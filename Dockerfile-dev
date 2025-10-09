@@ -1,6 +1,9 @@
 FROM gradle:7.6.1-jdk17 AS build
 WORKDIR /app
 
+# Gradle 메모리 설정
+ENV GRADLE_OPTS="-Xmx2048m -Xms512m -XX:MaxMetaspaceSize=512m"
+
 # Gradle 래퍼와 빌드 파일들을 먼저 복사하여 캐싱 활용
 COPY gradle gradle
 COPY gradlew .
@@ -26,7 +29,7 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # JAR 파일 복사
 COPY --from=build /app/build/libs/*.jar app.jar
 
-EXPOSE 8083
+EXPOSE 8085
 
 # 개발 환경용 JVM 옵션
 ENV JAVA_OPTS="-Xms256m -Xmx512m -Dspring.profiles.active=dev"
