@@ -1,6 +1,9 @@
 package org.ever._4ever_be_business.infrastructure.kafka.consumer.handler;
 
-import org.ever._4ever_be_business.infrastructure.kafka.event.*;
+import org.ever.event.AlarmEvent;
+import org.ever.event.BusinessEvent;
+import org.ever.event.ScmEvent;
+import org.ever.event.UserEvent;
 
 /**
  * Multi Topic 이벤트 처리 핸들러 인터페이스

@@ -1,4 +1,4 @@
-package org.ever._4ever_be_business.infrastructure.kafka.event;
+package org.ever.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
