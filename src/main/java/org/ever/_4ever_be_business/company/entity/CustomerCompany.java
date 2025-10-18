@@ -1,0 +1,64 @@
+package org.ever._4ever_be_business.company.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.ever._4ever_be_business.common.entity.TimeStamp;
+
+@Entity
+@Table(name="customer_company")
+@Getter
+@NoArgsConstructor
+public class CustomerCompany extends TimeStamp {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name="customer_user_id")
+    private String customerUserId;
+
+    @Column(name="company_code", length = 20)
+    private String companyCode;
+
+    @Column(name="company_name", length = 100)
+    private String companyName;
+
+    @Column(name="business_number", length = 20)
+    private String businessNumber;
+
+    @Column(name="ceo_name", length = 50)
+    private String ceoName;
+
+    @Column(name="zip_code", length = 10)
+    private String zipCode;
+
+    @Column(name="base_address", length = 255)
+    private String baseAddress;
+
+    @Column(name="detail_address", length = 255)
+    private String detailAddress;
+
+    @Column(name="office_phone", length = 20)
+    private String officePhone;
+
+    @Column(name="office_email", length = 20)
+    private String officeEmail;
+
+    @Column(name="etc", length = 255)
+    private String etc;
+
+    public CustomerCompany(String customerUserId, String companyCode, String companyName, String businessNumber, String ceoName, String zipCode, String baseAddress, String detailAddress, String officePhone, String officeEmail, String etc) {
+        this.customerUserId = customerUserId;
+        this.companyCode = companyCode;
+        this.companyName = companyName;
+        this.businessNumber = businessNumber;
+        this.ceoName = ceoName;
+        this.zipCode = zipCode;
+        this.baseAddress = baseAddress;
+        this.detailAddress = detailAddress;
+        this.officePhone = officePhone;
+        this.officeEmail = officeEmail;
+        this.etc = etc;
+    }
+}
