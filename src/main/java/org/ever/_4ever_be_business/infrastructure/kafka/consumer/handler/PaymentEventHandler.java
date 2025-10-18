@@ -1,6 +1,6 @@
 package org.ever._4ever_be_business.infrastructure.kafka.consumer.handler;
 
-import org.ever._4ever_be_business.infrastructure.kafka.event.PaymentEvent;
+import org.ever.event.PaymentEvent;
 
 /**
  * Payment 이벤트 처리 핸들러 인터페이스

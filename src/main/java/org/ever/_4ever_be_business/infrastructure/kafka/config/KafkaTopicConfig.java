@@ -28,6 +28,14 @@ public class KafkaTopicConfig {
     public static final String SCM_EVENT_TOPIC = "scm-event";
     public static final String ALARM_EVENT_TOPIC = "alarm-event";
 
+    // 고객사 등록 토픽
+    public static final String CREATE_USER_TOPIC = "create-user";
+    public static final String USER_CREATED_TOPIC = "user-created";
+    public static final String USER_CREATION_FAILED_TOPIC = "user-creation-failed";
+    public static final String USER_ROLLBACK_TOPIC = "user-rollback";
+    public static final String PROCESS_COMPLETED_TOPIC = "process-completed";
+
+
     // 고객사 생성 토픽
     @Bean
     public NewTopic clientCreatedTopic() {

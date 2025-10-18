@@ -3,7 +3,7 @@ package org.ever._4ever_be_business.infrastructure.kafka.consumer.handler.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.infrastructure.kafka.consumer.handler.PaymentEventHandler;
-import org.ever._4ever_be_business.infrastructure.kafka.event.PaymentEvent;
+import org.ever.event.PaymentEvent;
 import org.springframework.stereotype.Component;
 
 @Slf4j

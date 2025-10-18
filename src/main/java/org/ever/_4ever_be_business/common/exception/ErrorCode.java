@@ -43,12 +43,15 @@ public enum ErrorCode {
     REDIS_CONNECTION_ERROR(5002, HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결에 실패했습니다."),
     DATABASE_ERROR(5003, HttpStatus.INTERNAL_SERVER_ERROR, "데이터베이스 오류가 발생했습니다."),
 
+    KAFKA_PRODUCER_ERROR(1234,HttpStatus.INTERNAL_SERVER_ERROR,"카프카 에러"),
+
     // Business Logic Errors (6000~6999)
     BUSINESS_LOGIC_ERROR(6000, HttpStatus.BAD_REQUEST, "비즈니스 로직 처리 중 오류가 발생했습니다."),
     DUPLICATE_REQUEST(6001, HttpStatus.CONFLICT, "중복된 요청입니다."),
     INVALID_STATE_TRANSITION(6002, HttpStatus.BAD_REQUEST, "유효하지 않은 상태 전환입니다."),
     INVALID_BUSINESS_NUMBER(6003, HttpStatus.BAD_REQUEST, "유효하지 않은 사업자 번호입니다."),
     DOCUMENT_GENERATION_FAILED(6004, HttpStatus.INTERNAL_SERVER_ERROR, "문서 생성에 실패했습니다.");
+
 
     private final int code;
     private final HttpStatus httpStatus;
