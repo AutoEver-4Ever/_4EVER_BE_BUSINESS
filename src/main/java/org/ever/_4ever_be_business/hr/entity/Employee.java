@@ -17,9 +17,9 @@ public class Employee extends TimeStamp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //user 연동
-    @Column(name="internel_user_id")
-    private Long internelUserId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="internel_user_id")
+    private InternelUser internelUser;
 
     @Column(name="remaining_vacation")
     private Long remainingVacation;
@@ -27,8 +27,8 @@ public class Employee extends TimeStamp {
     @Column(name="last_training_date")
     private LocalDateTime lastTrainingDate;
 
-    public Employee(Long internelUserId, Long remainingVacation, LocalDateTime lastTrainingDate) {
-        this.internelUserId = internelUserId;
+    public Employee(InternelUser internelUser, Long remainingVacation, LocalDateTime lastTrainingDate) {
+        this.internelUser = internelUser;
         this.remainingVacation = remainingVacation;
         this.lastTrainingDate = lastTrainingDate;
     }
