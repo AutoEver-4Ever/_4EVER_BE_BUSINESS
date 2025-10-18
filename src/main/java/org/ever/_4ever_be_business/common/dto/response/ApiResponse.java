@@ -1,4 +1,4 @@
-package org.ever._4ever_be_business.common.response;
+package org.ever._4ever_be_business.common.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;

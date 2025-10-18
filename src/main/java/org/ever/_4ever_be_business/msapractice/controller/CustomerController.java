@@ -1,12 +1,11 @@
 package org.ever._4ever_be_business.msapractice.controller;
 
-import org.ever._4ever_be_business.common.response.ApiResponse;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.msapractice.dto.CreateCustomerRequestDto;
-import org.ever._4ever_be_business.msapractice.dto.CustomerResponseDto;
 import org.ever._4ever_be_business.msapractice.service.CustomerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

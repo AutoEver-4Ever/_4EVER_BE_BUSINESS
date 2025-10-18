@@ -1,8 +1,7 @@
 package org.ever._4ever_be_business.msapractice.service;
 
-import org.ever._4ever_be_business.common.response.ApiResponse;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.msapractice.dto.CreateCustomerRequestDto;
-import org.ever._4ever_be_business.msapractice.dto.CustomerResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.async.DeferredResult;
 

@@ -3,7 +3,7 @@ package org.ever._4ever_be_business.common.async;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.ever._4ever_be_business.common.response.ApiResponse;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;

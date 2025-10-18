@@ -4,7 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.ever._4ever_be_business.common.async.AsyncResultManager;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
-import org.ever._4ever_be_business.common.response.ApiResponse;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.common.saga.CompensationHandler;
 import org.ever._4ever_be_business.common.saga.SagaCompensationService;
 import org.ever._4ever_be_business.common.saga.SagaTransactionManager;
