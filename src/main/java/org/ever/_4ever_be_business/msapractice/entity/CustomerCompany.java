@@ -7,7 +7,7 @@ import lombok.*;
 
 import jakarta.persistence.*;
 
-@Entity
+@Entity(name = "MsaPracticeCustomerCompany")
 @Table(name = "customer_company")
 @EntityListeners(EntityAuditListener.class)
 @Getter
