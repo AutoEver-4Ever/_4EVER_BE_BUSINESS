@@ -23,6 +23,11 @@ public enum ErrorCode {
     CLIENT_DELETE_FAILED(2002, HttpStatus.BAD_REQUEST, "고객사 삭제에 실패했습니다."),
     CLIENT_UPDATE_FAILED(2003, HttpStatus.BAD_REQUEST, "고객사 정보 수정에 실패했습니다."),
     INVALID_CLIENT_STATUS(2004, HttpStatus.BAD_REQUEST, "유효하지 않은 고객사 상태입니다."),
+    CUSTOMER_NOT_FOUND(2005, HttpStatus.NOT_FOUND, "고객사를 찾을 수 없습니다."),
+    QUOTATION_NOT_FOUND(2006, HttpStatus.NOT_FOUND, "견적을 찾을 수 없습니다."),
+    ORDER_NOT_FOUND(2007, HttpStatus.NOT_FOUND, "주문서를 찾을 수 없습니다."),
+    QUOTATION_APPROVAL_NOT_FOUND(2008, HttpStatus.NOT_FOUND, "견적 승인 정보를 찾을 수 없습니다."),
+    CUSTOMER_COMPANY_NOT_FOUND(2009, HttpStatus.NOT_FOUND, "고객사 회사 정보를 찾을 수 없습니다."),
 
     // Contract Errors (3000~3999) - 계약 관리
     CONTRACT_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "계약 정보를 찾을 수 없습니다."),

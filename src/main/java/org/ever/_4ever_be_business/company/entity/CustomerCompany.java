@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name="customer_company")
@@ -12,8 +15,8 @@ import org.ever._4ever_be_business.common.entity.TimeStamp;
 public class CustomerCompany extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36, columnDefinition = "VARCHAR(36)")
+    private String id;
 
     @Column(name="customer_user_id")
     private String customerUserId;
@@ -48,6 +51,9 @@ public class CustomerCompany extends TimeStamp {
     @Column(name="etc", length = 255)
     private String etc;
 
+    @Column(name="is_active", nullable = false)
+    private Boolean isActive = true;
+
     public CustomerCompany(String customerUserId, String companyCode, String companyName, String businessNumber, String ceoName, String zipCode, String baseAddress, String detailAddress, String officePhone, String officeEmail, String etc) {
         this.customerUserId = customerUserId;
         this.companyCode = companyCode;
@@ -60,5 +66,54 @@ public class CustomerCompany extends TimeStamp {
         this.officePhone = officePhone;
         this.officeEmail = officeEmail;
         this.etc = etc;
+        this.isActive = true;
+    }
+
+    /**
+     * 고객사 정보 수정
+     */
+    public void updateInfo(String companyName, String businessNumber, String ceoName,
+                          String baseAddress, String detailAddress,
+                          String officePhone, String officeEmail, String etc) {
+        this.companyName = companyName;
+        this.businessNumber = businessNumber;
+        this.ceoName = ceoName;
+        this.baseAddress = baseAddress;
+        this.detailAddress = detailAddress;
+        this.officePhone = officePhone;
+        this.officeEmail = officeEmail;
+        this.etc = etc;
+    }
+
+    /**
+     * 고객사 상태 변경
+     */
+    public void updateStatus(String statusCode) {
+        if ("ACTIVE".equalsIgnoreCase(statusCode)) {
+            this.isActive = true;
+        } else if ("INACTIVE".equalsIgnoreCase(statusCode)) {
+            this.isActive = false;
+        }
+    }
+
+    /**
+     * 고객사 비활성화 (Soft Delete)
+     */
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    /**
+     * 고객사 활성화
+     */
+    public void activate() {
+        this.isActive = true;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }

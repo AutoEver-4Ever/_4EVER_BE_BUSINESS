@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,8 +16,8 @@ import java.time.LocalDateTime;
 public class Order extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
     @Column(nullable = false, name="order_code")
     private String orderCode;
@@ -28,8 +29,8 @@ public class Order extends TimeStamp {
     @OneToOne(mappedBy = "order")
     private OrderShipment OrderShipment;
 
-    @Column(nullable = false, name="customer_user_id")
-    private Long customerUserId;
+    @Column(nullable = false, name="customer_user_id", length = 36)
+    private String customerUserId;
 
     @Column(nullable = false, name="total_price")
     private BigDecimal totalPrice;
@@ -44,7 +45,7 @@ public class Order extends TimeStamp {
     @JoinColumn(name="status_id")
     private OrderStatus status;
 
-    public Order(String orderCode, Quotation quotation, OrderShipment orderShipment, Long customerUserId, BigDecimal totalPrice, LocalDateTime orderDate, LocalDateTime dueDate, OrderStatus status) {
+    public Order(String orderCode, Quotation quotation, OrderShipment orderShipment, String customerUserId, BigDecimal totalPrice, LocalDateTime orderDate, LocalDateTime dueDate, OrderStatus status) {
         this.orderCode = orderCode;
         this.quotation = quotation;
         OrderShipment = orderShipment;
@@ -53,5 +54,12 @@ public class Order extends TimeStamp {
         this.orderDate = orderDate;
         this.dueDate = dueDate;
         this.status = status;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }

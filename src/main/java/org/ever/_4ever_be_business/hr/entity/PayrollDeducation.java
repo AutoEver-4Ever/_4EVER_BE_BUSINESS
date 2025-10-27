@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 
 @Entity
 @Table(name="payroll_deducation")
@@ -12,8 +13,8 @@ import org.ever._4ever_be_business.common.entity.TimeStamp;
 public class PayrollDeducation extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
     @ManyToOne
     @JoinColumn(name="payroll_id")
@@ -26,5 +27,12 @@ public class PayrollDeducation extends TimeStamp {
     public PayrollDeducation(Payroll payroll, Deducation deduction) {
         this.payroll = payroll;
         this.deduction = deduction;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }

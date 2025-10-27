@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 
 import java.time.LocalDateTime;
 
@@ -14,12 +15,12 @@ import java.time.LocalDateTime;
 public class Employee extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
-    //user 연동
-    @Column(name="internel_user_id")
-    private Long internelUserId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="internel_user_id")
+    private InternelUser internelUser;
 
     @Column(name="remaining_vacation")
     private Long remainingVacation;
@@ -27,9 +28,16 @@ public class Employee extends TimeStamp {
     @Column(name="last_training_date")
     private LocalDateTime lastTrainingDate;
 
-    public Employee(Long internelUserId, Long remainingVacation, LocalDateTime lastTrainingDate) {
-        this.internelUserId = internelUserId;
+    public Employee(InternelUser internelUser, Long remainingVacation, LocalDateTime lastTrainingDate) {
+        this.internelUser = internelUser;
         this.remainingVacation = remainingVacation;
         this.lastTrainingDate = lastTrainingDate;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.order.enums.Unit;
 
 @Entity
@@ -13,15 +14,15 @@ import org.ever._4ever_be_business.order.enums.Unit;
 public class OrderItem extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
     @ManyToOne
     @JoinColumn(name="order_id")
     private Order order;
 
-    @Column(nullable = false, name="product_id")
-    private Long productId;
+    @Column(nullable = false, name="product_id", length = 36)
+    private String productId;  // UUID
 
     @Column(nullable = false, name="count")
     private Long count;
@@ -32,11 +33,18 @@ public class OrderItem extends TimeStamp {
     @Column(nullable = false, name="price")
     private Long price;
 
-    public OrderItem(Order order, Long productId, Long count, Unit unit, Long price) {
+    public OrderItem(Order order, String productId, Long count, Unit unit, Long price) {
         this.order = order;
         this.productId = productId;
         this.count = count;
         this.unit = unit;
         this.price = price;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }

@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.enums.TrainingCategory;
+import org.ever._4ever_be_business.hr.enums.TrainingStatus;
 
 @Entity
 @Table(name="training")
@@ -13,13 +15,14 @@ import org.ever._4ever_be_business.hr.enums.TrainingCategory;
 public class Training extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
     @Column(name="training_name")
     private String trainingName;
 
     @Column(name="training_category")
+    @Enumerated(EnumType.STRING)
     private TrainingCategory category;
 
     @Column(name="duration_hours")
@@ -31,19 +34,35 @@ public class Training extends TimeStamp {
     @Column(name="enrolled")
     private Long enrolled;
 
+    @Column(name="capacity")
+    private Integer capacity;
+
     @Column(name="description", length = 50)
     private String description;
 
     @Column(name="status")
     private Boolean status;
 
-    public Training(String trainingName, TrainingCategory category, Long durationHours, String deliveryMethod, Long enrolled, String description, Boolean status) {
+    @Column(name="training_status")
+    @Enumerated(EnumType.STRING)
+    private TrainingStatus trainingStatus;
+
+    public Training(String trainingName, TrainingCategory category, Long durationHours, String deliveryMethod, Long enrolled, Integer capacity, String description, Boolean status, TrainingStatus trainingStatus) {
         this.trainingName = trainingName;
         this.category = category;
         this.durationHours = durationHours;
         this.deliveryMethod = deliveryMethod;
         this.enrolled = enrolled;
+        this.capacity = capacity;
         this.description = description;
         this.status = status;
+        this.trainingStatus = trainingStatus;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }
