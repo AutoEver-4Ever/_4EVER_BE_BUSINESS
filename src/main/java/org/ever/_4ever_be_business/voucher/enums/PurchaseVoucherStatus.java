@@ -6,8 +6,10 @@ public enum PurchaseVoucherStatus {
     REJECTED,          // 승인 요청이 거절된 상태 (결재 반려 등)
     CANCELLED,         // 거래나 바우처가 취소된 상태 (승인 후라도 취소 가능)
 
+    PENDING,           // 대기 중 상태 (지급 기한 전, 미지급 상태)
     PAID,              // 전액 지급 완료된 상태 (완납)
     UNPAID,            // 아직 아무 금액도 지급되지 않은 상태 (미지급)
+    OVERDUE,           // 지급 기한 초과, 미지급 상태 (미납)
     PARTIALLY_PAID,    // 일부 금액만 지급된 상태 (부분 지급)
     PARTIALLY_UNPAID,  // 일부 금액이 아직 미지급 상태 (PARTIALLY_PAID와 의미 동일하나 관점상 미지급 중심 표현)
 
