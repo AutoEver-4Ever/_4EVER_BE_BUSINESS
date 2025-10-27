@@ -5,10 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.company.repository.CustomerCompanyRepository;
-import org.ever._4ever_be_business.hr.entity.Department;
-import org.ever._4ever_be_business.hr.entity.Position;
-import org.ever._4ever_be_business.hr.repository.DepartmentRepository;
-import org.ever._4ever_be_business.hr.repository.PositionRepository;
+import org.ever._4ever_be_business.hr.entity.*;
+import org.ever._4ever_be_business.hr.enums.Gender;
+import org.ever._4ever_be_business.hr.repository.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +25,9 @@ public class DataPreloader {
     private final DepartmentRepository departmentRepository;
     private final PositionRepository positionRepository;
     private final CustomerCompanyRepository customerCompanyRepository;
+    private final InternelUserRepository internelUserRepository;
+    private final EmployeeRepository employeeRepository;
+    private final CustomerUserRepository customerUserRepository;
 
     @PostConstruct
     @Transactional
@@ -37,6 +39,8 @@ public class DataPreloader {
         loadDepartments();
         loadPositions();
         loadCustomerCompanies();
+        loadInternelUsers();
+        loadCustomerUsers();
 
         log.info("========================================");
         log.info("초기 데이터 로딩 완료");
@@ -193,5 +197,152 @@ public class DataPreloader {
         }
 
         log.info("총 {}개의 고객사 생성 완료", companies.length);
+    }
+
+    /**
+     * 내부 직원 데이터 생성
+     */
+    private void loadInternelUsers() {
+        if (internelUserRepository.count() > 0) {
+            log.info("내부 직원 데이터가 이미 존재합니다. 스킵합니다.");
+            return;
+        }
+
+        log.info("내부 직원 데이터 생성 중...");
+
+        // Position 조회 (사원, 대리, 과장 사용)
+        Position position1 = positionRepository.findByPositionCode("POS-001")
+                .orElseThrow(() -> new RuntimeException("Position not found"));
+        Position position2 = positionRepository.findByPositionCode("POS-003")
+                .orElseThrow(() -> new RuntimeException("Position not found"));
+        Position position3 = positionRepository.findByPositionCode("POS-004")
+                .orElseThrow(() -> new RuntimeException("Position not found"));
+
+        InternelUser[] internelUsers = {
+                new InternelUser(
+                        "internel1",                        // id
+                        1001L,                              // userId
+                        "internel1",                        // name
+                        "EMP-001",                          // employeeCode
+                        position1,                          // position (사원)
+                        Gender.MALE,                        // gender
+                        LocalDateTime.of(1995, 3, 15, 0, 0),  // birthDate
+                        LocalDateTime.of(2023, 1, 1, 0, 0),   // hireDate
+                        "서울특별시 강남구",                  // address
+                        "internel1@gmail.com",              // email
+                        "010-1111-1111",                    // phoneNumber
+                        LocalDateTime.of(2023, 1, 1, 0, 0),   // departmentStartAt
+                        "학사",                              // education
+                        "신입"                               // career
+                ),
+                new InternelUser(
+                        "internel2",
+                        1002L,
+                        "internel2",
+                        "EMP-002",
+                        position2,                          // position (대리)
+                        Gender.FEMALE,
+                        LocalDateTime.of(1992, 7, 22, 0, 0),
+                        LocalDateTime.of(2021, 3, 1, 0, 0),
+                        "서울특별시 서초구",
+                        "internel2@gmail.com",
+                        "010-2222-2222",
+                        LocalDateTime.of(2021, 3, 1, 0, 0),
+                        "석사",
+                        "경력 2년"
+                ),
+                new InternelUser(
+                        "internel3",
+                        1003L,
+                        "internel3",
+                        "EMP-003",
+                        position3,                          // position (과장)
+                        Gender.MALE,
+                        LocalDateTime.of(1988, 11, 5, 0, 0),
+                        LocalDateTime.of(2018, 6, 1, 0, 0),
+                        "서울특별시 송파구",
+                        "internel3@gmail.com",
+                        "010-3333-3333",
+                        LocalDateTime.of(2018, 6, 1, 0, 0),
+                        "학사",
+                        "경력 5년"
+                )
+        };
+
+        for (InternelUser user : internelUsers) {
+            internelUserRepository.save(user);
+            log.info("내부 직원 생성: {} ({})", user.getName(), user.getEmployeeCode());
+
+            // Employee 엔티티 생성
+            Employee employee = new Employee(
+                    user,
+                    15L,  // 연차 15일
+                    LocalDateTime.now().minusMonths(6)  // 6개월 전 교육 수료
+            );
+            employeeRepository.save(employee);
+            log.info("Employee 엔티티 생성: {}", user.getName());
+        }
+
+        log.info("총 {}개의 내부 직원 생성 완료", internelUsers.length);
+    }
+
+    /**
+     * 고객사 담당자 데이터 생성
+     */
+    private void loadCustomerUsers() {
+        if (customerUserRepository.count() > 0) {
+            log.info("고객사 담당자 데이터가 이미 존재합니다. 스킵합니다.");
+            return;
+        }
+
+        log.info("고객사 담당자 데이터 생성 중...");
+
+        // 기존 고객사 3개 조회
+        CustomerCompany company1 = customerCompanyRepository.findByCompanyCode("CUST-001")
+                .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
+        CustomerCompany company2 = customerCompanyRepository.findByCompanyCode("CUST-002")
+                .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
+        CustomerCompany company3 = customerCompanyRepository.findByCompanyCode("CUST-003")
+                .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
+
+        CustomerUser[] customerUsers = {
+                new CustomerUser(
+                        "customer1",                    // id
+                        2001L,                          // userId
+                        101L,                           // customerId
+                        "customer1",                    // customerName
+                        company1,                       // customerCompany (현대자동차)
+                        "CUST-USER-001",                // customerUserCode
+                        "customer1@gmail.com",          // email
+                        "010-1001-1001"                 // phoneNumber
+                ),
+                new CustomerUser(
+                        "customer2",
+                        2002L,
+                        102L,
+                        "customer2",
+                        company2,                       // customerCompany (삼성전자)
+                        "CUST-USER-002",
+                        "customer2@gmail.com",
+                        "010-2002-2002"
+                ),
+                new CustomerUser(
+                        "customer3",
+                        2003L,
+                        103L,
+                        "customer3",
+                        company3,                       // customerCompany (LG화학)
+                        "CUST-USER-003",
+                        "customer3@gmail.com",
+                        "010-3003-3003"
+                )
+        };
+
+        for (CustomerUser user : customerUsers) {
+            customerUserRepository.save(user);
+            log.info("고객사 담당자 생성: {} ({})", user.getCustomerName(), user.getCustomerUserCode());
+        }
+
+        log.info("총 {}개의 고객사 담당자 생성 완료", customerUsers.length);
     }
 }
