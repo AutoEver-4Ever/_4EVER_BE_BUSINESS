@@ -14,7 +14,7 @@ import java.util.Optional;
  * 트랜잭션 변경 로그 레포지토리
  */
 @Repository
-public interface TransactionChangeLogRepository extends JpaRepository<TransactionChangeLog, Long> {
+public interface TransactionChangeLogRepository extends JpaRepository<TransactionChangeLog, String> {
     /**
      * 트랜잭션 ID로 로그 조회
      * @param transactionId 트랜잭션 ID
