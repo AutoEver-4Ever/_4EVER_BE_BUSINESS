@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.enums.PayrollStatus;
 
 import java.math.BigDecimal;
@@ -16,8 +17,8 @@ import java.time.LocalDateTime;
 public class Payroll extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
     @ManyToOne
     @JoinColumn(name="employee_id")
@@ -49,5 +50,12 @@ public class Payroll extends TimeStamp {
         this.netSalary = netSalary;
         this.payDate = payDate;
         this.baseDate = baseDate;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }
