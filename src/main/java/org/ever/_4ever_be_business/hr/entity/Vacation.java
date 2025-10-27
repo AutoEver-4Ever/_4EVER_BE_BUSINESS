@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.enums.VacationStatus;
 import org.ever._4ever_be_business.hr.enums.VacationType;
 
@@ -14,8 +15,8 @@ import org.ever._4ever_be_business.hr.enums.VacationType;
 public class Vacation extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
     @ManyToOne
     @JoinColumn(name="employee_id")
@@ -39,5 +40,12 @@ public class Vacation extends TimeStamp {
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }

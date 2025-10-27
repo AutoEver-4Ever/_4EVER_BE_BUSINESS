@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.order.enums.ApprovalStatus;
 
 import java.time.LocalDateTime;
@@ -15,8 +16,8 @@ import java.time.LocalDateTime;
 public class VacationRequestApproval extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
 
     @Column
     private ApprovalStatus approvalStatus;
@@ -36,5 +37,12 @@ public class VacationRequestApproval extends TimeStamp {
         this.approvedBy = approvedBy;
         this.approvedAt = approvedAt;
         this.rejectedReason = rejectedReason;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
     }
 }
