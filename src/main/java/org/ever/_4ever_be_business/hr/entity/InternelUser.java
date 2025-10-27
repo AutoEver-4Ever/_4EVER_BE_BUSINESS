@@ -74,6 +74,29 @@ public class InternelUser extends TimeStamp {
         this.career = career;
     }
 
+    /**
+     * 목업 데이터 생성용 생성자 (ID 포함)
+     */
+    public InternelUser(String id, Long userId, String name, String employeeCode, Position position,
+                        Gender gender, LocalDateTime birthDate, LocalDateTime hireDate, String address,
+                        String email, String phoneNumber, LocalDateTime departmentStartAt,
+                        String education, String career) {
+        this.id = id;
+        this.userId = userId;
+        this.name = name;
+        this.employeeCode = employeeCode;
+        this.position = position;
+        this.gender = gender;
+        this.birthDate = birthDate;
+        this.hireDate = hireDate;
+        this.address = address;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.departmentStartAt = departmentStartAt;
+        this.education = education;
+        this.career = career;
+    }
+
     @PrePersist
     public void generateId() {
         if (this.id == null) {
