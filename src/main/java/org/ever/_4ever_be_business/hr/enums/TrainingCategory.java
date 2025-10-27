@@ -2,6 +2,11 @@ package org.ever._4ever_be_business.hr.enums;
 
 public enum TrainingCategory {
 
+    BASIC_TRAINING,         // 기본 교육
+    TECHNICAL_TRAINING,     // 기술 교육
+    SOFT_SKILL_TRAINING,    // 소프트 스킬 교육
+    MARKETING_TRAINING,     // 마케팅 교육
+
     INTERNSHIP,         // 인턴십: 정식 채용 전 실무 경험 중심의 프로그램
     ONBOARDING,         // 온보딩: 신입/이직자 대상 회사 적응 및 기본교육
     TRAINING,           // 일반 직무교육: 업무 역량 강화를 위한 사내/외 교육
