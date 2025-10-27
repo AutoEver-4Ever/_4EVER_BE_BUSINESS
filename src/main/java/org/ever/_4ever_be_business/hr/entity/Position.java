@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 
 import java.math.BigDecimal;
 
@@ -14,8 +15,8 @@ import java.math.BigDecimal;
 public class Position extends TimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36, columnDefinition = "VARCHAR(36)")
+    private String id;
 
     private String positionCode;
 
@@ -30,4 +31,18 @@ public class Position extends TimeStamp {
 
     @Column(name="salary")
     private BigDecimal salary;
+
+    public Position(String positionCode, String positionName, Boolean isManager, BigDecimal salary) {
+        this.positionCode = positionCode;
+        this.positionName = positionName;
+        this.isManager = isManager;
+        this.salary = salary;
+    }
+
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            this.id = UuidV7Generator.generate();
+        }
+    }
 }
