@@ -16,13 +16,13 @@ public class InventoryCheckResultItemDto {
     private String itemName;
 
     @JsonProperty("requiredQuantity")
-    private Long requiredQuantity;
+    private Integer requiredQuantity;
 
     @JsonProperty("inventoryQuantity")
-    private Long inventoryQuantity;
+    private Integer inventoryQuantity;
 
     @JsonProperty("shortageQuantity")
-    private Long shortageQuantity;
+    private Integer shortageQuantity;
 
     @JsonProperty("statusCode")
     private String statusCode;

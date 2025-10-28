@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.hr.dto.request.*;
 import org.ever._4ever_be_business.hr.dto.response.*;
+import org.ever._4ever_be_business.hr.entity.InternelUser;
 import org.ever._4ever_be_business.hr.enums.LeaveType;
 import org.ever._4ever_be_business.hr.enums.TrainingCategory;
 import org.ever._4ever_be_business.hr.enums.TrainingStatus;
+import org.ever._4ever_be_business.hr.repository.InternelUserRepository;
 import org.ever._4ever_be_business.hr.service.*;
 import org.ever._4ever_be_business.hr.vo.*;
 import org.ever._4ever_be_business.sd.dto.response.PageInfo;
@@ -48,6 +50,7 @@ public class HrmController {
     private final TrainingService trainingService;
     private final TimeRecordService timeRecordService;
     private final AttendanceService attendanceService;
+    private final InternelUserRepository internelUserRepository;
 
     // ==================== Statistics ====================
 
@@ -261,6 +264,17 @@ public class HrmController {
         leaveRequestService.rejectLeaveRequest(requestId);
         log.info("휴가 신청 반려 성공 - requestId: {}", requestId);
         return ApiResponse.success(null, "휴가 신청이 반려되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 잔여 연차 조회
+     */
+    @GetMapping("/leave-request")
+    public ApiResponse<RemainingLeaveDaysDto> getRemainingLeaveDays(@RequestParam String userId) {
+        log.info("잔여 연차 조회 API 호출 - userId: {}", userId);
+        RemainingLeaveDaysDto result = leaveRequestService.getRemainingLeaveDays(userId);
+        log.info("잔여 연차 조회 성공 - userId: {}, remainingLeaveDays: {}", userId, result.getRemainingLeaveDays());
+        return ApiResponse.success(result, "잔여 연차를 조회했습니다.", HttpStatus.OK);
     }
 
     // ==================== Payroll ====================
@@ -559,5 +573,27 @@ public class HrmController {
         attendanceService.checkOut(requestDto.getEmployeeId());
         log.info("퇴근 처리 성공 - employeeId: {}", requestDto.getEmployeeId());
         return ApiResponse.success(null, "퇴근 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+
+    // ==================== HRM Employee Info ====================
+
+    /**
+     * HRM 직원 기본 정보 조회 (InternelUser ID 기반)
+     */
+    @PostMapping("/{userId}/employee")
+    public ApiResponse<HrmEmployeeBasicInfoDto> getEmployeeBasicInfo(@PathVariable String userId) {
+        log.info("HRM 직원 기본 정보 조회 API 호출 - userId: {}", userId);
+
+        InternelUser internelUser = internelUserRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("직원 정보를 찾을 수 없습니다. userId: " + userId));
+
+        HrmEmployeeBasicInfoDto result = new HrmEmployeeBasicInfoDto(
+                internelUser.getName(),
+                internelUser.getPhoneNumber(),
+                internelUser.getEmail()
+        );
+
+        log.info("HRM 직원 기본 정보 조회 성공 - name: {}", internelUser.getName());
+        return ApiResponse.success(result, "성공 메시지", HttpStatus.OK);
     }
 }

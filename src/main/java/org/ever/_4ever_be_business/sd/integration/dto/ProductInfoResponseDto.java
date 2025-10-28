@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -25,5 +26,11 @@ public class ProductInfoResponseDto {
 
         @JsonProperty("itemName")
         private String productName;
+
+        @JsonProperty("uomName")
+        private String uomName;
+
+        @JsonProperty("unitPrice")
+        private BigDecimal unitPrice;
     }
 }

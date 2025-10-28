@@ -6,10 +6,13 @@ import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.dto.request.CreateLeaveRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.LeaveRequestListItemDto;
+import org.ever._4ever_be_business.hr.dto.response.RemainingLeaveDaysDto;
 import org.ever._4ever_be_business.hr.entity.Employee;
+import org.ever._4ever_be_business.hr.entity.InternelUser;
 import org.ever._4ever_be_business.hr.entity.LeaveRequest;
 import org.ever._4ever_be_business.hr.enums.LeaveRequestStatus;
 import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
+import org.ever._4ever_be_business.hr.repository.InternelUserRepository;
 import org.ever._4ever_be_business.hr.repository.LeaveRequestRepository;
 import org.ever._4ever_be_business.hr.service.LeaveRequestService;
 import org.ever._4ever_be_business.hr.vo.LeaveRequestSearchConditionVo;
@@ -33,6 +36,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
+    private final InternelUserRepository internelUserRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -145,5 +149,45 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.reject();
 
         log.info("휴가 신청 반려 완료 - requestId: {}", requestId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RemainingLeaveDaysDto getRemainingLeaveDays(String userId) {
+        log.info("잔여 연차 조회 요청 - userId: {}", userId);
+
+        // 1. InternelUser 조회
+        InternelUser internelUser = internelUserRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        // 2. Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
+
+        // 3. 1년 전 날짜 계산
+        LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
+
+        // 4. 1년 이내 승인된 휴가 일수 합계 조회
+        Integer usedLeaveDays = leaveRequestRepository.sumApprovedLeaveDaysInLastYear(
+                employee.getId(),
+                LeaveRequestStatus.APPROVED,
+                oneYearAgo
+        );
+
+        // 5. 잔여 연차 계산 (기본 연차 18일 - 사용 일수)
+        int used = (usedLeaveDays != null) ? usedLeaveDays : 0;
+        int remaining = 18 - used;
+
+        RemainingLeaveDaysDto result = new RemainingLeaveDaysDto(
+                userId,
+                18,
+                used,
+                remaining
+        );
+
+        log.info("잔여 연차 조회 성공 - userId: {}, usedLeaveDays: {}, remainingLeaveDays: {}",
+                userId, used, remaining);
+
+        return result;
     }
 }

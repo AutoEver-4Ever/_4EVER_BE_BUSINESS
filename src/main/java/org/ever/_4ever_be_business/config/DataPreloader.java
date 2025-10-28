@@ -232,7 +232,7 @@ public class DataPreloader {
         InternelUser[] internelUsers = {
                 new InternelUser(
                         "internel1",                        // id
-                        "1001L",                              // userId
+                        "internel1",                        // userId (Gateway와 동일)
                         "internel1",                        // name
                         "EMP-001",                          // employeeCode
                         position1,                          // position (사원)
@@ -248,7 +248,7 @@ public class DataPreloader {
                 ),
                 new InternelUser(
                         "internel2",
-                        "1002L",
+                        "internel2",                        // userId (Gateway와 동일)
                         "internel2",
                         "EMP-002",
                         position2,                          // position (대리)
@@ -264,7 +264,7 @@ public class DataPreloader {
                 ),
                 new InternelUser(
                         "internel3",
-                        "1003L",
+                        "internel3",                        // userId (Gateway와 동일)
                         "internel3",
                         "EMP-003",
                         position3,                          // position (과장)
@@ -323,8 +323,7 @@ public class DataPreloader {
         CustomerUser[] customerUsers = {
                 new CustomerUser(
                         "customer1",                    // id
-                        2001L,                          // userId
-                        101L,                           // customerId
+                        "customer1",                    // userId (Gateway와 동일)
                         "customer1",                    // customerName
                         company1,                       // customerCompany (현대자동차)
                         "CUST-USER-001",                // customerUserCode
@@ -333,8 +332,7 @@ public class DataPreloader {
                 ),
                 new CustomerUser(
                         "customer2",
-                        2002L,
-                        102L,
+                        "customer2",                    // userId (Gateway와 동일)
                         "customer2",
                         company2,                       // customerCompany (삼성전자)
                         "CUST-USER-002",
@@ -343,8 +341,7 @@ public class DataPreloader {
                 ),
                 new CustomerUser(
                         "customer3",
-                        2003L,
-                        103L,
+                        "customer3",                    // userId (Gateway와 동일)
                         "customer3",
                         company3,                       // customerCompany (LG화학)
                         "CUST-USER-003",
@@ -353,8 +350,7 @@ public class DataPreloader {
                 ),
                 new CustomerUser(
                         "customer4",
-                        2004L,
-                        104L,
+                        "customer4",                    // userId (Gateway와 동일)
                         "customer4",
                         company4,                       // customerCompany (SK하이닉스)
                         "CUST-USER-004",
@@ -363,8 +359,7 @@ public class DataPreloader {
                 ),
                 new CustomerUser(
                         "customer5",
-                        2005L,
-                        105L,
+                        "customer5",                    // userId (Gateway와 동일)
                         "customer5",
                         company5,                       // customerCompany (포스코)
                         "CUST-USER-005",

@@ -56,7 +56,7 @@ public class MockDataProvider {
     public ProductOrderInfoResponseDto createMockProductOrderItems(String productOrderId) {
         log.info("[MOCK] 생산 주문 아이템 생성 - productOrderId: {}", productOrderId);
         // 실제 DTO 구조에 맞게 기본 데이터 반환
-        return new ProductOrderInfoResponseDto(new ArrayList<>());
+        return new ProductOrderInfoResponseDto(new ArrayList<>(), BigDecimal.ZERO);
     }
 
     /**
@@ -80,13 +80,14 @@ public class MockDataProvider {
         log.info("[MOCK] 공급업체 정보 생성 - supplierCompanyId: {}", supplierCompanyId);
 
         return new SupplierCompanyResponseDto(
-                supplierCompanyId,
-                "Mock공급업체-" + supplierCompanyId,
-                "123-45-67890",
-                "서울시 강남구",
-                "02-1234-5678",
-                "mock@example.com",
-                "담당자-Mock"
+                supplierCompanyId,                          // companyId
+                "SUPP-" + supplierCompanyId,               // companyNumber
+                "Mock공급업체-" + supplierCompanyId,        // companyName
+                "서울시 강남구",                            // baseAddress
+                "테헤란로 123",                             // detailAddress
+                "제조업",                                   // category
+                "02-1234-5678",                            // officePhone
+                "manager-" + supplierCompanyId             // managerId
         );
     }
 

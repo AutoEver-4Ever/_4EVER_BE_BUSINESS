@@ -67,6 +67,11 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
         // 1. 동적 쿼리 조건 생성
         BooleanBuilder builder = new BooleanBuilder();
 
+        // 견적 ID 필터
+        if (condition.getQuotationId() != null && !condition.getQuotationId().isEmpty()) {
+            builder.and(quotation.id.eq(condition.getQuotationId()));
+        }
+
         // 날짜 범위 필터 (startDate ~ endDate)
         if (condition.getStartDate() != null && !condition.getStartDate().isEmpty()) {
             java.time.LocalDate startDate = java.time.LocalDate.parse(condition.getStartDate(), DATE_FORMATTER);

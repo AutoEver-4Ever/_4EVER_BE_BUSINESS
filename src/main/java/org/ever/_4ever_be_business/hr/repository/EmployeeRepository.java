@@ -1,10 +1,12 @@
 package org.ever._4ever_be_business.hr.repository;
 
 import org.ever._4ever_be_business.hr.entity.Employee;
+import org.ever._4ever_be_business.hr.entity.InternelUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Employee Repository
@@ -27,4 +29,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, String>, Emp
      * @return 직원 수
      */
     long countByCreatedAtBefore(LocalDateTime date);
+
+    /**
+     * InternelUser로 Employee 조회
+     *
+     * @param internelUser InternelUser 엔티티
+     * @return Employee
+     */
+    Optional<Employee> findByInternelUser(InternelUser internelUser);
 }
