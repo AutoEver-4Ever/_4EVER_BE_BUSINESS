@@ -8,13 +8,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateEmployeeRequestDto {
-    @JsonProperty("employeeName")
-    private String employeeName;
+public class UpdateTrainingProgramDto {
+    @JsonProperty("programName")
+    private String programName;
 
-    @JsonProperty("departmentId")
-    private String departmentId;
-
-    @JsonProperty("positionId")
-    private String positionId;
+    @JsonProperty("statusCode")
+    private String statusCode;
 }

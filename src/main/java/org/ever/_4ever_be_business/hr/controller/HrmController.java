@@ -1,0 +1,563 @@
+package org.ever._4ever_be_business.hr.controller;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
+import org.ever._4ever_be_business.hr.dto.request.*;
+import org.ever._4ever_be_business.hr.dto.response.*;
+import org.ever._4ever_be_business.hr.enums.LeaveType;
+import org.ever._4ever_be_business.hr.enums.TrainingCategory;
+import org.ever._4ever_be_business.hr.enums.TrainingStatus;
+import org.ever._4ever_be_business.hr.service.*;
+import org.ever._4ever_be_business.hr.vo.*;
+import org.ever._4ever_be_business.sd.dto.response.PageInfo;
+import org.ever._4ever_be_business.tam.dto.request.CheckInRequestDto;
+import org.ever._4ever_be_business.tam.dto.request.CheckOutRequestDto;
+import org.ever._4ever_be_business.tam.dto.request.UpdateTimeRecordDto;
+import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
+import org.ever._4ever_be_business.tam.dto.response.TimeRecordDetailDto;
+import org.ever._4ever_be_business.tam.dto.response.TimeRecordListItemDto;
+import org.ever._4ever_be_business.tam.service.AttendanceService;
+import org.ever._4ever_be_business.tam.service.TimeRecordService;
+import org.ever._4ever_be_business.tam.vo.AttendanceListSearchConditionVo;
+import org.ever._4ever_be_business.tam.vo.AttendanceSearchConditionVo;
+import org.ever._4ever_be_business.tam.vo.TimeRecordDetailVo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/hrm")
+@RequiredArgsConstructor
+public class HrmController {
+
+    private final DepartmentService departmentService;
+    private final PositionService positionService;
+    private final EmployeeService employeeService;
+    private final LeaveRequestService leaveRequestService;
+    private final PayrollService payrollService;
+    private final StatisticsService statisticsService;
+    private final TrainingService trainingService;
+    private final TimeRecordService timeRecordService;
+    private final AttendanceService attendanceService;
+
+    // ==================== Statistics ====================
+
+    /**
+     * HR 대시보드 통계 조회
+     */
+    @GetMapping("/statistics")
+    public ApiResponse<HRStatisticsResponseDto> getHRStatistics() {
+        log.info("HR 대시보드 통계 조회 API 호출");
+        HRStatisticsResponseDto result = statisticsService.getHRStatistics();
+        log.info("HR 대시보드 통계 조회 성공");
+        return ApiResponse.success(result, "대시보드 정보를 성공적으로 조회했습니다.", HttpStatus.OK);
+    }
+
+    // ==================== Departments ====================
+
+    /**
+     * 부서 목록 조회
+     */
+    @GetMapping("/departments")
+    public ApiResponse<DepartmentListResponseDto> getDepartmentList(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        log.info("부서 목록 조회 API 호출 - status: {}, page: {}, size: {}", status, page, size);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DepartmentListItemDto> pageResult = departmentService.getDepartmentList(status, pageable);
+
+        PageInfo pageInfo = new PageInfo(
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalElements(),
+                pageResult.getTotalPages(),
+                pageResult.hasNext()
+        );
+
+        DepartmentListResponseDto responseDto = new DepartmentListResponseDto(
+                (int) pageResult.getTotalElements(),
+                pageResult.getContent(),
+                pageInfo
+        );
+
+        log.info("부서 목록 조회 성공 - total: {}, size: {}", pageResult.getTotalElements(), pageResult.getContent().size());
+        return ApiResponse.success(responseDto, "부서 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 부서 상세 정보 조회
+     */
+    @GetMapping("/organization/department/{departmentId}")
+    public ApiResponse<DepartmentDetailDto> getDepartmentDetail(@PathVariable String departmentId) {
+        log.info("부서 상세 정보 조회 API 호출 - departmentId: {}", departmentId);
+        DepartmentDetailDto result = departmentService.getDepartmentDetail(departmentId);
+        log.info("부서 상세 정보 조회 성공 - departmentId: {}, departmentName: {}, headcount: {}",
+                departmentId, result.getDepartmentName(), result.getHeadcount());
+        return ApiResponse.success(result, "부서 상세 정보 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    // ==================== Positions ====================
+
+    /**
+     * 직급 목록 조회
+     */
+    @GetMapping("/positions")
+    public ApiResponse<List<PositionListItemDto>> getPositionList() {
+        log.info("직급 목록 조회 API 호출");
+        List<PositionListItemDto> result = positionService.getPositionList();
+        log.info("직급 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "직급 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직급 상세 정보 조회
+     */
+    @GetMapping("/organization/position/{positionId}")
+    public ApiResponse<PositionDetailDto> getPositionDetail(@PathVariable String positionId) {
+        log.info("직급 상세 정보 조회 API 호출 - positionId: {}", positionId);
+        PositionDetailDto result = positionService.getPositionDetail(positionId);
+        log.info("직급 상세 정보 조회 성공 - positionId: {}, positionName: {}, headCount: {}",
+                positionId, result.getPositionName(), result.getHeadCount());
+        return ApiResponse.success(result, "직급 상세 정보를 조회했습니다.", HttpStatus.OK);
+    }
+
+    // ==================== Employees ====================
+
+    /**
+     * 직원 목록 조회
+     */
+    @GetMapping("/employee")
+    public ApiResponse<Page<EmployeeListItemDto>> getEmployeeList(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        log.info("직원 목록 조회 API 호출 - department: {}, position: {}, name: {}, page: {}, size: {}",
+                department, position, name, page, size);
+
+        EmployeeListSearchConditionVo condition = new EmployeeListSearchConditionVo(department, position, name);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EmployeeListItemDto> result = employeeService.getEmployeeList(condition, pageable);
+
+        log.info("직원 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
+        return ApiResponse.success(result, "직원 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원 상세 정보 조회
+     */
+    @GetMapping("/employee/{employeeId}")
+    public ApiResponse<EmployeeDetailDto> getEmployeeDetail(@PathVariable String employeeId) {
+        log.info("직원 상세 정보 조회 API 호출 - employeeId: {}", employeeId);
+        EmployeeDetailDto result = employeeService.getEmployeeDetail(employeeId);
+        log.info("직원 상세 정보 조회 성공 - employeeId: {}, employeeName: {}", employeeId, result.getName());
+        return ApiResponse.success(result, "직원 상세 정보를 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원 정보 수정
+     */
+    @PatchMapping("/employee/{employeeId}")
+    public ApiResponse<Void> updateEmployee(
+            @PathVariable String employeeId,
+            @RequestBody UpdateEmployeeRequestDto requestDto) {
+        log.info("직원 정보 수정 API 호출 - employeeId: {}, employeeName: {}", employeeId, requestDto.getEmployeeName());
+        employeeService.updateEmployee(employeeId, requestDto);
+        log.info("직원 정보 수정 성공 - employeeId: {}", employeeId);
+        return ApiResponse.success(null, "직원 정보를 수정했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 교육 프로그램 신청
+     */
+    @PostMapping("/employee/request")
+    public ApiResponse<Void> requestTraining(@RequestBody TrainingRequestDto requestDto) {
+        log.info("교육 프로그램 신청 API 호출 - employeeId: {}, programId: {}", requestDto.getEmployeeId(), requestDto.getProgramId());
+        employeeService.requestTraining(requestDto);
+        log.info("교육 프로그램 신청 성공 - employeeId: {}, programId: {}", requestDto.getEmployeeId(), requestDto.getProgramId());
+        return ApiResponse.success(null, "교육 프로그램 신청이 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원 교육 프로그램 등록
+     */
+    @PostMapping("/program/{employeeId}")
+    public ApiResponse<Void> enrollTrainingProgram(
+            @PathVariable String employeeId,
+            @RequestBody TrainingRequestDto requestDto) {
+        log.info("교육 프로그램 등록 API 호출 - employeeId: {}, programId: {}", employeeId, requestDto.getProgramId());
+        requestDto.setEmployeeId(employeeId);
+        employeeService.requestTraining(requestDto);
+        log.info("교육 프로그램 등록 성공 - employeeId: {}, programId: {}", employeeId, requestDto.getProgramId());
+        return ApiResponse.success(null, "교육 프로그램 등록이 완료되었습니다.", HttpStatus.CREATED);
+    }
+
+    // ==================== Leave Requests ====================
+
+    /**
+     * 휴가 신청 목록 조회
+     */
+    @GetMapping("/leave/request")
+    public ApiResponse<Page<LeaveRequestListItemDto>> getLeaveRequestList(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) LeaveType type,
+            @RequestParam(required = false, defaultValue = "DESC") String sortOrder,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("휴가 신청 목록 조회 API 호출 - department: {}, position: {}, name: {}, type: {}, sortOrder: {}, page: {}, size: {}",
+                department, position, name, type, sortOrder, page, size);
+
+        LeaveRequestSearchConditionVo condition = new LeaveRequestSearchConditionVo(department, position, name, type, sortOrder);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<LeaveRequestListItemDto> result = leaveRequestService.getLeaveRequestList(condition, pageable);
+
+        log.info("휴가 신청 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
+        return ApiResponse.success(result, "휴가 신청 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 휴가 신청
+     */
+    @PostMapping("/leave/request")
+    public ApiResponse<Void> createLeaveRequest(@RequestBody CreateLeaveRequestDto requestDto) {
+        log.info("휴가 신청 API 호출 - employeeId: {}, leaveType: {}, startDate: {}, endDate: {}",
+                requestDto.getEmployeeId(), requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
+        leaveRequestService.createLeaveRequest(requestDto);
+        log.info("휴가 신청 성공 - employeeId: {}", requestDto.getEmployeeId());
+        return ApiResponse.success(null, "휴가 신청이 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 휴가 신청 승인
+     */
+    @PatchMapping("/leave/request/{requestId}/release")
+    public ApiResponse<Void> approveLeaveRequest(@PathVariable String requestId) {
+        log.info("휴가 신청 승인 API 호출 - requestId: {}", requestId);
+        leaveRequestService.approveLeaveRequest(requestId);
+        log.info("휴가 신청 승인 성공 - requestId: {}", requestId);
+        return ApiResponse.success(null, "휴가 신청이 승인되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 휴가 신청 반려
+     */
+    @PatchMapping("/leave/request/{requestId}/reject")
+    public ApiResponse<Void> rejectLeaveRequest(@PathVariable String requestId) {
+        log.info("휴가 신청 반려 API 호출 - requestId: {}", requestId);
+        leaveRequestService.rejectLeaveRequest(requestId);
+        log.info("휴가 신청 반려 성공 - requestId: {}", requestId);
+        return ApiResponse.success(null, "휴가 신청이 반려되었습니다.", HttpStatus.OK);
+    }
+
+    // ==================== Payroll ====================
+
+    /**
+     * 급여 명세서 상세 조회
+     */
+    @GetMapping("/payroll/{payrollId}")
+    public ApiResponse<PaystubDetailDto> getPaystubDetail(@PathVariable String payrollId) {
+        log.info("급여 명세서 상세 조회 API 호출 - payrollId: {}", payrollId);
+        PaystubDetailDto result = payrollService.getPaystubDetail(payrollId);
+        log.info("급여 명세서 상세 조회 성공 - payrollId: {}, employeeName: {}", payrollId, result.getEmployee().getEmployeeName());
+        return ApiResponse.success(result, "급여 명세서 상세 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 급여 명세서 목록 조회
+     */
+    @GetMapping("/payroll")
+    public ApiResponse<Page<PayrollListItemDto>> getPayrollList(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String position,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("급여 명세서 목록 조회 API 호출 - year: {}, month: {}, name: {}, department: {}, position: {}, page: {}, size: {}",
+                year, month, name, department, position, page, size);
+
+        PayrollSearchConditionVo condition = new PayrollSearchConditionVo(year, month, name, department, position);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PayrollListItemDto> result = payrollService.getPayrollList(condition, pageable);
+
+        log.info("급여 명세서 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
+        return ApiResponse.success(result, "급여 명세서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 급여 지급 완료 처리
+     */
+    @PostMapping("/payroll/complete")
+    public ApiResponse<Void> completePayroll(@RequestBody CompletePayrollRequestDto requestDto) {
+        log.info("급여 지급 완료 처리 API 호출 - payrollId: {}", requestDto.getPayrollId());
+        payrollService.completePayroll(requestDto.getPayrollId());
+        log.info("급여 지급 완료 처리 성공 - payrollId: {}", requestDto.getPayrollId());
+        return ApiResponse.success(null, "급여 지급이 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 모든 직원 당월 급여 생성
+     */
+    @PostMapping("/payroll/generate")
+    public ApiResponse<Void> generateMonthlyPayroll() {
+        log.info("모든 직원 당월 급여 생성 API 호출");
+        payrollService.generateMonthlyPayrollForAllEmployees();
+        log.info("모든 직원 당월 급여 생성 완료");
+        return ApiResponse.success(null, "급여가 생성되었습니다.", HttpStatus.CREATED);
+    }
+
+    // ==================== Training ====================
+
+    /**
+     * 교육 프로그램 상세 정보 조회
+     */
+    @GetMapping("/trainings/program/{programId}")
+    public DeferredResult<ApiResponse<TrainingResponseDto>> getProgramDetailInfo(@PathVariable String programId) {
+        log.info("교육 프로그램 상세 정보 조회 요청 - programId: {}", programId);
+
+        DeferredResult<ApiResponse<TrainingResponseDto>> deferredResult = new DeferredResult<>(30000L);
+
+        deferredResult.onTimeout(() -> {
+            log.warn("교육 프로그램 상세 정보 조회 타임아웃 - programId: {}", programId);
+            deferredResult.setResult(ApiResponse.fail("요청 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT));
+        });
+
+        TrainingDetailVo vo = new TrainingDetailVo(programId);
+
+        trainingService.getTrainingDetail(vo)
+                .thenAccept(response -> {
+                    log.info("교육 프로그램 상세 정보 조회 성공 - programId: {}", programId);
+                    deferredResult.setResult(ApiResponse.success(response, "교육 프로그램 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
+                })
+                .exceptionally(throwable -> {
+                    log.error("교육 프로그램 상세 정보 조회 실패 - programId: {}", programId, throwable);
+                    deferredResult.setResult(ApiResponse.fail("교육 프로그램 상세 정보 조회에 실패했습니다: " + throwable.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+                    return null;
+                });
+
+        return deferredResult;
+    }
+
+    /**
+     * 교육 프로그램 목록 조회
+     */
+    @GetMapping("/trainings/program")
+    public ApiResponse<Page<TrainingListItemDto>> getTrainingList(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) TrainingStatus status,
+            @RequestParam(required = false) TrainingCategory category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("교육 프로그램 목록 조회 요청 - name: {}, status: {}, category: {}, page: {}, size: {}",
+                name, status, category, page, size);
+
+        TrainingSearchConditionVo condition = new TrainingSearchConditionVo(name, status, category);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TrainingListItemDto> result = trainingService.getTrainingList(condition, pageable);
+
+        log.info("교육 프로그램 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
+        return ApiResponse.success(result, "교육 프로그램 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 교육 프로그램 생성
+     */
+    @PostMapping("/trainings/program")
+    public ApiResponse<Void> createTrainingProgram(@RequestBody CreateTrainingProgramDto requestDto) {
+        log.info("교육 프로그램 생성 API 호출 - programName: {}, category: {}", requestDto.getProgramName(), requestDto.getCategory());
+        trainingService.createTrainingProgram(requestDto);
+        log.info("교육 프로그램 생성 성공 - programName: {}", requestDto.getProgramName());
+        return ApiResponse.success(null, "교육 프로그램이 생성되었습니다.", HttpStatus.CREATED);
+    }
+
+    /**
+     * 교육 프로그램 수정
+     */
+    @PatchMapping("/program/{programId}")
+    public ApiResponse<Void> updateTrainingProgram(
+            @PathVariable String programId,
+            @RequestBody UpdateTrainingProgramDto requestDto) {
+        log.info("교육 프로그램 수정 API 호출 - programId: {}, programName: {}, statusCode: {}",
+                programId, requestDto.getProgramName(), requestDto.getStatusCode());
+        trainingService.updateTrainingProgram(programId, requestDto);
+        log.info("교육 프로그램 수정 성공 - programId: {}", programId);
+        return ApiResponse.success(null, "교육 프로그램이 수정되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원 교육 이력 조회
+     */
+    @GetMapping("/trainings/employee/{employeeId}/training-history")
+    public ApiResponse<EmployeeTrainingHistoryDto> getEmployeeTrainingHistory(@PathVariable String employeeId) {
+        log.info("직원 교육 이력 조회 요청 - employeeId: {}", employeeId);
+        EmployeeTrainingHistoryVo vo = new EmployeeTrainingHistoryVo(employeeId);
+        EmployeeTrainingHistoryDto result = trainingService.getEmployeeTrainingHistory(vo);
+        log.info("직원 교육 이력 조회 성공 - employeeId: {}, completedCount: {}, requiredMissingCount: {}",
+                employeeId, result.getCompletedCount(), result.getRequiredMissingCount());
+        return ApiResponse.success(result, "직원 교육 이력 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원 교육 현황 목록 조회
+     */
+    @GetMapping("/trainings")
+    public ApiResponse<EmployeeTrainingListResponseDto> getEmployeeTrainingList(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        log.info("직원 교육 현황 목록 조회 요청 - department: {}, position: {}, name: {}, page: {}, size: {}",
+                department, position, name, page, size);
+
+        EmployeeTrainingSearchConditionVo condition = new EmployeeTrainingSearchConditionVo(department, position, name);
+        Pageable pageable = PageRequest.of(page, size);
+        EmployeeTrainingListResponseDto result = trainingService.getEmployeeTrainingList(condition, pageable);
+
+        log.info("직원 교육 현황 목록 조회 성공 - totalElements: {}", result.getPage().getTotalElements());
+        return ApiResponse.success(result, "목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원 교육 현황 통계 조회
+     */
+    @GetMapping("/trainings/training-status")
+    public ApiResponse<TrainingStatusResponseDto> getTrainingStatusList(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        log.info("직원 교육 현황 통계 조회 API 호출 - department: {}, position: {}, name: {}, page: {}, size: {}",
+                department, position, name, page, size);
+
+        TrainingStatusSearchConditionVo condition = new TrainingStatusSearchConditionVo(department, position, name);
+        Pageable pageable = PageRequest.of(page, size);
+        TrainingStatusResponseDto result = trainingService.getTrainingStatusList(condition, pageable);
+
+        log.info("직원 교육 현황 통계 조회 성공 - totalElements: {}", result.getPage().getTotalElements());
+        return ApiResponse.success(result, "목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원별 교육 요약 정보 조회
+     */
+    @GetMapping("/trainings/training/employee/{employeeId}")
+    public ApiResponse<EmployeeTrainingSummaryDto> getEmployeeTrainingSummary(@PathVariable String employeeId) {
+        log.info("직원별 교육 요약 정보 조회 API 호출 - employeeId: {}", employeeId);
+        EmployeeTrainingSummaryDto result = trainingService.getEmployeeTrainingSummary(employeeId);
+        log.info("직원별 교육 요약 정보 조회 성공 - employeeId: {}, employeeName: {}", employeeId, result.getEmployeeName());
+        return ApiResponse.success(result, "직원 교육 이력 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    // ==================== Time Records ====================
+
+    /**
+     * 근태 기록 상세 정보 조회
+     */
+    @GetMapping("/time-records/time-record/{timerecordId}")
+    public ApiResponse<TimeRecordDetailDto> getTimeRecordDetail(@PathVariable String timerecordId) {
+        log.info("근태 기록 상세 정보 조회 요청 - timerecordId: {}", timerecordId);
+        TimeRecordDetailVo vo = new TimeRecordDetailVo(timerecordId);
+        TimeRecordDetailDto result = timeRecordService.getTimeRecordDetail(vo);
+        log.info("근태 기록 상세 정보 조회 성공 - timerecordId: {}, employeeName: {}, status: {}",
+                timerecordId, result.getEmployee().getEmployeeName(), result.getStatusCode());
+        return ApiResponse.success(result, "근태 기록 상세 정보 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 근태 기록 수정
+     */
+    @PatchMapping("/time-records/time-record/{timerecordId}")
+    public ApiResponse<Void> updateTimeRecord(
+            @PathVariable String timerecordId,
+            @RequestBody UpdateTimeRecordDto requestDto) {
+        log.info("근태 기록 수정 요청 - timerecordId: {}, employeeId: {}", timerecordId, requestDto.getEmployeeId());
+        timeRecordService.updateTimeRecord(timerecordId, requestDto);
+        log.info("근태 기록 수정 성공 - timerecordId: {}", timerecordId);
+        return ApiResponse.success(null, "근태 기록이 수정되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 근태 기록 목록 조회
+     */
+    @GetMapping("/time-records/time-record")
+    public ApiResponse<Page<TimeRecordListItemDto>> getAttendanceList(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        log.info("근태 기록 목록 조회 요청 - department: {}, position: {}, name: {}, date: {}, page: {}, size: {}",
+                department, position, name, date, page, size);
+
+        AttendanceSearchConditionVo condition = new AttendanceSearchConditionVo(department, position, name, date);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TimeRecordListItemDto> result = timeRecordService.getAttendanceList(condition, pageable);
+
+        log.info("근태 기록 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
+        return ApiResponse.success(result, "근태 기록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    // ==================== Attendance ====================
+
+    /**
+     * 출퇴근 기록 조회
+     */
+    @GetMapping("/attendance")
+    public ApiResponse<Page<AttendanceListItemDto>> getAttendanceHistoryList(
+            @RequestParam(required = false) String employeeId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        log.info("출퇴근 기록 조회 API 호출 - employeeId: {}, startDate: {}, endDate: {}, status: {}, page: {}, size: {}",
+                employeeId, startDate, endDate, status, page, size);
+
+        AttendanceListSearchConditionVo condition = new AttendanceListSearchConditionVo(employeeId, startDate, endDate, status);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AttendanceListItemDto> result = attendanceService.getAttendanceList(condition, pageable);
+
+        log.info("출퇴근 기록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
+        return ApiResponse.success(result, "출퇴근 기록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 출근 처리
+     */
+    @PatchMapping("/attendance/check-in")
+    public ApiResponse<Void> checkIn(@RequestBody CheckInRequestDto requestDto) {
+        log.info("출근 처리 API 호출 - employeeId: {}", requestDto.getEmployeeId());
+        attendanceService.checkIn(requestDto.getEmployeeId());
+        log.info("출근 처리 성공 - employeeId: {}", requestDto.getEmployeeId());
+        return ApiResponse.success(null, "출근 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 퇴근 처리
+     */
+    @PatchMapping("/attendance/check-out")
+    public ApiResponse<Void> checkOut(@RequestBody CheckOutRequestDto requestDto) {
+        log.info("퇴근 처리 API 호출 - employeeId: {}", requestDto.getEmployeeId());
+        attendanceService.checkOut(requestDto.getEmployeeId());
+        log.info("퇴근 처리 성공 - employeeId: {}", requestDto.getEmployeeId());
+        return ApiResponse.success(null, "퇴근 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+}

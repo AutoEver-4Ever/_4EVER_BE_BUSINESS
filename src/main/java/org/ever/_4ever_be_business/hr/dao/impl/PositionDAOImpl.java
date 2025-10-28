@@ -167,7 +167,7 @@ public class PositionDAOImpl implements PositionDAO {
      */
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class PositionInfoProjection {
+    public static class PositionInfoProjection {
         private String positionId;
         private String positionCode;
         private String positionName;

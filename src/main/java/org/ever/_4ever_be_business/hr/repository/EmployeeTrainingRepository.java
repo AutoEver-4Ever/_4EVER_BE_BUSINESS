@@ -10,4 +10,11 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface EmployeeTrainingRepository extends JpaRepository<EmployeeTraining, String>, EmployeeTrainingRepositoryCustom {
+    /**
+     * 특정 교육 프로그램의 수강생 수 조회
+     *
+     * @param trainingId 교육 프로그램 ID
+     * @return 수강생 수
+     */
+    long countByTrainingId(String trainingId);
 }

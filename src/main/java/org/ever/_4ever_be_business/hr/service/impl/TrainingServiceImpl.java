@@ -6,6 +6,7 @@ import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.dao.TrainingDAO;
 import org.ever._4ever_be_business.hr.dto.request.CreateTrainingProgramDto;
+import org.ever._4ever_be_business.hr.dto.request.UpdateTrainingProgramDto;
 import org.ever._4ever_be_business.hr.dto.response.*;
 import org.ever._4ever_be_business.hr.entity.Employee;
 import org.ever._4ever_be_business.hr.entity.EmployeeTraining;
@@ -110,16 +111,22 @@ public class TrainingServiceImpl implements TrainingService {
         Page<Training> trainingPage = trainingDAO.searchTrainingPrograms(condition, pageable);
 
         // 2. Training 엔티티를 TrainingListItemDto로 변환
+        // capacity는 해당 교육을 듣고 있는 실제 수강생 수
         List<TrainingListItemDto> content = trainingPage.getContent().stream()
-                .map(training -> new TrainingListItemDto(
-                        training.getId(),
-                        training.getTrainingName(),
-                        training.getTrainingStatus(),
-                        training.getCategory(),
-                        training.getDurationHours() != null ? training.getDurationHours().intValue() : 0,
-                        "ONLINE".equalsIgnoreCase(training.getDeliveryMethod()),
-                        training.getCapacity()
-                ))
+                .map(training -> {
+                    // 각 교육 프로그램별 실제 수강생 수 조회
+                    long enrolledCount = employeeTrainingRepository.countByTrainingId(training.getId());
+
+                    return new TrainingListItemDto(
+                            training.getId(),
+                            training.getTrainingName(),
+                            training.getTrainingStatus(),
+                            training.getCategory(),
+                            training.getDurationHours() != null ? training.getDurationHours().intValue() : 0,
+                            "ONLINE".equalsIgnoreCase(training.getDeliveryMethod()),
+                            (int) enrolledCount  // 실제 수강생 수
+                    );
+                })
                 .collect(Collectors.toList());
 
         return new PageImpl<>(content, pageable, trainingPage.getTotalElements());
@@ -290,5 +297,33 @@ public class TrainingServiceImpl implements TrainingService {
                 employeeId, result.getEmployeeName());
 
         return result;
+    }
+
+    @Override
+    @Transactional
+    public void updateTrainingProgram(String programId, UpdateTrainingProgramDto requestDto) {
+        log.info("교육 프로그램 수정 요청 - programId: {}, programName: {}, statusCode: {}",
+                programId, requestDto.getProgramName(), requestDto.getStatusCode());
+
+        // 1. Training 조회
+        Training training = trainingRepository.findById(programId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "교육 프로그램을 찾을 수 없습니다."));
+
+        // 2. TrainingStatus 파싱 (statusCode가 제공된 경우)
+        TrainingStatus trainingStatus = null;
+        if (requestDto.getStatusCode() != null && !requestDto.getStatusCode().isEmpty()) {
+            try {
+                trainingStatus = TrainingStatus.valueOf(requestDto.getStatusCode());
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "유효하지 않은 상태 코드입니다: " + requestDto.getStatusCode());
+            }
+        }
+
+        // 3. Training 정보 업데이트
+        training.updateTrainingProgram(requestDto.getProgramName(), trainingStatus);
+
+        // 4. 저장 (Dirty Checking으로 자동 저장)
+        log.info("교육 프로그램 수정 성공 - programId: {}, programName: {}, trainingStatus: {}",
+                programId, training.getTrainingName(), training.getTrainingStatus());
     }
 }

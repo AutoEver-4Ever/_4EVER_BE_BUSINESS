@@ -41,8 +41,8 @@ public class Order extends TimeStamp {
     @Column(nullable = false, name="due_date")
     private LocalDateTime dueDate;
 
-    @ManyToOne
-    @JoinColumn(name="status_id")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name="status")
     private OrderStatus status;
 
     public Order(String orderCode, Quotation quotation, OrderShipment orderShipment, String customerUserId, BigDecimal totalPrice, LocalDateTime orderDate, LocalDateTime dueDate, OrderStatus status) {

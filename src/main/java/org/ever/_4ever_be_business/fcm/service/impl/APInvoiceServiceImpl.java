@@ -46,7 +46,7 @@ public class APInvoiceServiceImpl implements APInvoiceService {
 
         // 3. SCM에서 Product Order 정보 조회
         ProductOrderInfoResponseDto productOrderInfo = productOrderServicePort
-                .getProductOrderItemsById(String.valueOf(voucher.getProductOrder()));
+                .getProductOrderItemsById(voucher.getProductOrderId());
 
         // 4. Items 변환
         List<APInvoiceItemDto> items = productOrderInfo.getItems().stream()
@@ -69,7 +69,7 @@ public class APInvoiceServiceImpl implements APInvoiceService {
                 voucher.getIssueDate().format(DATE_FORMATTER),
                 voucher.getDueDate().format(DATE_FORMATTER),
                 supplierCompany.getCompanyName(),
-                String.valueOf(voucher.getProductOrder()),
+                voucher.getProductOrderId(),
                 voucher.getTotalAmount(),
                 voucher.getMemo(),
                 items

@@ -17,13 +17,13 @@ public class ProductInfoResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProductDto {
-        @JsonProperty("product_id")
+        @JsonProperty("itemId")
         private String productId;
 
-        @JsonProperty("product_code")
+        @JsonProperty("itemNumber")
         private String productCode;
 
-        @JsonProperty("product_name")
+        @JsonProperty("itemName")
         private String productName;
     }
 }

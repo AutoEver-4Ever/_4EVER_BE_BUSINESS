@@ -65,4 +65,19 @@ public class Training extends TimeStamp {
             this.id = UuidV7Generator.generate();
         }
     }
+
+    /**
+     * 교육 프로그램 정보 수정
+     *
+     * @param trainingName   교육 프로그램명
+     * @param trainingStatus 교육 상태
+     */
+    public void updateTrainingProgram(String trainingName, TrainingStatus trainingStatus) {
+        if (trainingName != null && !trainingName.isEmpty()) {
+            this.trainingName = trainingName;
+        }
+        if (trainingStatus != null) {
+            this.trainingStatus = trainingStatus;
+        }
+    }
 }

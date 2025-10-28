@@ -64,11 +64,11 @@ public class LeaveRequestRepositoryImpl implements LeaveRequestRepositoryCustom 
                         ),                                          // employee (nested)
                         leaveRequest.leaveType.stringValue(),      // leaveType
                         Expressions.stringTemplate(
-                                "DATE_FORMAT({0}, '%Y-%m-%dT%H:%i:%s')",
+                                "TO_CHAR({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS')",
                                 leaveRequest.startDate
                         ),                                          // startDate
                         Expressions.stringTemplate(
-                                "DATE_FORMAT({0}, '%Y-%m-%dT%H:%i:%s')",
+                                "TO_CHAR({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS')",
                                 leaveRequest.endDate
                         ),                                          // endDate
                         leaveRequest.numberOfLeaveDays,            // numberOfLeaveDays

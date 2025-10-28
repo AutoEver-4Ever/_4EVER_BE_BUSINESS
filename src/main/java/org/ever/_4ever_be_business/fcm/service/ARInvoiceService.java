@@ -37,4 +37,11 @@ public interface ARInvoiceService {
      * @param memo 새로운 메모
      */
     void updateARInvoice(String invoiceId, String status, String dueDate, String memo);
+
+    /**
+     * AR 전표 미수 처리 완료 (상태를 PAID로 변경)
+     *
+     * @param invoiceId 전표 ID
+     */
+    void completeReceivable(String invoiceId);
 }

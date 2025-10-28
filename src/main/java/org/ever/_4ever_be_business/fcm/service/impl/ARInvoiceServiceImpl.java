@@ -139,4 +139,22 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
 
         log.info("AR 전표 정보 업데이트 완료 - invoiceId: {}", invoiceId);
     }
+
+    @Override
+    @Transactional
+    public void completeReceivable(String invoiceId) {
+        log.info("AR 전표 미수 처리 완료 - invoiceId: {}", invoiceId);
+
+        // 1. SalesVoucher 조회
+        SalesVoucher voucher = salesVoucherRepository.findById(invoiceId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "존재하지 않는 전표입니다."));
+
+        // 2. 상태를 PAID로 변경
+        voucher.updateStatus(SalesVoucherStatus.PAID);
+
+        // 3. 저장
+        salesVoucherRepository.save(voucher);
+
+        log.info("AR 전표 미수 처리 완료 성공 - invoiceId: {}, status: PAID", invoiceId);
+    }
 }

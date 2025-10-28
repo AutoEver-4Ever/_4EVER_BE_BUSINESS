@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="sales_voucher")
+@Table(name="purchase_voucher")
 @NoArgsConstructor
 @Getter
 public class PurchaseVoucher extends TimeStamp {
@@ -21,11 +21,11 @@ public class PurchaseVoucher extends TimeStamp {
     @Column(length = 36)
     private String id;
     // scm 연동
-    @Column(nullable = false, name = "supplier_company_id")
-    private Long supplierCompanyId;
+    @Column(nullable = false, name = "supplier_company_id", length = 36)
+    private String supplierCompanyId;
     // scm 연동
-    @Column(nullable = false, name = "product_order_id")
-    private Long productOrder;
+    @Column(nullable = false, name = "product_order_id", length = 36)
+    private String productOrderId;
 
     @Column(nullable = false, name = "voucher_code")
     private String voucherCode;
@@ -39,7 +39,8 @@ public class PurchaseVoucher extends TimeStamp {
     @Column(nullable = false, name = "total_amount")
     private BigDecimal totalAmount;
 
-    @Column(nullable = false, name = "status")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "status", length = 20)
     private PurchaseVoucherStatus status;
 
     @Column(nullable = false, length = 255)

@@ -39,6 +39,14 @@ public class Position extends TimeStamp {
         this.salary = salary;
     }
 
+    public Position(String positionCode, String positionName, Department department, Boolean isManager, BigDecimal salary) {
+        this.positionCode = positionCode;
+        this.positionName = positionName;
+        this.department = department;
+        this.isManager = isManager;
+        this.salary = salary;
+    }
+
     @PrePersist
     public void generateId() {
         if (this.id == null) {

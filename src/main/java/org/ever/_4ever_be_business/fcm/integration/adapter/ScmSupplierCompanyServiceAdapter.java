@@ -16,10 +16,12 @@ import java.util.Map;
 
 /**
  * SCM 서버의 SupplierCompany 서비스와 통신하는 Adapter
+ * prod 환경에서 사용
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "external.mock.enabled", havingValue = "false")
 public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServicePort {
 
     private final RestClient restClient;
@@ -35,7 +37,7 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
             Map<String, String> requestBody = Map.of("supplierCompanyId", supplierCompanyId);
 
             ApiResponse<SupplierCompanyResponseDto> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm-pp/company/supplier/single")
+                    .uri(scmServiceUrl + "/scm/scm-pp/company/supplier/single")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<ApiResponse<SupplierCompanyResponseDto>>() {});
@@ -61,7 +63,7 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
             Map<String, List<String>> requestBody = Map.of("supplierCompanyIds", supplierCompanyIds);
 
             ApiResponse<SupplierCompaniesResponseDto> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm-pp/company/supplier/multiple")
+                    .uri(scmServiceUrl + "/scm/scm-pp/company/supplier/multiple")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<ApiResponse<SupplierCompaniesResponseDto>>() {});

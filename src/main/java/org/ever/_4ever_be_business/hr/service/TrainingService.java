@@ -76,4 +76,12 @@ public interface TrainingService {
      * @return EmployeeTrainingSummaryDto
      */
     EmployeeTrainingSummaryDto getEmployeeTrainingSummary(String employeeId);
+
+    /**
+     * 교육 프로그램 수정
+     *
+     * @param programId  교육 프로그램 ID
+     * @param requestDto 수정 정보
+     */
+    void updateTrainingProgram(String programId, org.ever._4ever_be_business.hr.dto.request.UpdateTrainingProgramDto requestDto);
 }

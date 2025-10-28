@@ -23,4 +23,16 @@ public interface PayrollService {
      * @return 급여 명세서 목록
      */
     Page<PayrollListItemDto> getPayrollList(PayrollSearchConditionVo condition, Pageable pageable);
+
+    /**
+     * 급여 지급 완료 처리
+     *
+     * @param payrollId 급여 ID
+     */
+    void completePayroll(String payrollId);
+
+    /**
+     * 모든 직원에 대한 당월 급여 생성
+     */
+    void generateMonthlyPayrollForAllEmployees();
 }

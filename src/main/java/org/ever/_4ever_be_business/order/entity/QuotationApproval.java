@@ -19,10 +19,11 @@ public class QuotationApproval extends TimeStamp {
     @Column(length = 36)
     private String id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name="approval_status")
     private ApprovalStatus approvalStatus;
 
-    @Column(nullable = false, name="approved_at")
+    @Column(name="approved_at")
     private LocalDateTime approvedAt;
 
     @Column(name="approved_by_employee_id", length = 36)

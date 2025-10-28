@@ -50,6 +50,20 @@ public class CustomerUser extends TimeStamp {
     }
 
     /**
+     * 목업 데이터 생성용 생성자 (ID 포함)
+     */
+    public CustomerUser(String id, Long userId, Long customerId, String customerName, CustomerCompany customerCompany, String customerUserCode, String email, String phoneNumber) {
+        this.id = id;
+        this.userId = userId;
+        this.customerId = customerId;
+        this.customerName = customerName;
+        this.customerCompany = customerCompany;
+        this.customerUserCode = customerUserCode;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+    }
+
+    /**
      * 담당자 정보 수정
      */
     public void updateManagerInfo(String customerName, String email, String phoneNumber) {

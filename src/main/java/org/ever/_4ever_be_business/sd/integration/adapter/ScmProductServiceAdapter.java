@@ -16,10 +16,12 @@ import java.util.List;
 
 /**
  * SCM 서버의 Product 서비스와 통신하는 Adapter
+ * prod 환경에서 사용
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "external.mock.enabled", havingValue = "false")
 public class ScmProductServiceAdapter implements ProductServicePort {
 
     private final RestClient restClient;
@@ -35,7 +37,7 @@ public class ScmProductServiceAdapter implements ProductServicePort {
 
         try {
             ApiResponse<ProductInfoResponseDto> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm-pp/product/multiple")
+                    .uri(scmServiceUrl + "/scm/scm-pp/product/multiple")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestDto)
                     .retrieve()

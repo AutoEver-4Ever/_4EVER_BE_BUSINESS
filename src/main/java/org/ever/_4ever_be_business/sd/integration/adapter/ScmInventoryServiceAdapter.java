@@ -14,10 +14,12 @@ import org.springframework.web.client.RestClient;
 
 /**
  * SCM 서버의 Inventory 서비스와 통신하는 Adapter
+ * prod 환경에서 사용
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "external.mock.enabled", havingValue = "false")
 public class ScmInventoryServiceAdapter implements InventoryServicePort {
 
     private final RestClient restClient;
@@ -31,7 +33,7 @@ public class ScmInventoryServiceAdapter implements InventoryServicePort {
 
         try {
             ApiResponse<InventoryCheckResponseDto> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm-pp/inventory/stock-check")
+                    .uri(scmServiceUrl + "/scm/scm-pp/inventory/stock-check")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestDto)
                     .retrieve()

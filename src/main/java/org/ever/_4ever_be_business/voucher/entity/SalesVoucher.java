@@ -3,6 +3,7 @@ package org.ever._4ever_be_business.voucher.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.ever._4ever_be_business.common.entity.TimeStamp;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.order.entity.Order;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @Table(name="sales_voucher")
 @Getter
 @NoArgsConstructor
-public class SalesVoucher {
+public class SalesVoucher extends TimeStamp {
 
     @Id
     @Column(length = 36)
@@ -29,6 +30,9 @@ public class SalesVoucher {
     @JoinColumn(name = "order_id")
     private Order order;
 
+    @Column(name = "product_order_id", length = 36)
+    private String productOrderId;
+
     @Column(nullable = false, name = "voucher_code")
     private String voucherCode;
 
@@ -41,7 +45,8 @@ public class SalesVoucher {
     @Column(nullable = false, name = "total_amount")
     private BigDecimal totalAmount;
 
-    @Column(nullable = false, name = "status")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "status", length = 20)
     private SalesVoucherStatus status;
 
     @Column(nullable = false, length = 255)

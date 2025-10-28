@@ -24,7 +24,6 @@ import java.util.List;
 import static org.ever._4ever_be_business.company.entity.QCustomerCompany.customerCompany;
 import static org.ever._4ever_be_business.hr.entity.QCustomerUser.customerUser;
 import static org.ever._4ever_be_business.order.entity.QOrder.order;
-import static org.ever._4ever_be_business.order.entity.QOrderStatus.orderStatus;
 
 @Repository
 @RequiredArgsConstructor
@@ -51,7 +50,13 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
         // 상태 필터
         if (condition.getStatus() != null && !condition.getStatus().equalsIgnoreCase("ALL")) {
-            builder.and(orderStatus.status.eq(condition.getStatus()));
+            try {
+                org.ever._4ever_be_business.order.entity.OrderStatus status =
+                    org.ever._4ever_be_business.order.entity.OrderStatus.valueOf(condition.getStatus());
+                builder.and(order.status.eq(status));
+            } catch (IllegalArgumentException e) {
+                // 잘못된 상태값은 무시
+            }
         }
 
         // 검색 조건 (type과 search 모두 있을 때만 검색)
@@ -89,10 +94,9 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                                 order.dueDate
                         ),                                     // dueDate
                         order.totalPrice,                      // totalAmount
-                        orderStatus.status                     // statusCode
+                        order.status.stringValue()             // statusCode
                 ))
                 .from(order)
-                .leftJoin(order.status, orderStatus)
                 .leftJoin(customerUser).on(customerUser.id.eq(order.customerUserId))
                 .leftJoin(customerUser.customerCompany, customerCompany)
                 .where(builder)
@@ -108,7 +112,6 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
         Long total = queryFactory
                 .select(order.count())
                 .from(order)
-                .leftJoin(order.status, orderStatus)
                 .leftJoin(customerUser).on(customerUser.id.eq(order.customerUserId))
                 .leftJoin(customerUser.customerCompany, customerCompany)
                 .where(builder)
@@ -122,7 +125,6 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
         // 1. Order 기본 정보 + Customer 정보 조회
         Order orderEntity = queryFactory
                 .selectFrom(order)
-                .leftJoin(order.status, orderStatus).fetchJoin()
                 .where(order.id.eq(salesOrderId))
                 .fetchOne();
 
@@ -156,7 +158,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 orderEntity.getOrderCode(),
                 orderEntity.getOrderDate().format(DATE_FORMATTER),
                 orderEntity.getDueDate().format(DATE_FORMATTER),
-                orderEntity.getStatus() != null ? orderEntity.getStatus().getStatus() : null,
+                orderEntity.getStatus() != null ? orderEntity.getStatus().name() : null,
                 orderEntity.getTotalPrice()
         );
 
