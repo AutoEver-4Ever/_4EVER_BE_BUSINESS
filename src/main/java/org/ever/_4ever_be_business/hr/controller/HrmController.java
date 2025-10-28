@@ -578,22 +578,54 @@ public class HrmController {
     // ==================== HRM Employee Info ====================
 
     /**
-     * HRM 직원 기본 정보 조회 (InternelUser ID 기반)
+     * HRM 직원 기본 정보 조회 (InternelUser userId 기반)
      */
     @PostMapping("/{userId}/employee")
     public ApiResponse<HrmEmployeeBasicInfoDto> getEmployeeBasicInfo(@PathVariable String userId) {
         log.info("HRM 직원 기본 정보 조회 API 호출 - userId: {}", userId);
 
-        InternelUser internelUser = internelUserRepository.findById(userId)
+        InternelUser internelUser = internelUserRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("직원 정보를 찾을 수 없습니다. userId: " + userId));
 
         HrmEmployeeBasicInfoDto result = new HrmEmployeeBasicInfoDto(
+                internelUser.getUserId(),
                 internelUser.getName(),
                 internelUser.getPhoneNumber(),
                 internelUser.getEmail()
         );
 
-        log.info("HRM 직원 기본 정보 조회 성공 - name: {}", internelUser.getName());
+        log.info("HRM 직원 기본 정보 조회 성공 - userId: {}, name: {}", userId, internelUser.getName());
+        return ApiResponse.success(result, "성공 메시지", HttpStatus.OK);
+    }
+
+    /**
+     * HRM 직원 기본 정보 다중 조회 (InternelUser userIds 기반)
+     */
+    @PostMapping("/employees/multiple")
+    public ApiResponse<List<HrmEmployeeBasicInfoDto>> getEmployeesBasicInfo(@RequestBody EmployeesMultipleRequestDto requestDto) {
+        log.info("HRM 직원 기본 정보 다중 조회 API 호출 - userIds count: {}", requestDto.getUserIds().size());
+
+        List<HrmEmployeeBasicInfoDto> result = requestDto.getUserIds().stream()
+                .map(userId -> {
+                    try {
+                        InternelUser internelUser = internelUserRepository.findByUserId(userId)
+                                .orElseThrow(() -> new RuntimeException("직원 정보를 찾을 수 없습니다. userId: " + userId));
+
+                        return new HrmEmployeeBasicInfoDto(
+                                internelUser.getUserId(),
+                                internelUser.getName(),
+                                internelUser.getPhoneNumber(),
+                                internelUser.getEmail()
+                        );
+                    } catch (Exception e) {
+                        log.warn("직원 정보 조회 실패 - userId: {}, error: {}", userId, e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(dto -> dto != null)
+                .collect(java.util.stream.Collectors.toList());
+
+        log.info("HRM 직원 기본 정보 다중 조회 성공 - 조회된 직원 수: {}", result.size());
         return ApiResponse.success(result, "성공 메시지", HttpStatus.OK);
     }
 }
