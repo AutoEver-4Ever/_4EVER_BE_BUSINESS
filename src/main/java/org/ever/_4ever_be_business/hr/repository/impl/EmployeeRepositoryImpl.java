@@ -114,20 +114,20 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                         department.departmentName,                     // department
                         Expressions.constant("ACTIVE"),                // statusCode - 기본값
                         Expressions.stringTemplate(
-                                "DATE_FORMAT({0}, '%Y-%m-%d')",
+                                "TO_CHAR({0}, 'YYYY-MM-DD')",
                                 internelUser.hireDate
                         ),                                             // hireDate
                         Expressions.stringTemplate(
-                                "DATE_FORMAT({0}, '%Y-%m-%d')",
+                                "TO_CHAR({0}, 'YYYY-MM-DD')",
                                 internelUser.birthDate
                         ),                                             // birthDate
                         internelUser.address,                          // address
                         Expressions.stringTemplate(
-                                "DATE_FORMAT({0}, '%Y-%m-%d')",
+                                "TO_CHAR({0}, 'YYYY-MM-DD')",
                                 employee.createdAt
                         ),                                             // createdAt
                         Expressions.stringTemplate(
-                                "DATE_FORMAT({0}, '%Y-%m-%d')",
+                                "TO_CHAR({0}, 'YYYY-MM-DD')",
                                 employee.updatedAt
                         )                                              // updatedAt
                 ))

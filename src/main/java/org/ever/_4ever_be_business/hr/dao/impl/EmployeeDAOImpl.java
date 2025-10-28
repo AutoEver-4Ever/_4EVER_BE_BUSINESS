@@ -117,7 +117,7 @@ public class EmployeeDAOImpl implements EmployeeDAO {
      */
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class EmployeeInfoProjection {
+    public static class EmployeeInfoProjection {
         private String employeeId;
         private String employeeNumber;
         private String name;

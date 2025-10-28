@@ -190,6 +190,20 @@ public class HrmController {
         return ApiResponse.success(null, "교육 프로그램 신청이 완료되었습니다.", HttpStatus.OK);
     }
 
+    /**
+     * 직원 교육 프로그램 등록
+     */
+    @PostMapping("/program/{employeeId}")
+    public ApiResponse<Void> enrollTrainingProgram(
+            @PathVariable String employeeId,
+            @RequestBody TrainingRequestDto requestDto) {
+        log.info("교육 프로그램 등록 API 호출 - employeeId: {}, programId: {}", employeeId, requestDto.getProgramId());
+        requestDto.setEmployeeId(employeeId);
+        employeeService.requestTraining(requestDto);
+        log.info("교육 프로그램 등록 성공 - employeeId: {}, programId: {}", employeeId, requestDto.getProgramId());
+        return ApiResponse.success(null, "교육 프로그램 등록이 완료되었습니다.", HttpStatus.CREATED);
+    }
+
     // ==================== Leave Requests ====================
 
     /**
@@ -285,6 +299,28 @@ public class HrmController {
         return ApiResponse.success(result, "급여 명세서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
+    /**
+     * 급여 지급 완료 처리
+     */
+    @PostMapping("/payroll/complete")
+    public ApiResponse<Void> completePayroll(@RequestBody CompletePayrollRequestDto requestDto) {
+        log.info("급여 지급 완료 처리 API 호출 - payrollId: {}", requestDto.getPayrollId());
+        payrollService.completePayroll(requestDto.getPayrollId());
+        log.info("급여 지급 완료 처리 성공 - payrollId: {}", requestDto.getPayrollId());
+        return ApiResponse.success(null, "급여 지급이 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 모든 직원 당월 급여 생성
+     */
+    @PostMapping("/payroll/generate")
+    public ApiResponse<Void> generateMonthlyPayroll() {
+        log.info("모든 직원 당월 급여 생성 API 호출");
+        payrollService.generateMonthlyPayrollForAllEmployees();
+        log.info("모든 직원 당월 급여 생성 완료");
+        return ApiResponse.success(null, "급여가 생성되었습니다.", HttpStatus.CREATED);
+    }
+
     // ==================== Training ====================
 
     /**
@@ -347,6 +383,20 @@ public class HrmController {
         trainingService.createTrainingProgram(requestDto);
         log.info("교육 프로그램 생성 성공 - programName: {}", requestDto.getProgramName());
         return ApiResponse.success(null, "교육 프로그램이 생성되었습니다.", HttpStatus.CREATED);
+    }
+
+    /**
+     * 교육 프로그램 수정
+     */
+    @PatchMapping("/program/{programId}")
+    public ApiResponse<Void> updateTrainingProgram(
+            @PathVariable String programId,
+            @RequestBody UpdateTrainingProgramDto requestDto) {
+        log.info("교육 프로그램 수정 API 호출 - programId: {}, programName: {}, statusCode: {}",
+                programId, requestDto.getProgramName(), requestDto.getStatusCode());
+        trainingService.updateTrainingProgram(programId, requestDto);
+        log.info("교육 프로그램 수정 성공 - programId: {}", programId);
+        return ApiResponse.success(null, "교육 프로그램이 수정되었습니다.", HttpStatus.OK);
     }
 
     /**

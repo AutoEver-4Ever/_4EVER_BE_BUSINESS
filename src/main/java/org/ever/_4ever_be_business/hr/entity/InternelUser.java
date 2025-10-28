@@ -107,37 +107,15 @@ public class InternelUser extends TimeStamp {
     /**
      * 직원 정보 수정
      *
-     * @param name        이름
-     * @param position    직급
-     * @param gender      성별
-     * @param birthDate   생년월일
-     * @param email       이메일
-     * @param phoneNumber 전화번호
-     * @param address     주소
+     * @param name     이름
+     * @param position 직급
      */
-    public void updateEmployeeInfo(String name, Position position, Gender gender,
-                                    LocalDateTime birthDate, String email,
-                                    String phoneNumber, String address) {
+    public void updateEmployeeInfo(String name, Position position) {
         if (name != null) {
             this.name = name;
         }
         if (position != null) {
             this.position = position;
-        }
-        if (gender != null) {
-            this.gender = gender;
-        }
-        if (birthDate != null) {
-            this.birthDate = birthDate;
-        }
-        if (email != null) {
-            this.email = email;
-        }
-        if (phoneNumber != null) {
-            this.phoneNumber = phoneNumber;
-        }
-        if (address != null) {
-            this.address = address;
         }
     }
 }

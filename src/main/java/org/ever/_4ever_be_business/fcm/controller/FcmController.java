@@ -182,4 +182,15 @@ public class FcmController {
         log.info("AR 전표 정보 업데이트 성공 - invoiceId: {}", invoiceId);
         return ApiResponse.success(null, "매출 전표 정보가 업데이트되었습니다.", HttpStatus.OK);
     }
+
+    /**
+     * AR 전표 미수 처리 완료
+     */
+    @PostMapping("/invoice/ar/{invoiceId}/receivable/complete")
+    public ApiResponse<Void> completeReceivable(@PathVariable String invoiceId) {
+        log.info("AR 전표 미수 처리 완료 API 호출 - invoiceId: {}", invoiceId);
+        arInvoiceService.completeReceivable(invoiceId);
+        log.info("AR 전표 미수 처리 완료 성공 - invoiceId: {}", invoiceId);
+        return ApiResponse.success(null, "미수 처리가 완료되었습니다.", HttpStatus.OK);
+    }
 }

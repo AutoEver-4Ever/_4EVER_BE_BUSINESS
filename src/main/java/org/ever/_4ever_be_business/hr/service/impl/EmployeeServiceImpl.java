@@ -85,25 +85,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "직급 정보를 찾을 수 없습니다."));
         }
 
-        // 3. birthDate 파싱
-        LocalDateTime birthDate = null;
-        if (requestDto.getBirthDate() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            birthDate = LocalDateTime.parse(requestDto.getBirthDate() + "T00:00:00");
-        }
-
-        // 4. InternelUser 정보 업데이트
+        // 3. InternelUser 정보 업데이트
         internelUser.updateEmployeeInfo(
                 requestDto.getEmployeeName(),
-                position,
-                requestDto.getGender(),
-                birthDate,
-                requestDto.getEmail(),
-                requestDto.getPhoneNumber(),
-                requestDto.getAddress()
+                position
         );
 
-        // 5. 저장 (Dirty Checking으로 자동 저장)
+        // 4. 저장 (Dirty Checking으로 자동 저장)
         log.info("직원 정보 수정 성공 - employeeId: {}, employeeName: {}",
                 employeeId, requestDto.getEmployeeName());
     }

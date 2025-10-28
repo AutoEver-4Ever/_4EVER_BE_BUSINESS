@@ -220,9 +220,9 @@ public class DepartmentDAOImpl implements DepartmentDAO {
     /**
      * QueryDSL Projection용 내부 클래스
      */
-    @lombok.Getter
-    @lombok.AllArgsConstructor
-    private static class DepartmentInfoProjection {
+    @Getter
+    @AllArgsConstructor
+    public static class DepartmentInfoProjection {
         private String departmentId;
         private String departmentCode;
         private String departmentName;
@@ -242,9 +242,9 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         private LocalDateTime updatedAt;
     }
 
-    @lombok.Getter
-    @lombok.AllArgsConstructor
-    private static class EmployeeInfoProjection {
+    @Getter
+    @AllArgsConstructor
+    public static class EmployeeInfoProjection {
         private String employeeId;
         private String employeeName;
         private String positionName;
