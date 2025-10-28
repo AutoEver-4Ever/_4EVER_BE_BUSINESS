@@ -21,7 +21,6 @@ import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
 import org.ever._4ever_be_business.hr.repository.*;
 import org.ever._4ever_be_business.hr.service.EmployeeService;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
-import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
 import org.ever.event.CreateAuthUserEvent;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -177,8 +176,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .success(true)      // 여기는 성공한 경우임.
                     .userId(userId)
                     .email(requestDto.getEmail())
-                    .departmentName(department.getDepartmentName())
-                    .positionName(position.getPositionName())
+                    .departmentCode(department.getDepartmentCode())
+                    .positionCode(position.getPositionCode())
                     .build();
 
                 userServicePort.createAuthUserPort(event)
