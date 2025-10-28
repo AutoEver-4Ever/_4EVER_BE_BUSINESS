@@ -32,7 +32,6 @@ public class SdController {
     private final SalesAnalyticsService salesAnalyticsService;
     private final SdCustomerService customerService;
     private final SdOrderService sdOrderService;
-    private final OrderService orderService;
     private final QuotationService quotationService;
 
     // ==================== Statistics ====================
@@ -175,17 +174,6 @@ public class SdController {
         return ApiResponse.success(result, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK);
     }
 
-    /**
-     * 주문 등록
-     */
-    @PostMapping("/orders")
-    public ResponseEntity<Void> registerOrder(@RequestBody RegisterOrderRequest request) {
-        log.info("주문 등록 API 호출 - id: {}, name: {}, count: {}", request.getId(), request.getName(), request.getCount());
-        orderService.registerOrder(request.getId(), request.getName(), request.getCount());
-        log.info("주문 등록 성공 - id: {}", request.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
     // ==================== Quotations ====================
 
     /**
@@ -269,17 +257,5 @@ public class SdController {
         InventoryCheckResponseDto result = quotationService.checkInventory(requestDto);
         log.info("재고 확인 성공 - items count: {}", result.getItems().size());
         return ApiResponse.success(result, "재고 확인을 완료했습니다.", HttpStatus.OK);
-    }
-
-    // ==================== DTOs ====================
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class RegisterOrderRequest {
-        private Long id;
-        private String name;
-        private Integer count;
     }
 }

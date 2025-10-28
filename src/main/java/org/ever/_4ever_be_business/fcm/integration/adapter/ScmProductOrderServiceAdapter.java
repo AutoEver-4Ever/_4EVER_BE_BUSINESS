@@ -16,10 +16,12 @@ import java.util.Map;
 
 /**
  * SCM 서버의 ProductOrder 서비스와 통신하는 Adapter
+ * prod 환경에서 사용
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "external.mock.enabled", havingValue = "false")
 public class ScmProductOrderServiceAdapter implements ProductOrderServicePort {
 
     private final RestClient restClient;
