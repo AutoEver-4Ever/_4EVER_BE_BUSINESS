@@ -3,10 +3,10 @@ package org.ever._4ever_be_business.hr.integration.adapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.internel.InternelServerResponse;
-import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UserInfoRequest;
 import org.ever._4ever_be_business.hr.dto.response.UserInfoResponse;
 import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
+import org.ever.event.CreateAuthUserEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -60,7 +60,8 @@ public class UserServiceAdapter implements UserServicePort {
     }
 
     @Override
-    public CompletableFuture<Void> createInternalUserAccount(AuthUserCreateRequestDto request) {
+    public CompletableFuture<Void> createAuthUserPort(CreateAuthUserEvent request) {
         return null;
     }
+
 }
