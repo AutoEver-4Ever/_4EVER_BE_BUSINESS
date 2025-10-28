@@ -648,22 +648,7 @@ public class HrmController {
                     .status(HttpStatus.REQUEST_TIMEOUT)
                     .body(ApiResponse.fail("[SAGA][FAIL] 처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
         });
-
-        employeeService.createEmployee(requestDto)
-                .thenAccpet(responseDto -> {
-                    log.info("[INFO] 내부 사용자 생성 성공 - responseDto: {}", responseDto);
-                    deferredResult.setResult(ResponseEntity
-                            .status(HttpStatus.CREATED)
-                            .body(ApiResponse.success(responseDto, "[SAGA][SUCCESS]내부 사용자 등록이 완료되었습니다.")));
-                })
-                .exceptionally(throwable -> {
-                    log.error("[ERROR] 내부 사용자 생성 실패 - email: {}", requestDto.getEmail(), throwable);
-                    deferredResult.setResult(ResponseEntity
-                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(ApiResponse.fail("[SAGA][FAIL] 내부 사용자 생성 처리에 실패했습니다." + throwable.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR))
-                    );
-                    return null;
-                });
+        employeeService.createEmployee(requestDto, deferredResult);
         return deferredResult;
     }
 }
