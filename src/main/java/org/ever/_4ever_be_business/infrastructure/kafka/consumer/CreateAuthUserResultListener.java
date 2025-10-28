@@ -25,7 +25,7 @@ public class CreateAuthUserResultListener {
     private final KafkaProducerService kafkaProducerService;
 
     @KafkaListener(
-            topics = KafkaTopicConfig.PROCESS_COMPLETED_TOPIC,
+            topics = KafkaTopicConfig.AUTH_USER_RESULT_TOPIC,
             groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactory"
     )
