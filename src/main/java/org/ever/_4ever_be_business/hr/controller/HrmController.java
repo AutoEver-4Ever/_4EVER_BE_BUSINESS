@@ -1,5 +1,6 @@
 package org.ever._4ever_be_business.hr.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
@@ -595,5 +596,18 @@ public class HrmController {
 
         log.info("HRM 직원 기본 정보 조회 성공 - name: {}", internelUser.getName());
         return ApiResponse.success(result, "성공 메시지", HttpStatus.OK);
+    }
+
+    @PostMapping("/employee-users")
+    public ApiResponse<EmployeeCreateResponseDto> createEmployeeUser(
+            @RequestBody @Valid EmployeeCreateRequestDto requestDto
+    ) {
+        log.info("[INFO] 내부 사용자(employee) 생성 API 호출 - requestDto: {}", requestDto);
+
+        EmployeeCreateResponseDto responseDto = employeeService.createEmployee(requestDto);
+
+        log.info("[INFO] 내부 사용자 생성 성공 - responseDto: {}", responseDto);
+
+        return ApiResponse.success(responseDto, "내부 사용자 등록이 완료되었습니다.", HttpStatus.CREATED);
     }
 }

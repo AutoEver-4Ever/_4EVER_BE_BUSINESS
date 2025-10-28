@@ -4,20 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.dao.EmployeeDAO;
-import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
-import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
+import org.ever._4ever_be_business.hr.dto.request.*;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
-import org.ever._4ever_be_business.hr.entity.Employee;
-import org.ever._4ever_be_business.hr.entity.EmployeeTraining;
-import org.ever._4ever_be_business.hr.entity.InternelUser;
-import org.ever._4ever_be_business.hr.entity.Position;
-import org.ever._4ever_be_business.hr.entity.Training;
-import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
-import org.ever._4ever_be_business.hr.repository.EmployeeTrainingRepository;
-import org.ever._4ever_be_business.hr.repository.PositionRepository;
-import org.ever._4ever_be_business.hr.repository.TrainingRepository;
+import org.ever._4ever_be_business.hr.entity.*;
+import org.ever._4ever_be_business.hr.enums.UserStatus;
+import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
+import org.ever._4ever_be_business.hr.repository.*;
 import org.ever._4ever_be_business.hr.service.EmployeeService;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
 import org.springframework.data.domain.Page;
@@ -37,7 +33,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final PositionRepository positionRepository;
     private final TrainingRepository trainingRepository;
+    private final InternelUserRepository internalUserRepository;
     private final EmployeeTrainingRepository employeeTrainingRepository;
+    private final UserServicePort userServicePort;
 
     @Override
     @Transactional(readOnly = true)
@@ -121,5 +119,82 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         log.info("교육 프로그램 신청 성공 - employeeId: {}, trainingId: {}, trainingName: {}",
                 requestDto.getEmployeeId(), training.getId(), training.getTrainingName());
+    }
+
+    @Override
+    public EmployeeCreateResponseDto createEmployee(EmployeeCreateRequestDto requestDto) {
+        log.info("[INFO] 내부 사용자 등록 시작 - name: {}, email: {}", requestDto.getName(), requestDto.getEmail());
+
+        // 직급 조회
+        Position position = positionRepository.findById(requestDto.getPositionId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "직급 정보를 찾을 수 없습니다."));
+
+        Department department = position.getDepartment();
+
+        // userId 생성
+        String userId = UuidV7Generator.generate();
+
+        // employeeNumber(employeeCode) 생성
+        String employeeCode = "EMP-" + generateNumberByUuidLast7(userId);
+
+        // address 조합
+        String address = requestDto.getBaseAddress() + " " + requestDto.getDetailAddress();
+
+        // Auth 서버 전달용
+        AuthUserCreateRequestDto authRequest = AuthUserCreateRequestDto.builder()
+                .userId(userId)
+                .userEmail(requestDto.getEmail())
+                .departmentName(department.getDepartmentName())
+                .positionName(position.getPositionName())
+                .status("ACTIVE")
+                .build();
+
+
+        // 이 부분은 Kafka를 이용해서 처리해야함 -> 추후 처리
+        AuthUserCreateResponseDto authResponse = userServicePort.createInternalUserAccount(authRequest).join();
+        if (authResponse == null || authResponse.getUserId() == null) {
+            throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_ERROR, "사용자 계정 생성에 실패했습니다.");
+        }
+
+        // InternalUser 저장
+        InternelUser internalUser = InternelUser.createNewInternalUser(
+                userId,
+                requestDto.getName(),
+                employeeCode,
+                position,
+                requestDto.getBirthDate(),
+                requestDto.getHireDate(),
+                address,
+                requestDto.getEmail(),
+                requestDto.getPhoneNumber(),
+                UserStatus.ACTIVE
+        );
+        internalUserRepository.save(internalUser);
+
+        // Employee 저장
+        Employee employee = new Employee(
+                internalUser,
+                15L, // 초기 휴가 날짜 설정
+                null
+        );
+        employeeRepository.save(employee);
+
+        // 응답
+        return EmployeeCreateResponseDto.builder()
+                .createdAt(LocalDateTime.now())
+                .status(UserStatus.ACTIVE.name())
+                .build();
+    }
+
+    private String generateNumberByUuidLast7(String uuidId) {
+        if (uuidId == null || uuidId.isEmpty()) {
+            throw new IllegalArgumentException("[ERROR] UUID가 null 이거나 비어있습니다.");
+        }
+        String compactUuid = uuidId.replaceAll("-", "");
+        log.info("[INFO] Number로 사용될 생성된 uuid: {}", compactUuid);
+        if (compactUuid.length() < 7) {
+            throw new IllegalArgumentException("패딩된 uuid가 7자리 이하 이므로 Number를 생성할 수 없습니다. uuidId를 점검해주세요");
+        }
+        return compactUuid.substring(compactUuid.length() - 7);
     }
 }

@@ -3,6 +3,8 @@ package org.ever._4ever_be_business.hr.integration.adapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.internel.InternelServerResponse;
+import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateRequestDto;
+import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.request.UserInfoRequest;
 import org.ever._4ever_be_business.hr.dto.response.UserInfoResponse;
 import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
@@ -56,5 +58,10 @@ public class UserServiceAdapter implements UserServicePort {
                 throw new RuntimeException("직원 정보 조회 실패", e);
             }
         });
+    }
+
+    @Override
+    public CompletableFuture<AuthUserCreateResponseDto> createInternalUserAccount(AuthUserCreateRequestDto request) {
+        return null;
     }
 }

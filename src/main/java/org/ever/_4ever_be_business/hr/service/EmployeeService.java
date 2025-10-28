@@ -1,7 +1,10 @@
 package org.ever._4ever_be_business.hr.service;
 
+import jakarta.transaction.Transactional;
+import org.ever._4ever_be_business.hr.dto.request.EmployeeCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
@@ -40,4 +43,8 @@ public interface EmployeeService {
      * @param requestDto 교육 신청 정보 (employeeId, programId 포함)
      */
     void requestTraining(TrainingRequestDto requestDto);
+
+    // 내부 사용자 생성
+    @Transactional
+    EmployeeCreateResponseDto createEmployee(EmployeeCreateRequestDto requestDto);
 }
