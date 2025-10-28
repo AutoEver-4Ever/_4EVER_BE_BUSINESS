@@ -28,6 +28,7 @@ public class DataPreloader {
     private final InternelUserRepository internelUserRepository;
     private final EmployeeRepository employeeRepository;
     private final CustomerUserRepository customerUserRepository;
+    private final TrainingRepository trainingRepository;
 
     @PostConstruct
     @Transactional
@@ -41,6 +42,7 @@ public class DataPreloader {
         loadCustomerCompanies();
         loadInternelUsers();
         loadCustomerUsers();
+        loadTrainings();
 
         log.info("========================================");
         log.info("초기 데이터 로딩 완료");
@@ -86,25 +88,34 @@ public class DataPreloader {
 
         log.info("직급 데이터 생성 중...");
 
-        // 직급별 연봉 (만원 단위)
+        // 부서 조회 (직급에 부서를 할당하기 위해)
+        Department dept1 = departmentRepository.findByDepartmentCode("DEPT-001")
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+        Department dept2 = departmentRepository.findByDepartmentCode("DEPT-002")
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+        Department dept3 = departmentRepository.findByDepartmentCode("DEPT-003")
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+
+        // 직급별 연봉 (만원 단위) - 각 직급을 부서에 할당
         Position[] positions = {
-                new Position("POS-001", "사원", false, new BigDecimal("3500")),      // 3,500만원
-                new Position("POS-002", "주임", false, new BigDecimal("4000")),      // 4,000만원
-                new Position("POS-003", "대리", false, new BigDecimal("4800")),      // 4,800만원
-                new Position("POS-004", "과장", true, new BigDecimal("5800")),       // 5,800만원
-                new Position("POS-005", "차장", true, new BigDecimal("7000")),       // 7,000만원
-                new Position("POS-006", "부장", true, new BigDecimal("8500")),       // 8,500만원
-                new Position("POS-007", "이사", true, new BigDecimal("10500")),      // 1억 500만원
-                new Position("POS-008", "상무", true, new BigDecimal("13000")),      // 1억 3,000만원
-                new Position("POS-009", "전무", true, new BigDecimal("16000")),      // 1억 6,000만원
-                new Position("POS-010", "사장", true, new BigDecimal("20000"))       // 2억원
+                new Position("POS-001", "사원", dept1, false, new BigDecimal("3500")),      // 구매 부서
+                new Position("POS-002", "주임", dept1, false, new BigDecimal("4000")),      // 구매 부서
+                new Position("POS-003", "대리", dept2, false, new BigDecimal("4800")),      // 영업 부서
+                new Position("POS-004", "과장", dept2, true, new BigDecimal("5800")),       // 영업 부서
+                new Position("POS-005", "차장", dept3, true, new BigDecimal("7000")),       // 재고 부서
+                new Position("POS-006", "부장", dept3, true, new BigDecimal("8500")),       // 재고 부서
+                new Position("POS-007", "이사", dept1, true, new BigDecimal("10500")),      // 구매 부서
+                new Position("POS-008", "상무", dept2, true, new BigDecimal("13000")),      // 영업 부서
+                new Position("POS-009", "전무", dept3, true, new BigDecimal("16000")),      // 재고 부서
+                new Position("POS-010", "사장", dept1, true, new BigDecimal("20000"))       // 구매 부서
         };
 
         for (Position pos : positions) {
             positionRepository.save(pos);
-            log.info("직급 생성: {} ({}) - 연봉: {}만원, 관리직: {}",
+            log.info("직급 생성: {} ({}) - 부서: {}, 연봉: {}만원, 관리직: {}",
                     pos.getPositionName(),
                     pos.getPositionCode(),
+                    pos.getDepartment().getDepartmentName(),
                     pos.getSalary(),
                     pos.getIsManager() ? "Y" : "N");
         }
@@ -297,12 +308,16 @@ public class DataPreloader {
 
         log.info("고객사 담당자 데이터 생성 중...");
 
-        // 기존 고객사 3개 조회
+        // 기존 고객사 5개 조회
         CustomerCompany company1 = customerCompanyRepository.findByCompanyCode("CUST-001")
                 .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
         CustomerCompany company2 = customerCompanyRepository.findByCompanyCode("CUST-002")
                 .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
         CustomerCompany company3 = customerCompanyRepository.findByCompanyCode("CUST-003")
+                .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
+        CustomerCompany company4 = customerCompanyRepository.findByCompanyCode("CUST-004")
+                .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
+        CustomerCompany company5 = customerCompanyRepository.findByCompanyCode("CUST-005")
                 .orElseThrow(() -> new RuntimeException("CustomerCompany not found"));
 
         CustomerUser[] customerUsers = {
@@ -335,6 +350,26 @@ public class DataPreloader {
                         "CUST-USER-003",
                         "customer3@gmail.com",
                         "010-3003-3003"
+                ),
+                new CustomerUser(
+                        "customer4",
+                        2004L,
+                        104L,
+                        "customer4",
+                        company4,                       // customerCompany (SK하이닉스)
+                        "CUST-USER-004",
+                        "customer4@gmail.com",
+                        "010-4004-4004"
+                ),
+                new CustomerUser(
+                        "customer5",
+                        2005L,
+                        105L,
+                        "customer5",
+                        company5,                       // customerCompany (포스코)
+                        "CUST-USER-005",
+                        "customer5@gmail.com",
+                        "010-5005-5005"
                 )
         };
 
@@ -344,5 +379,99 @@ public class DataPreloader {
         }
 
         log.info("총 {}개의 고객사 담당자 생성 완료", customerUsers.length);
+    }
+
+    /**
+     * 교육 프로그램 데이터 생성
+     */
+    private void loadTrainings() {
+        if (trainingRepository.count() > 0) {
+            log.info("교육 프로그램 데이터가 이미 존재합니다. 스킵합니다.");
+            return;
+        }
+
+        log.info("교육 프로그램 데이터 생성 중...");
+
+        Training[] trainings = {
+                new Training(
+                        "Spring Boot 심화 과정",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.TECHNICAL,
+                        40L,
+                        "온라인",
+                        15L,
+                        30,
+                        "Spring Boot 프레임워크를 활용한 백엔드 개발 심화",
+                        true,
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
+                ),
+                new Training(
+                        "리더십 역량 강화",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.LEADERSHIP,
+                        24L,
+                        "오프라인",
+                        20L,
+                        25,
+                        "중간 관리자를 위한 리더십 및 팀 관리 스킬",
+                        true,
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.IN_PROGRESS
+                ),
+                new Training(
+                        "개인정보보호법 준수 교육",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.COMPLIANCE,
+                        4L,
+                        "온라인",
+                        45L,
+                        50,
+                        "개인정보보호법 및 정보보안 의무 교육",
+                        true,
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.IN_PROGRESS
+                ),
+                new Training(
+                        "비즈니스 영어 회화",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.LANGUAGE,
+                        60L,
+                        "오프라인",
+                        12L,
+                        20,
+                        "업무 상황에서 활용 가능한 실전 영어 회화",
+                        true,
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
+                ),
+                new Training(
+                        "데이터 분석 기초",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.COURSE,
+                        32L,
+                        "온라인",
+                        25L,
+                        40,
+                        "Python 기반 데이터 분석 및 시각화 기초 과정",
+                        true,
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
+                ),
+                new Training(
+                        "산업안전보건교육",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.SAFETY,
+                        8L,
+                        "오프라인",
+                        30L,
+                        50,
+                        "산업안전보건법에 따른 필수 안전 교육",
+                        true,
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.COMPLETED
+                )
+        };
+
+        for (Training training : trainings) {
+            trainingRepository.save(training);
+            log.info("교육 프로그램 생성: {} ({}) - {}시간, 신청: {}/{}, 상태: {}",
+                    training.getTrainingName(),
+                    training.getCategory(),
+                    training.getDurationHours(),
+                    training.getEnrolled(),
+                    training.getCapacity(),
+                    training.getTrainingStatus());
+        }
+
+        log.info("총 {}개의 교육 프로그램 생성 완료", trainings.length);
     }
 }
