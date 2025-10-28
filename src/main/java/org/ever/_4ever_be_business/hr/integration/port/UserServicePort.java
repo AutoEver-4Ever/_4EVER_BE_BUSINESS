@@ -1,5 +1,7 @@
 package org.ever._4ever_be_business.hr.integration.port;
 
+import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateRequestDto;
+import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.UserInfoResponse;
 
 import java.util.List;
@@ -18,4 +20,6 @@ public interface UserServicePort {
      * @return CompletableFuture<UserInfoResponse> User Service로부터 받은 직원 정보
      */
     CompletableFuture<UserInfoResponse> getMultipleUserInfo(List<Long> internelUserIds);
+
+    CompletableFuture<AuthUserCreateResponseDto> createInternalUserAccount(AuthUserCreateRequestDto request);
 }
