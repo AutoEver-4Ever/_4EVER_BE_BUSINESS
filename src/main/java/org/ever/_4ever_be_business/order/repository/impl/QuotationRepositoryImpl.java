@@ -121,7 +121,7 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
                 ))
                 .from(quotation)
                 .leftJoin(quotation.quotationApproval, quotationApproval)
-                .leftJoin(customerUser).on(customerUser.id.eq(String.valueOf(quotation.customerUserId)))
+                .leftJoin(customerUser).on(customerUser.id.eq(quotation.customerUserId))
                 .leftJoin(customerUser.customerCompany, customerCompany)
                 .leftJoin(quotationItem).on(quotationItem.quotation.id.eq(quotation.id)
                         .and(quotationItem.id.eq(
@@ -143,7 +143,7 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
                 .select(quotation.count())
                 .from(quotation)
                 .leftJoin(quotation.quotationApproval, quotationApproval)
-                .leftJoin(customerUser).on(customerUser.id.eq(String.valueOf(quotation.customerUserId)))
+                .leftJoin(customerUser).on(customerUser.id.eq(quotation.customerUserId))
                 .leftJoin(customerUser.customerCompany, customerCompany)
                 .where(builder)
                 .fetchOne();

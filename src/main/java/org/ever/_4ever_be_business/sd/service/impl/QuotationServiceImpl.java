@@ -259,10 +259,7 @@ public class QuotationServiceImpl implements QuotationService {
             throw new BusinessException(ErrorCode.CUSTOMER_COMPANY_NOT_FOUND);
         }
 
-        // 5. OrderStatus 조회 또는 생성 (READY_FOR_SHIPMENT)
-        OrderStatus orderStatus = new OrderStatus("READY_FOR_SHIPMENT");
-
-        // 6. Order 생성
+        // 5. Order 생성
         String orderCode = CodeGenerator.generateCode("OR");
         Order order = new Order(
                 orderCode,
@@ -272,7 +269,7 @@ public class QuotationServiceImpl implements QuotationService {
                 quotation.getTotalPrice(),
                 LocalDateTime.now(),  // orderDate
                 quotation.getDueDate(),
-                orderStatus
+                OrderStatus.READY_FOR_SHIPMENT
         );
         orderRepository.save(order);
         log.info("Order 생성 완료 - orderCode: {}", orderCode);

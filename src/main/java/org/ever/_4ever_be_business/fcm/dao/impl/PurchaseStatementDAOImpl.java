@@ -42,8 +42,8 @@ public class PurchaseStatementDAOImpl implements PurchaseStatementDAO {
                         purchaseVoucher.status,
                         purchaseVoucher.issueDate,
                         purchaseVoucher.dueDate,
-                        purchaseVoucher.supplierCompanyId.stringValue(),
-                        purchaseVoucher.productOrder.stringValue(),
+                        purchaseVoucher.supplierCompanyId,
+                        purchaseVoucher.productOrderId,
                         purchaseVoucher.totalAmount,
                         purchaseVoucher.memo
                 ))
@@ -100,11 +100,11 @@ public class PurchaseStatementDAOImpl implements PurchaseStatementDAO {
                         PurchaseStatementListProjection.class,
                         purchaseVoucher.id.stringValue(),
                         purchaseVoucher.voucherCode,
-                        purchaseVoucher.supplierCompanyId.stringValue(),
+                        purchaseVoucher.supplierCompanyId,
                         purchaseVoucher.issueDate,
                         purchaseVoucher.dueDate,
                         purchaseVoucher.status,
-                        purchaseVoucher.productOrder.stringValue()
+                        purchaseVoucher.productOrderId
                 ))
                 .from(purchaseVoucher)
                 .where(
@@ -192,7 +192,7 @@ public class PurchaseStatementDAOImpl implements PurchaseStatementDAO {
      */
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class PurchaseStatementInfoProjection {
+    public static class PurchaseStatementInfoProjection {
         private String invoiceId;
         private String invoiceCode;
         private org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus statusCode;
@@ -206,7 +206,7 @@ public class PurchaseStatementDAOImpl implements PurchaseStatementDAO {
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class PurchaseStatementListProjection {
+    public static class PurchaseStatementListProjection {
         private String invoiceId;
         private String invoiceCode;
         private String supplierCompanyId;

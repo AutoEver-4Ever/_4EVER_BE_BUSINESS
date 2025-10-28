@@ -228,7 +228,7 @@ public class SalesStatementDAOImpl implements SalesStatementDAO {
      */
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class SalesStatementInfoProjection {
+    public static class SalesStatementInfoProjection {
         private String invoiceId;
         private String invoiceCode;
         private org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus statusCode;
@@ -243,7 +243,7 @@ public class SalesStatementDAOImpl implements SalesStatementDAO {
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class QuotationItemProjection {
+    public static class QuotationItemProjection {
         private String productId;
         private Long quantity;
         private Unit unit;
@@ -252,7 +252,7 @@ public class SalesStatementDAOImpl implements SalesStatementDAO {
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class SalesStatementListProjection {
+    public static class SalesStatementListProjection {
         private String invoiceId;
         private String invoiceCode;
         private String connectionId;

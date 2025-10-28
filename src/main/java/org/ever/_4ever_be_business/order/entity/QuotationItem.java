@@ -29,6 +29,7 @@ public class QuotationItem extends TimeStamp {
     @Column(nullable = false, name="count")
     private Long count;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name="unit")
     private Unit unit;
 
