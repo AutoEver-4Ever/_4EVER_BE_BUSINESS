@@ -3,6 +3,7 @@ package org.ever._4ever_be_business.hr.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.ever._4ever_be_business.common.audit.EntityAuditListener;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.enums.Gender;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Table(name="internel_user")
 @NoArgsConstructor
 @Getter
+@EntityListeners(EntityAuditListener.class)
 public class InternelUser extends TimeStamp {
 
     @Id
