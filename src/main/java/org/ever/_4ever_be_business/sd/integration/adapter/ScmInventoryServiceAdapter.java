@@ -33,7 +33,7 @@ public class ScmInventoryServiceAdapter implements InventoryServicePort {
 
         try {
             ApiResponse<InventoryCheckResponseDto> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm-pp/inventory/stock-check")
+                    .uri(scmServiceUrl + "/scm/scm-pp/inventory/stock-check")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestDto)
                     .retrieve()

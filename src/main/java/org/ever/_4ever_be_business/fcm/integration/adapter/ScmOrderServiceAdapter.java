@@ -35,7 +35,7 @@ public class ScmOrderServiceAdapter implements OrderServicePort {
             Map<String, String> requestBody = Map.of("orderId", orderId);
 
             ApiResponse<OrderItemsResponseDto> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm-order/order/items")
+                    .uri(scmServiceUrl + "/scm/scm-order/order/items")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<ApiResponse<OrderItemsResponseDto>>() {});
