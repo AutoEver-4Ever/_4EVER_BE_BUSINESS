@@ -2,27 +2,34 @@ package org.ever._4ever_be_business.hr.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.async.AsyncResultManager;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
+import org.ever._4ever_be_business.common.saga.SagaTransactionManager;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.dao.EmployeeDAO;
-import org.ever._4ever_be_business.hr.dto.request.*;
+import org.ever._4ever_be_business.hr.dto.request.EmployeeCreateRequestDto;
+import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
+import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.entity.*;
 import org.ever._4ever_be_business.hr.enums.UserStatus;
-import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
 import org.ever._4ever_be_business.hr.repository.*;
 import org.ever._4ever_be_business.hr.service.EmployeeService;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
+import org.ever._4ever_be_business.infrastructure.kafka.config.KafkaTopicConfig;
+import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
+import org.ever.event.CreateAuthUserEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import org.springframework.web.context.request.async.DeferredResult;
 
 @Slf4j
 @Service
@@ -35,7 +42,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final TrainingRepository trainingRepository;
     private final InternelUserRepository internalUserRepository;
     private final EmployeeTrainingRepository employeeTrainingRepository;
-    private final UserServicePort userServicePort;
+    private final AsyncResultManager<EmployeeCreateResponseDto> asyncResultManager;
+    private final SagaTransactionManager sagaManager;
+    private final KafkaProducerService kafkaProducerService;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -122,68 +132,70 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeCreateResponseDto createEmployee(EmployeeCreateRequestDto requestDto) {
+    public void createEmployee(
+            EmployeeCreateRequestDto requestDto,
+            DeferredResult<ResponseEntity<ApiResponse<EmployeeCreateResponseDto>>> deferredResult
+    ) {
+        // 트랜잭션 id 생성
+        String transactionId = UuidV7Generator.generate();
+
+        asyncResultManager.registerResult(transactionId, deferredResult);
         log.info("[INFO] 내부 사용자 등록 시작 - name: {}, email: {}", requestDto.getName(), requestDto.getEmail());
 
-        // 직급 조회
-        Position position = positionRepository.findById(requestDto.getPositionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "직급 정보를 찾을 수 없습니다."));
+        sagaManager.executeSagaWithId(transactionId, () -> {
+            try {
+                Position position = positionRepository.findById(requestDto.getPositionId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 직급 정보를 찾을 수 없습니다."));
+                Department department = position.getDepartment();
 
-        Department department = position.getDepartment();
+                String userId = UuidV7Generator.generate();
+                String employeeCode = "EMP-" + generateNumberByUuidLast7(userId);
+                String address = requestDto.getBaseAddress() + " " + requestDto.getDetailAddress();
 
-        // userId 생성
-        String userId = UuidV7Generator.generate();
+                InternelUser internalUser = InternelUser.createNewInternalUser(
+                    userId,
+                    requestDto.getName(),
+                    employeeCode,
+                    position,
+                    requestDto.getBirthDate(),
+                    requestDto.getHireDate(),
+                    address,
+                    requestDto.getEmail(),
+                    requestDto.getPhoneNumber(),
+                    UserStatus.ACTIVE
+                );
+                internalUserRepository.save(internalUser);
 
-        // employeeNumber(employeeCode) 생성
-        String employeeCode = "EMP-" + generateNumberByUuidLast7(userId);
+                Employee employee = new Employee(internalUser, 15L, null);
+                employeeRepository.save(employee);
 
-        // address 조합
-        String address = requestDto.getBaseAddress() + " " + requestDto.getDetailAddress();
+                CreateAuthUserEvent event = CreateAuthUserEvent.builder()
+                    .eventId(UuidV7Generator.generate())
+                    .transactionId(transactionId)
+                    .success(true)      // 여기는 성공한 경우임.
+                    .userId(userId)
+                    .email(requestDto.getEmail())
+                    .departmentName(department.getDepartmentName())
+                    .positionName(position.getPositionName())
+                    .build();
 
-        // Auth 서버 전달용
-        AuthUserCreateRequestDto authRequest = AuthUserCreateRequestDto.builder()
-                .userId(userId)
-                .userEmail(requestDto.getEmail())
-                .departmentName(department.getDepartmentName())
-                .positionName(position.getPositionName())
-                .status("ACTIVE")
-                .build();
+                kafkaProducerService.sendEventSync(
+                    KafkaTopicConfig.CREATE_USER_TOPIC,
+                    userId,
+                    event
+                );
+                return null;
+            } catch (Exception error) {
+                asyncResultManager.setErrorResult(
+                        transactionId,
+                        "[SAGA][FAIL] 내부 사용자 생성 처리에 실패했습니다.: " + error.getMessage(),
+                        HttpStatus.INTERNAL_SERVER_ERROR
+                );
+                throw error;
+            }
+        });
 
 
-        // 이 부분은 Kafka를 이용해서 처리해야함 -> 추후 처리
-//        authResponse = userServicePort.createInternalUserAccount(authRequest).join();
-//        if (authResponse == null || authResponse.getUserId() == null) {
-//            throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_ERROR, "사용자 계정 생성에 실패했습니다.");
-//        }
-
-        // InternalUser 저장
-        InternelUser internalUser = InternelUser.createNewInternalUser(
-                userId,
-                requestDto.getName(),
-                employeeCode,
-                position,
-                requestDto.getBirthDate(),
-                requestDto.getHireDate(),
-                address,
-                requestDto.getEmail(),
-                requestDto.getPhoneNumber(),
-                UserStatus.ACTIVE
-        );
-        internalUserRepository.save(internalUser);
-
-        // Employee 저장
-        Employee employee = new Employee(
-                internalUser,
-                15L, // 초기 휴가 날짜 설정
-                null
-        );
-        employeeRepository.save(employee);
-
-        // 응답
-        return EmployeeCreateResponseDto.builder()
-                .createdAt(LocalDateTime.now())
-                .status(UserStatus.ACTIVE.name())
-                .build();
     }
 
     private String generateNumberByUuidLast7(String uuidId) {
