@@ -192,7 +192,7 @@ public class SdController {
         log.info("견적 목록 조회 API 호출 - startDate: {}, endDate: {}, status: {}, type: {}, search: {}, sort: {}, page: {}, size: {}",
                 startDate, endDate, status, type, search, sort, page, size);
 
-        QuotationSearchConditionVo condition = new QuotationSearchConditionVo(startDate, endDate, status, type, search, sort);
+        QuotationSearchConditionVo condition = new QuotationSearchConditionVo(null, startDate, endDate, status, type, search, sort);
         Pageable pageable = PageRequest.of(page, size);
         Page<QuotationListItemDto> result = quotationService.getQuotationList(condition, pageable);
 

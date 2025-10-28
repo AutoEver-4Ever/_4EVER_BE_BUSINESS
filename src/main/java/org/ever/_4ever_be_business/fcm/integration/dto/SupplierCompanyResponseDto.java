@@ -14,14 +14,17 @@ public class SupplierCompanyResponseDto {
     @JsonProperty("companyId")
     private String companyId;
 
-    @JsonProperty("companyCode")
-    private String companyCode;
+    @JsonProperty("companyNumber")
+    private String companyNumber;
 
     @JsonProperty("companyName")
     private String companyName;
 
-    @JsonProperty("address")
-    private String address;
+    @JsonProperty("baseAddress")
+    private String baseAddress;
+
+    @JsonProperty("detailAddress")
+    private String detailAddress;
 
     @JsonProperty("category")
     private String category;

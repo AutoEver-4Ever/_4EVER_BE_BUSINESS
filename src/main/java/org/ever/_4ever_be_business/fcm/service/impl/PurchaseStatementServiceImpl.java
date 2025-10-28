@@ -153,7 +153,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
 
                     PurchaseStatementConnectionDto connection = new PurchaseStatementConnectionDto(
                             supplierCompany != null ? supplierCompany.getCompanyId() : null,
-                            supplierCompany != null ? supplierCompany.getCompanyCode() : null,
+                            supplierCompany != null ? supplierCompany.getCompanyNumber() : null,
                             supplierCompany != null ? supplierCompany.getCompanyName() : null
                     );
 

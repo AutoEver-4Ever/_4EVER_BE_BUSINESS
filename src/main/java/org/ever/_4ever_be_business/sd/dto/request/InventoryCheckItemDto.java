@@ -12,9 +12,6 @@ public class InventoryCheckItemDto {
     @JsonProperty("itemId")
     private String itemId;
 
-    @JsonProperty("itemName")
-    private String itemName;
-
     @JsonProperty("requiredQuantity")
-    private Long requiredQuantity;
+    private Integer requiredQuantity;
 }

@@ -65,7 +65,6 @@ public class CustomerCompanyDAOImpl implements CustomerCompanyDAO {
         if (dto.getManager() != null) {
             CustomerUser customerUser = new CustomerUser(
                     null,  // userId - 향후 Auth 서비스와 연동 시 사용
-                    null,  // customerId - 향후 Auth 서비스와 연동 시 사용
                     dto.getManager().getName(),
                     savedCompany,
                     null,  // customerUserCode - 필요시 생성 로직 추가
@@ -122,11 +121,10 @@ public class CustomerCompanyDAOImpl implements CustomerCompanyDAO {
             } else {
                 // 담당자가 없으면 새로 생성
                 CustomerUser newManager = new CustomerUser(
-                        null,
-                        null,
+                        null,  // userId - 향후 Auth 서비스와 연동 시 사용
                         dto.getManager().getName(),
                         customerCompany,
-                        null,
+                        null,  // customerUserCode - 필요시 생성 로직 추가
                         dto.getManager().getEmail(),
                         dto.getManager().getMobile()
                 );

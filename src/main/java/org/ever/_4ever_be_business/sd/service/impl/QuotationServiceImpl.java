@@ -166,7 +166,13 @@ public class QuotationServiceImpl implements QuotationService {
         log.info("견적서 생성 요청 - userId: {}, dueDate: {}, items count: {}",
                 dto.getUserId(), dto.getDueDate(), dto.getItems().size());
 
-        // 1. Product 정보 조회 (Adapter 사용)
+        // 1. CustomerUser 조회 (userId로)
+        org.ever._4ever_be_business.hr.entity.CustomerUser customerUser = customerUserRepository.findByUserId(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("CustomerUser를 찾을 수 없습니다. userId: " + dto.getUserId()));
+
+        log.info("CustomerUser 조회 성공 - id: {}, name: {}", customerUser.getId(), customerUser.getCustomerName());
+
+        // 2. Product 정보 조회 (Adapter 사용)
         List<String> productIds = dto.getItems().stream()
                 .map(QuotationItemRequestDto::getItemId)
                 .collect(Collectors.toList());
@@ -179,22 +185,22 @@ public class QuotationServiceImpl implements QuotationService {
                         product -> product
                 ));
 
-        // 2. 총액 계산
+        // 3. 총액 계산
         BigDecimal totalAmount = dto.getItems().stream()
                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 3. QuotationApproval 생성 (초기 상태: PENDING)
+        // 4. QuotationApproval 생성 (초기 상태: PENDING)
         QuotationApproval approval = QuotationApproval.createPending();
         QuotationApproval savedApproval = quotationApprovalRepository.save(approval);
 
-        // 4. Quotation 생성
+        // 5. Quotation 생성 (CustomerUser의 id를 customerUserId에 저장)
         String quotationCode = CodeGenerator.generateCode("QO");
         LocalDate dueDate = LocalDate.parse(dto.getDueDate(), DATE_FORMATTER);
 
         Quotation quotation = new Quotation(
                 quotationCode,
-                dto.getUserId(),
+                customerUser.getId(),  // CustomerUser의 PK(id)를 저장
                 totalAmount,
                 savedApproval,
                 dueDate.atStartOfDay(),

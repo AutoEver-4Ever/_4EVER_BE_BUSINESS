@@ -2,6 +2,7 @@ package org.ever._4ever_be_business.hr.service;
 
 import org.ever._4ever_be_business.hr.dto.request.CreateLeaveRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.LeaveRequestListItemDto;
+import org.ever._4ever_be_business.hr.dto.response.RemainingLeaveDaysDto;
 import org.ever._4ever_be_business.hr.vo.LeaveRequestSearchConditionVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,4 +37,12 @@ public interface LeaveRequestService {
      * @param requestId 휴가 신청 ID
      */
     void rejectLeaveRequest(String requestId);
+
+    /**
+     * 잔여 연차 조회
+     *
+     * @param userId 사용자 ID
+     * @return RemainingLeaveDaysDto
+     */
+    RemainingLeaveDaysDto getRemainingLeaveDays(String userId);
 }

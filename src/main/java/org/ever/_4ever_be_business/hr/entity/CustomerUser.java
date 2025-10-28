@@ -18,10 +18,7 @@ public class CustomerUser extends TimeStamp {
     private String id;
 
     @Column(name="user_id")
-    private Long userId;
-
-    @Column(name="customer_id")
-    private Long customerId;
+    private String userId;
 
     @Column(name="customer_name")
     private String customerName;
@@ -39,9 +36,8 @@ public class CustomerUser extends TimeStamp {
     @Column(name="phone_number", length = 20)
     private String phoneNumber;
 
-    public CustomerUser(Long userId, Long customerId, String customerName, CustomerCompany customerCompany, String customerUserCode, String email, String phoneNumber) {
+    public CustomerUser(String userId, String customerName, CustomerCompany customerCompany, String customerUserCode, String email, String phoneNumber) {
         this.userId = userId;
-        this.customerId = customerId;
         this.customerName = customerName;
         this.customerCompany = customerCompany;
         this.customerUserCode = customerUserCode;
@@ -52,10 +48,9 @@ public class CustomerUser extends TimeStamp {
     /**
      * 목업 데이터 생성용 생성자 (ID 포함)
      */
-    public CustomerUser(String id, Long userId, Long customerId, String customerName, CustomerCompany customerCompany, String customerUserCode, String email, String phoneNumber) {
+    public CustomerUser(String id, String userId, String customerName, CustomerCompany customerCompany, String customerUserCode, String email, String phoneNumber) {
         this.id = id;
         this.userId = userId;
-        this.customerId = customerId;
         this.customerName = customerName;
         this.customerCompany = customerCompany;
         this.customerUserCode = customerUserCode;

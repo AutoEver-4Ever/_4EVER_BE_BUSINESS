@@ -10,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateQuotationRequestDto {
-    private String userId;          // Customer User UUID
+    private String userId;          // CustomerUser의 userId (String)
     private String dueDate;         // YYYY-MM-DD
     private List<QuotationItemRequestDto> items;
     private String note;
