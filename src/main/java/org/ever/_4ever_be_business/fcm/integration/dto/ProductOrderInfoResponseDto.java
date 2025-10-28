@@ -12,7 +12,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductOrderInfoResponseDto {
+    @JsonProperty("items")
     private List<ProductOrderItemDto> items;
+
+    @JsonProperty("totalPrice")
+    private BigDecimal totalPrice;
 
     @Getter
     @NoArgsConstructor
@@ -24,7 +28,8 @@ public class ProductOrderInfoResponseDto {
         @JsonProperty("itemName")
         private String itemName;
 
-        private Long quantity;
+        @JsonProperty("quantity")
+        private Integer quantity;
 
         @JsonProperty("uomName")
         private String uomName;

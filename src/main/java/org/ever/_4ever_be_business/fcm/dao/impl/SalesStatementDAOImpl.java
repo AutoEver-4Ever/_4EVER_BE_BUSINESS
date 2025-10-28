@@ -84,7 +84,7 @@ public class SalesStatementDAOImpl implements SalesStatementDAO {
                 .map(item -> new SalesStatementItemDto(
                         item.getProductId(),
                         null, // itemName - Service에서 SCM 호출하여 채울 예정
-                        item.getQuantity(),
+                        item.getQuantity().intValue(),
                         item.getUnit().name(),
                         item.getUnitPrice(),
                         item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()))

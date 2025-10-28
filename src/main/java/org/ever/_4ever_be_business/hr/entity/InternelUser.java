@@ -20,7 +20,7 @@ public class InternelUser extends TimeStamp {
     private String id;
 
     @Column(name="user_id")
-    private Long userId;
+    private String userId;
 
     @Column(name="name")
     private String name;
@@ -60,7 +60,7 @@ public class InternelUser extends TimeStamp {
     private String career;
 
 
-    public InternelUser(Long userId, String name, String employeeCode, Position position, Gender gender, LocalDateTime birthDate, LocalDateTime hireDate, String address, LocalDateTime departmentStartAt, String education, String career) {
+    public InternelUser(String userId, String name, String employeeCode, Position position, Gender gender, LocalDateTime birthDate, LocalDateTime hireDate, String address, LocalDateTime departmentStartAt, String education, String career) {
         this.userId = userId;
         this.name = name;
         this.employeeCode = employeeCode;
@@ -77,7 +77,7 @@ public class InternelUser extends TimeStamp {
     /**
      * 목업 데이터 생성용 생성자 (ID 포함)
      */
-    public InternelUser(String id, Long userId, String name, String employeeCode, Position position,
+    public InternelUser(String id, String userId, String name, String employeeCode, Position position,
                         Gender gender, LocalDateTime birthDate, LocalDateTime hireDate, String address,
                         String email, String phoneNumber, LocalDateTime departmentStartAt,
                         String education, String career) {
