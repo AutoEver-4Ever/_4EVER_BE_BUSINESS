@@ -30,6 +30,7 @@ public class Payroll extends TimeStamp {
     @Column(name="overtime_salary")
     private BigDecimal overtimeSalary;
 
+    @Enumerated(EnumType.STRING)
     @Column(name="status")
     private PayrollStatus status;
 
@@ -57,5 +58,13 @@ public class Payroll extends TimeStamp {
         if (this.id == null) {
             this.id = UuidV7Generator.generate();
         }
+    }
+
+    /**
+     * 급여 지급 완료 처리
+     */
+    public void markAsPaid() {
+        this.status = PayrollStatus.PAID;
+        this.payDate = LocalDateTime.now();
     }
 }

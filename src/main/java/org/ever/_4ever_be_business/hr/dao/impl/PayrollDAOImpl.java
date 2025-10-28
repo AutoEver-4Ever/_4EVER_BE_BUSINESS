@@ -253,7 +253,7 @@ public class PayrollDAOImpl implements PayrollDAO {
      */
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class PayrollInfoProjection {
+    public static class PayrollInfoProjection {
         private String payrollId;
         private String employeeId;
         private String employeeNumber;
@@ -269,7 +269,7 @@ public class PayrollDAOImpl implements PayrollDAO {
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class PayrollListProjection {
+    public static class PayrollListProjection {
         private String payrollId;
         private String employeeId;
         private String employeeName;
