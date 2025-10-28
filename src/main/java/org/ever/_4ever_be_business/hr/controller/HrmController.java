@@ -15,6 +15,7 @@ import org.ever._4ever_be_business.hr.repository.InternelUserRepository;
 import org.ever._4ever_be_business.hr.service.*;
 import org.ever._4ever_be_business.hr.vo.*;
 import org.ever._4ever_be_business.sd.dto.response.PageInfo;
+import org.ever.event.CreateAuthUserResultEvent;
 import org.ever._4ever_be_business.tam.dto.request.CheckInRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.CheckOutRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.UpdateTimeRecordDto;
@@ -634,13 +635,13 @@ public class HrmController {
 
     @PostMapping("/employee-users")
     @Operation(summary = "내부 사용자 생성", description = "내부 사용자 생성을 비동기로 처리합니다.")
-    public DeferredResult<ResponseEntity<ApiResponse<EmployeeCreateResponseDto>>> createEmployeeUser(
+    public DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> createEmployeeUser(
             @RequestBody @Valid EmployeeCreateRequestDto requestDto
     ) {
         log.info("[INFO] 내부 사용자(employee) 생성 API 호출 - requestDto: {}", requestDto);
 
         // DeferredResult를 생성하여 30초(30000ms) 타임아웃 설정
-        DeferredResult<ResponseEntity<ApiResponse<EmployeeCreateResponseDto>>> deferredResult = new DeferredResult<>(30000L);
+        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult = new DeferredResult<>(30000L);
 
         deferredResult.onTimeout(() -> {
             log.warn("[WARN] 내부 사용자 생성 처리 타임아웃 - email: {}", requestDto.getEmail());

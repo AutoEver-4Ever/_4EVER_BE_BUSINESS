@@ -12,7 +12,6 @@ import org.ever._4ever_be_business.hr.dao.EmployeeDAO;
 import org.ever._4ever_be_business.hr.dto.request.EmployeeCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
-import org.ever._4ever_be_business.hr.dto.response.EmployeeCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.entity.*;
@@ -22,6 +21,7 @@ import org.ever._4ever_be_business.hr.repository.*;
 import org.ever._4ever_be_business.hr.service.EmployeeService;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
 import org.ever.event.CreateAuthUserEvent;
+import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,7 +42,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final TrainingRepository trainingRepository;
     private final InternelUserRepository internalUserRepository;
     private final EmployeeTrainingRepository employeeTrainingRepository;
-    private final AsyncResultManager<EmployeeCreateResponseDto> asyncResultManager;
+    private final AsyncResultManager<CreateAuthUserResultEvent> asyncResultManager;
     private final SagaTransactionManager sagaManager;
     @Qualifier("kafkaUserServiceAdapter")
     private final UserServicePort userServicePort;
@@ -135,7 +135,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public void createEmployee(
             EmployeeCreateRequestDto requestDto,
-            DeferredResult<ResponseEntity<ApiResponse<EmployeeCreateResponseDto>>> deferredResult
+            DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
     ) {
         // 트랜잭션 id 생성
         String transactionId = UuidV7Generator.generate();

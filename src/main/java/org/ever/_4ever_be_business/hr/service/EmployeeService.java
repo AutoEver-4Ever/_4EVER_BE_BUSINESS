@@ -5,10 +5,10 @@ import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.hr.dto.request.EmployeeCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
-import org.ever._4ever_be_business.hr.dto.response.EmployeeCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
+import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +50,8 @@ public interface EmployeeService {
     // 내부 사용자 생성
 
     @Transactional
-    void createEmployee(EmployeeCreateRequestDto requestDto,
-         DeferredResult<ResponseEntity<ApiResponse<EmployeeCreateResponseDto>>>
-         deferredResult);
+    void createEmployee(
+            EmployeeCreateRequestDto requestDto,
+            DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+    );
 }
