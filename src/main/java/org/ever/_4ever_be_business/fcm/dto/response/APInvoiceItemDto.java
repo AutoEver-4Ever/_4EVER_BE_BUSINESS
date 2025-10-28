@@ -16,7 +16,7 @@ public class APInvoiceItemDto {
     private String itemName;
 
     @JsonProperty("quantity")
-    private Long quantity;
+    private Integer quantity;
 
     @JsonProperty("unitOfMaterialName")
     private String unitOfMaterialName;
