@@ -232,7 +232,7 @@ public class DataPreloader {
         InternelUser[] internelUsers = {
                 new InternelUser(
                         "internel1",                        // id
-                        1001L,                              // userId
+                        "1001L",                              // userId
                         "internel1",                        // name
                         "EMP-001",                          // employeeCode
                         position1,                          // position (사원)
@@ -248,7 +248,7 @@ public class DataPreloader {
                 ),
                 new InternelUser(
                         "internel2",
-                        1002L,
+                        "1002L",
                         "internel2",
                         "EMP-002",
                         position2,                          // position (대리)
@@ -264,7 +264,7 @@ public class DataPreloader {
                 ),
                 new InternelUser(
                         "internel3",
-                        1003L,
+                        "1003L",
                         "internel3",
                         "EMP-003",
                         position3,                          // position (과장)
