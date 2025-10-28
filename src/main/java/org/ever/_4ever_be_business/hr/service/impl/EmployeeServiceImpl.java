@@ -17,6 +17,7 @@ import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.entity.*;
 import org.ever._4ever_be_business.hr.enums.UserStatus;
+import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
 import org.ever._4ever_be_business.hr.repository.*;
 import org.ever._4ever_be_business.hr.service.EmployeeService;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
@@ -45,6 +46,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final AsyncResultManager<EmployeeCreateResponseDto> asyncResultManager;
     private final SagaTransactionManager sagaManager;
     private final KafkaProducerService kafkaProducerService;
+    private final UserServicePort userServicePort;
 
 
     @Override
@@ -179,23 +181,25 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .positionName(position.getPositionName())
                     .build();
 
-                kafkaProducerService.sendEventSync(
-                    KafkaTopicConfig.CREATE_USER_TOPIC,
-                    userId,
-                    event
-                );
+                userServicePort.createAuthUserPort(event)
+                    .exceptionally(error -> {
+                        asyncResultManager.setErrorResult(
+                            transactionId,
+                            "[SAGA][FAIL] 사용자 계정 생성 요청 발행 실패: " + error.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                        );
+                        return null;
+                    });
                 return null;
             } catch (Exception error) {
                 asyncResultManager.setErrorResult(
-                        transactionId,
-                        "[SAGA][FAIL] 내부 사용자 생성 처리에 실패했습니다.: " + error.getMessage(),
-                        HttpStatus.INTERNAL_SERVER_ERROR
+                    transactionId,
+                    "[SAGA][FAIL] 내부 사용자 생성 처리에 실패했습니다.: " + error.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR
                 );
                 throw error;
             }
         });
-
-
     }
 
     private String generateNumberByUuidLast7(String uuidId) {
