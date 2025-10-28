@@ -21,9 +21,9 @@ import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
 import org.ever._4ever_be_business.hr.repository.*;
 import org.ever._4ever_be_business.hr.service.EmployeeService;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
-import org.ever._4ever_be_business.infrastructure.kafka.config.KafkaTopicConfig;
 import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
 import org.ever.event.CreateAuthUserEvent;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -45,7 +45,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeTrainingRepository employeeTrainingRepository;
     private final AsyncResultManager<EmployeeCreateResponseDto> asyncResultManager;
     private final SagaTransactionManager sagaManager;
-    private final KafkaProducerService kafkaProducerService;
+    @Qualifier("kafkaUserServiceAdapter")
     private final UserServicePort userServicePort;
 
 
