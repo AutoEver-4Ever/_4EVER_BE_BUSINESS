@@ -17,10 +17,12 @@ import java.util.concurrent.CompletableFuture;
 /**
  * UserServicePort 인터페이스를 구현하여 실제 HTTP API 호출 수행
  * RestClient를 사용하여 User Service와 통신
+ * prod 환경에서 사용
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "external.mock.enabled", havingValue = "false")
 public class UserServiceAdapter implements UserServicePort {
 
     private final RestClient restClient;

@@ -12,6 +12,13 @@ public class TrainingRequestDto {
     @JsonProperty("programId")
     private String programId;
 
-    @JsonProperty("employeeId")
     private String employeeId;
+
+    public TrainingRequestDto(String programId) {
+        this.programId = programId;
+    }
+
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
 }

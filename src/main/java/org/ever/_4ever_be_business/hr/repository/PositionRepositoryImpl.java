@@ -112,7 +112,7 @@ public class PositionRepositoryImpl implements PositionRepositoryCustom {
      */
     @lombok.Getter
     @lombok.AllArgsConstructor
-    private static class PositionInfoProjection {
+    public static class PositionInfoProjection {
         private String positionId;
         private String positionNumber;
         private String positionName;
