@@ -8,6 +8,7 @@ import org.ever._4ever_be_business.common.util.UuidV7Generator;
 
 import java.time.LocalDateTime;
 
+// 내부 직원의 메타 데이터
 @Entity
 @Table(name="employee")
 @NoArgsConstructor
