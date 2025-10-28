@@ -2,12 +2,11 @@ package org.ever._4ever_be_business.hr.integration.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.common.util.UuidV7Generator;
-import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.UserInfoResponse;
 import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
 import org.ever._4ever_be_business.infrastructure.kafka.config.KafkaTopicConfig;
 import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
+import org.ever.event.CreateAuthUserEvent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -35,27 +34,31 @@ public class KafkaUserServiceAdapter implements UserServicePort {
     // - 코레오그래피에서는 발생 성공(브로커 저장)만 보장하면 충분함.
     // - 최종 성공/실패는 완료 이벤트(process-completed)에서 확정함.
     @Override
-    public CompletableFuture<Void> createInternalUserAccount(
-            AuthUserCreateRequestDto requestDto
+    public CompletableFuture<Void> createAuthUserPort(
+            CreateAuthUserEvent event
     ) {
         try {
-            String eventId = UuidV7Generator.generate();        // 이벤트 키
-            String transactionId = UuidV7Generator.generate();  // 상관 키
-            String key = requestDto.getUserId();                // 파티션 키
+            // 파티션 키: 모든 이벤트가 동일한 파티션을 라우팅 되도록 보장하는 키
+            // 파티션 키로 사용자 ID를 사용함.
+            String key = event.getUserId();
 
             // 동기 발행(sendEventSync)로 카프카 메시지 발생
             kafkaProducerService.sendEventSync(
                     KafkaTopicConfig.CREATE_USER_TOPIC,
                     key,
-                    requestDto
+                    event
             );
-            log.info("[KAFKA] 내부 사용자 생성 요청 발행 완료 - eventId: {}, transactionId: {}, key: {}, email: {}",
-                    eventId, transactionId, key, requestDto.getUserEmail());
+
+            log.info("[KAFKA] 내부 사용자 생성 요청 발행 완료 - transactionId: {}, eventId: {}, key: {}, email: {}",
+                    event.getTransactionId(), event.getEventId(), key, event.getEmail());
 
             return CompletableFuture.completedFuture(null);
         } catch (Exception error) {
-            log.error("[KAFKA] 내부 사용자 생성 요청 발행 실패 - userId: {}, error: {}", requestDto.getUserId(), error.getMessage());
-            throw new RuntimeException("사용자 계정 생성 요청 발행 실패", error);
+            log.error("[KAFKA] 내부 사용자 생성 이벤트 발행 실패 - transactionId: {}, error: {}",
+                    event.getTransactionId(), error.getMessage(), error);
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            future.completeExceptionally(error);
+            return future;
         }
     }
 }
