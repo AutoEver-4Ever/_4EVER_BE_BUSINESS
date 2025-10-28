@@ -151,10 +151,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 
         // 이 부분은 Kafka를 이용해서 처리해야함 -> 추후 처리
-        AuthUserCreateResponseDto authResponse = userServicePort.createInternalUserAccount(authRequest).join();
-        if (authResponse == null || authResponse.getUserId() == null) {
-            throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_ERROR, "사용자 계정 생성에 실패했습니다.");
-        }
+//        authResponse = userServicePort.createInternalUserAccount(authRequest).join();
+//        if (authResponse == null || authResponse.getUserId() == null) {
+//            throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_ERROR, "사용자 계정 생성에 실패했습니다.");
+//        }
 
         // InternalUser 저장
         InternelUser internalUser = InternelUser.createNewInternalUser(

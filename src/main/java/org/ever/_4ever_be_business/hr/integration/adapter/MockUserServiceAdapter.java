@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.mock.MockDataProvider;
 import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateRequestDto;
-import org.ever._4ever_be_business.hr.dto.request.AuthUserCreateResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.UserInfoResponse;
 import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,8 +31,8 @@ public class MockUserServiceAdapter implements UserServicePort {
     }
 
     @Override
-    public CompletableFuture<AuthUserCreateResponseDto> createInternalUserAccount(AuthUserCreateRequestDto request) {
-        log.info("[MOCK ADAPTER] AuthUserCreateResponseDto 호출");
+    public CompletableFuture<Void> createInternalUserAccount(AuthUserCreateRequestDto request) {
+        log.info("[MOCK ADAPTER] createInternalUserAccount 호출");
         return null;
     }
 }
