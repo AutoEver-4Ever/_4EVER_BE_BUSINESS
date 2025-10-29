@@ -5,8 +5,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
+import org.ever._4ever_be_business.common.exception.BusinessException;
+import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.dto.request.*;
 import org.ever._4ever_be_business.hr.dto.response.*;
+import org.ever._4ever_be_business.hr.entity.CustomerUser;
 import org.ever._4ever_be_business.hr.entity.Department;
 import org.ever._4ever_be_business.hr.entity.InternelUser;
 import org.ever._4ever_be_business.hr.entity.Position;
@@ -15,6 +18,7 @@ import org.ever._4ever_be_business.hr.enums.PayrollStatus;
 import org.ever._4ever_be_business.hr.enums.TrainingCategory;
 import org.ever._4ever_be_business.hr.enums.TrainingStatus;
 import org.ever._4ever_be_business.tam.enums.AttendanceStatus;
+import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
 import org.ever._4ever_be_business.hr.repository.DepartmentRepository;
 import org.ever._4ever_be_business.hr.repository.InternelUserRepository;
 import org.ever._4ever_be_business.hr.repository.PositionRepository;
@@ -65,6 +69,7 @@ public class HrmController {
     private final AttendanceService attendanceService;
     private final CustomerUserService customerUserService;
     private final InternelUserRepository internelUserRepository;
+    private final CustomerUserRepository customerUserRepository;
     private final DepartmentRepository departmentRepository;
     private final PositionRepository positionRepository;
     private final TrainingRepository trainingRepository;
@@ -252,6 +257,38 @@ public class HrmController {
         log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 성공 - internelUserId: {}, availableCount: {}",
                 internelUserId, result.size());
         return ApiResponse.success(result, "수강 가능한 교육 프로그램 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    // ==================== 사용자 이름 조회 ====================
+
+    /**
+     * 내부 사용자 이름 단건 조회
+     */
+    @GetMapping("/users/internal/{userId}")
+    public ApiResponse<UserNameResponse> getInternalUserName(@PathVariable String userId) {
+        log.info("내부 사용자 이름 조회 API 호출 - userId: {}", userId);
+
+        InternelUser internelUser = internelUserRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "내부 사용자 정보를 찾을 수 없습니다."));
+
+        UserNameResponse response = new UserNameResponse(internelUser.getUserId(), internelUser.getName());
+        log.info("내부 사용자 이름 조회 성공 - userId: {}, userName: {}", response.getUserId(), response.getUserName());
+        return ApiResponse.success(response, "내부 사용자 이름을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 고객 사용자 이름 단건 조회
+     */
+    @GetMapping("/users/customer/{userId}")
+    public ApiResponse<UserNameResponse> getCustomerUserName(@PathVariable String userId) {
+        log.info("고객 사용자 이름 조회 API 호출 - userId: {}", userId);
+
+        CustomerUser customerUser = customerUserRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "고객 사용자 정보를 찾을 수 없습니다."));
+
+        UserNameResponse response = new UserNameResponse(customerUser.getUserId(), customerUser.getCustomerName());
+        log.info("고객 사용자 이름 조회 성공 - userId: {}, userName: {}", response.getUserId(), response.getUserName());
+        return ApiResponse.success(response, "고객 사용자 이름을 조회했습니다.", HttpStatus.OK);
     }
 
     /**
