@@ -150,15 +150,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 Department requestedDepartment = departmentRepository.findById(requestDto.getDepartmentId())
                         .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 부서 정보를 찾을 수 없습니다."));
 
-                Department positionDepartment = position.getDepartment();
-                if (positionDepartment == null) {
-                    throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 직급에 매핑된 부서 정보를 찾을 수 없습니다.");
-                }
-                if (!positionDepartment.getId().equals(requestedDepartment.getId())) {
-                    throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR,
-                            "[ERROR] 요청한 부서와 직급이 일치하지 않습니다.");
-                }
-
                 String userId = UuidV7Generator.generate();
                 String employeeCode = "EMP-" + generateNumberByUuidLast7(userId);
                 String address = requestDto.getBaseAddress() + " " + requestDto.getDetailAddress();
