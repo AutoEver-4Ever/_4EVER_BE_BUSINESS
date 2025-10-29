@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Component("kafkaUserServicePort")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "external.mock.enabled", havingValue = "kafka", matchIfMissing = true)
+@ConditionalOnProperty(name = "external.hr.user-service.adapter", havingValue = "kafka", matchIfMissing = true)
 public class KafkaUserServiceAdapter implements UserServicePort {
 
     private final KafkaProducerService kafkaProducerService;
