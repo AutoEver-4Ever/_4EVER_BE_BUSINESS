@@ -38,6 +38,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeDAO employeeDAO;
     private final EmployeeRepository employeeRepository;
     private final PositionRepository positionRepository;
+    private final DepartmentRepository departmentRepository;
     private final TrainingRepository trainingRepository;
     private final InternelUserRepository internalUserRepository;
     private final EmployeeTrainingRepository employeeTrainingRepository;
@@ -145,11 +146,15 @@ public class EmployeeServiceImpl implements EmployeeService {
             try {
                 Position position = positionRepository.findById(requestDto.getPositionId())
                         .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 직급 정보를 찾을 수 없습니다."));
-                Department department = position.getDepartment();
-                if (department == null) {
+
+                Department requestedDepartment = departmentRepository.findById(requestDto.getDepartmentId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 부서 정보를 찾을 수 없습니다."));
+
+                Department positionDepartment = position.getDepartment();
+                if (positionDepartment == null) {
                     throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 직급에 매핑된 부서 정보를 찾을 수 없습니다.");
                 }
-                if (!department.getId().equals(requestDto.getDepartmentId())) {
+                if (!positionDepartment.getId().equals(requestedDepartment.getId())) {
                     throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR,
                             "[ERROR] 요청한 부서와 직급이 일치하지 않습니다.");
                 }
@@ -181,7 +186,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .success(true)      // 여기는 성공한 경우임.
                     .userId(userId)
                     .email(requestDto.getEmail())
-                    .departmentCode(department.getDepartmentCode())
+                    .departmentCode(requestedDepartment.getDepartmentCode())
                     .positionCode(position.getPositionCode())
                     .build();
 

@@ -46,6 +46,12 @@ public class CreateAuthUserResultListener {
             return;
         }
 
+        if (!asyncResultManager.hasPendingResult(transactionId)) {
+            log.warn("[KAFKA][WARN] 처리할 DeferredResult가 없어 결과 이벤트를 무시합니다. transactionId: {}", transactionId);
+            acknowledgment.acknowledge();
+            return;
+        }
+
         try {
             if (event.isSuccess()) {
                 asyncResultManager.setSuccessResult(

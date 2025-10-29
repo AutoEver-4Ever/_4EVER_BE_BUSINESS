@@ -42,4 +42,11 @@ public interface AsyncResultManager<T> {
      * @param status HTTP 상태 코드
      */
     void setErrorResult(String transactionId, String errorMessage, HttpStatus status);
+
+    /**
+     * 트랜잭션 ID로 등록된 결과가 존재하는지 여부 확인
+     * @param transactionId 트랜잭션 ID
+     * @return 존재 여부
+     */
+    boolean hasPendingResult(String transactionId);
 }
