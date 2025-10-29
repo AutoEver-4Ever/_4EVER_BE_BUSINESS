@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "external.mock.enabled", havingValue = "kafka", matchIfMissing = true)
+@ConditionalOnProperty(name = "external.hr.user-service.adapter", havingValue = "kafka", matchIfMissing = true)
 public class CreateAuthUserResultListener {
 
     private final AsyncResultManager<CreateAuthUserResultEvent> asyncResultManager;
