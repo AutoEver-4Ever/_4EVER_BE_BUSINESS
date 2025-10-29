@@ -278,11 +278,18 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         sagaManager.executeSagaWithId(transactionId, () -> {
             try {
-                Position position = positionRepository.findById(requestDto.getPositionId())
-                        .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 직급 정보를 찾을 수 없습니다."));
-
+                // 1. Department 먼저 조회
                 Department requestedDepartment = departmentRepository.findById(requestDto.getDepartmentId())
                         .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 부서 정보를 찾을 수 없습니다."));
+
+                // 2. 해당 Department에 속한 Position 목록 조회
+                List<Position> departmentPositions = positionRepository.findByDepartmentId(requestDto.getDepartmentId());
+
+                // 3. 목록에서 positionId에 해당하는 Position 찾기 (해당 부서에 속한 직급인지 검증)
+                Position position = departmentPositions.stream()
+                        .filter(p -> p.getId().equals(requestDto.getPositionId()))
+                        .findFirst()
+                        .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 해당 부서에 속한 직급이 아닙니다. departmentId: " + requestDto.getDepartmentId() + ", positionId: " + requestDto.getPositionId()));
 
                 String userId = UuidV7Generator.generate();
                 String employeeCode = "EMP-" + generateNumberByUuidLast7(userId);

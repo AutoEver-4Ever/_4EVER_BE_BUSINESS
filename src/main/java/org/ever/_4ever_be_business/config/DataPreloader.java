@@ -80,6 +80,7 @@ public class DataPreloader {
 
     /**
      * 직급 데이터 생성
+     * 각 부서마다 모든 직급(사원~사장)을 생성
      */
     private void loadPositions() {
         if (positionRepository.count() > 0) {
@@ -89,39 +90,74 @@ public class DataPreloader {
 
         log.info("직급 데이터 생성 중...");
 
-        // 부서 조회 (직급에 부서를 할당하기 위해)
-        Department dept1 = departmentRepository.findByDepartmentCode("DEPT-001")
-                .orElseThrow(() -> new RuntimeException("Department not found"));
-        Department dept2 = departmentRepository.findByDepartmentCode("DEPT-002")
-                .orElseThrow(() -> new RuntimeException("Department not found"));
-        Department dept3 = departmentRepository.findByDepartmentCode("DEPT-003")
-                .orElseThrow(() -> new RuntimeException("Department not found"));
-
-        // 직급별 연봉 (만원 단위) - 각 직급을 부서에 할당
-        Position[] positions = {
-                new Position("POS-001", "사원", dept1, false, new BigDecimal("3500")),      // 구매 부서
-                new Position("POS-002", "주임", dept1, false, new BigDecimal("4000")),      // 구매 부서
-                new Position("POS-003", "대리", dept2, false, new BigDecimal("4800")),      // 영업 부서
-                new Position("POS-004", "과장", dept2, true, new BigDecimal("5800")),       // 영업 부서
-                new Position("POS-005", "차장", dept3, true, new BigDecimal("7000")),       // 재고 부서
-                new Position("POS-006", "부장", dept3, true, new BigDecimal("8500")),       // 재고 부서
-                new Position("POS-007", "이사", dept1, true, new BigDecimal("10500")),      // 구매 부서
-                new Position("POS-008", "상무", dept2, true, new BigDecimal("13000")),      // 영업 부서
-                new Position("POS-009", "전무", dept3, true, new BigDecimal("16000")),      // 재고 부서
-                new Position("POS-010", "사장", dept1, true, new BigDecimal("20000"))       // 구매 부서
+        // 모든 부서 조회
+        Department[] departments = {
+                departmentRepository.findByDepartmentCode("DEPT-001")
+                        .orElseThrow(() -> new RuntimeException("구매 부서를 찾을 수 없습니다.")),
+                departmentRepository.findByDepartmentCode("DEPT-002")
+                        .orElseThrow(() -> new RuntimeException("영업 부서를 찾을 수 없습니다.")),
+                departmentRepository.findByDepartmentCode("DEPT-003")
+                        .orElseThrow(() -> new RuntimeException("재고 부서를 찾을 수 없습니다.")),
+                departmentRepository.findByDepartmentCode("DEPT-004")
+                        .orElseThrow(() -> new RuntimeException("재무 부서를 찾을 수 없습니다.")),
+                departmentRepository.findByDepartmentCode("DEPT-005")
+                        .orElseThrow(() -> new RuntimeException("인적자원 부서를 찾을 수 없습니다.")),
+                departmentRepository.findByDepartmentCode("DEPT-006")
+                        .orElseThrow(() -> new RuntimeException("생산 부서를 찾을 수 없습니다."))
         };
 
-        for (Position pos : positions) {
-            positionRepository.save(pos);
-            log.info("직급 생성: {} ({}) - 부서: {}, 연봉: {}만원, 관리직: {}",
-                    pos.getPositionName(),
-                    pos.getPositionCode(),
-                    pos.getDepartment().getDepartmentName(),
-                    pos.getSalary(),
-                    pos.getIsManager() ? "Y" : "N");
+        // 직급 정보 (이름, 관리직 여부, 연봉)
+        Object[][] positionInfos = {
+                {"사원", false, new BigDecimal("3500")},
+                {"주임", false, new BigDecimal("4000")},
+                {"대리", false, new BigDecimal("4800")},
+                {"과장", true, new BigDecimal("5800")},
+                {"차장", true, new BigDecimal("7000")},
+                {"부장", true, new BigDecimal("8500")},
+                {"이사", true, new BigDecimal("10500")},
+                {"상무", true, new BigDecimal("13000")},
+                {"전무", true, new BigDecimal("16000")},
+                {"사장", true, new BigDecimal("20000")}
+        };
+
+        int positionCount = 0;
+
+        // 각 부서마다 모든 직급 생성
+        for (int deptIdx = 0; deptIdx < departments.length; deptIdx++) {
+            Department dept = departments[deptIdx];
+            String deptCode = String.format("%03d", deptIdx + 1);
+
+            for (int posIdx = 0; posIdx < positionInfos.length; posIdx++) {
+                Object[] info = positionInfos[posIdx];
+                String positionName = (String) info[0];
+                boolean isManager = (boolean) info[1];
+                BigDecimal salary = (BigDecimal) info[2];
+
+                // 직급 코드: POS-{부서번호}{직급번호} (예: POS-001001, POS-001002, ...)
+                String positionCode = String.format("POS-%s%02d", deptCode, posIdx + 1);
+
+                Position position = new Position(
+                        positionCode,
+                        positionName,
+                        dept,
+                        isManager,
+                        salary
+                );
+
+                positionRepository.save(position);
+                positionCount++;
+
+                log.info("직급 생성: {} ({}) - 부서: {}, 연봉: {}만원, 관리직: {}",
+                        position.getPositionName(),
+                        position.getPositionCode(),
+                        dept.getDepartmentName(),
+                        position.getSalary(),
+                        position.getIsManager() ? "Y" : "N");
+            }
         }
 
-        log.info("총 {}개의 직급 생성 완료", positions.length);
+        log.info("총 {}개의 직급 생성 완료 ({}개 부서 × {}개 직급)",
+                positionCount, departments.length, positionInfos.length);
     }
 
     /**
@@ -222,13 +258,13 @@ public class DataPreloader {
 
         log.info("내부 직원 데이터 생성 중...");
 
-        // Position 조회 (사원, 대리, 과장 사용)
-        Position position1 = positionRepository.findByPositionCode("POS-001")
-                .orElseThrow(() -> new RuntimeException("Position not found"));
-        Position position2 = positionRepository.findByPositionCode("POS-003")
-                .orElseThrow(() -> new RuntimeException("Position not found"));
-        Position position3 = positionRepository.findByPositionCode("POS-004")
-                .orElseThrow(() -> new RuntimeException("Position not found"));
+        // Position 조회 (구매 부서의 사원, 대리, 과장 사용)
+        Position position1 = positionRepository.findByPositionCode("POS-00101")  // 구매-사원
+                .orElseThrow(() -> new RuntimeException("Position not found: POS-00101"));
+        Position position2 = positionRepository.findByPositionCode("POS-00103")  // 구매-대리
+                .orElseThrow(() -> new RuntimeException("Position not found: POS-00103"));
+        Position position3 = positionRepository.findByPositionCode("POS-00104")  // 구매-과장
+                .orElseThrow(() -> new RuntimeException("Position not found: POS-00104"));
 
         InternelUser[] internelUsers = {
                 new InternelUser(
