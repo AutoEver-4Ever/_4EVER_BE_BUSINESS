@@ -76,7 +76,7 @@ public class EmployeeDAOImpl implements EmployeeDAO {
                 ? employeeInfo.getUpdatedAt().toString().substring(0, 10)
                 : null;
 
-        // DTO 조립
+        // DTO 조립 (trainings는 Service에서 채움)
         EmployeeDetailDto result = new EmployeeDetailDto(
                 employeeInfo.getEmployeeId(),
                 employeeInfo.getEmployeeNumber(),
@@ -90,7 +90,8 @@ public class EmployeeDAOImpl implements EmployeeDAO {
                 birthDate,
                 employeeInfo.getAddress(),
                 createdAt,
-                updatedAt
+                updatedAt,
+                null // trainings - Service에서 채움
         );
 
         log.debug("직원 상세 정보 조회 완료 - employeeId: {}, employeeName: {}",

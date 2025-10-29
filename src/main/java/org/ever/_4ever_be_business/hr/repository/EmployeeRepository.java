@@ -37,4 +37,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, String>, Emp
      * @return Employee
      */
     Optional<Employee> findByInternelUser(InternelUser internelUser);
+
+    /**
+     * InternelUser ID로 Employee 조회
+     *
+     * @param internelUserId InternelUser ID
+     * @return Employee
+     */
+    Optional<Employee> findByInternelUserId(String internelUserId);
 }

@@ -249,7 +249,7 @@ public class QuotationServiceImpl implements QuotationService {
         }
         approval.approveAndReadyForShipment(employeeId);
         quotationApprovalRepository.save(approval);
-        log.info("견적서 승인 완료 - status: READY_FOR_SHIPMENT");
+        log.info("견적서 승인 완료 - status: APPROVAL");
 
         // 3. QuotationItem 목록 조회
         List<QuotationItem> quotationItems = quotationItemRepository.findAll().stream()
@@ -332,6 +332,28 @@ public class QuotationServiceImpl implements QuotationService {
 
         log.info("견적서 검토 확정 성공 - quotationId: {}, status: {}",
                 quotationId, approval.getApprovalStatus());
+    }
+
+    @Override
+    @Transactional
+    public void rejectQuotation(String quotationId, String reason) {
+        log.info("견적서 거부 요청 - quotationId: {}, reason: {}", quotationId, reason);
+
+        // 1. Quotation 엔티티 조회
+        Quotation quotation = quotationDAO.findQuotationEntityById(quotationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUOTATION_NOT_FOUND));
+
+        // 2. QuotationApproval 조회
+        QuotationApproval approval = quotation.getQuotationApproval();
+        if (approval == null) {
+            throw new BusinessException(ErrorCode.QUOTATION_APPROVAL_NOT_FOUND);
+        }
+
+        // 3. 거부 처리
+        approval.reject(reason);
+        quotationApprovalRepository.save(approval);
+
+        log.info("견적서 거부 완료 - quotationId: {}, status: REJECTED", quotationId);
     }
 
     @Override

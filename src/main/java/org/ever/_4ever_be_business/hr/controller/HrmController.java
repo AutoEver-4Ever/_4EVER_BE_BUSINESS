@@ -27,6 +27,7 @@ import org.ever._4ever_be_business.tam.dto.request.CheckInRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.CheckOutRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.UpdateTimeRecordDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
+import org.ever._4ever_be_business.tam.dto.response.AttendanceRecordDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceStatusDto;
 import org.ever._4ever_be_business.tam.dto.response.TimeRecordDetailDto;
 import org.ever._4ever_be_business.tam.dto.response.TimeRecordListItemDto;
@@ -62,6 +63,7 @@ public class HrmController {
     private final TrainingService trainingService;
     private final TimeRecordService timeRecordService;
     private final AttendanceService attendanceService;
+    private final CustomerUserService customerUserService;
     private final InternelUserRepository internelUserRepository;
     private final DepartmentRepository departmentRepository;
     private final PositionRepository positionRepository;
@@ -225,6 +227,43 @@ public class HrmController {
         EmployeeDetailDto result = employeeService.getEmployeeDetail(employeeId);
         log.info("직원 상세 정보 조회 성공 - employeeId: {}, employeeName: {}", employeeId, result.getName());
         return ApiResponse.success(result, "직원 상세 정보를 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUser ID로 직원 정보 및 교육 이력 조회
+     */
+    @GetMapping("/employees/{internelUserId}")
+    public ApiResponse<EmployeeWithTrainingDto> getEmployeeWithTrainingByInternelUserId(@PathVariable String internelUserId) {
+        log.info("InternelUser ID로 직원 정보 및 교육 이력 조회 API 호출 - internelUserId: {}", internelUserId);
+        EmployeeWithTrainingDto result = employeeService.getEmployeeWithTrainingByInternelUserId(internelUserId);
+        log.info("InternelUser ID로 직원 정보 및 교육 이력 조회 성공 - internelUserId: {}, employeeName: {}, trainingCount: {}",
+                internelUserId, result.getName(), result.getTrainings().size());
+        return ApiResponse.success(result, "직원 정보 및 교육 이력을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUser ID로 수강 가능한 교육 프로그램 목록 조회
+     * (수강 중이지 않고, 모집 중이 아닌 교육 프로그램)
+     */
+    @GetMapping("/employees/{internelUserId}/available-trainings")
+    public ApiResponse<List<TrainingProgramSimpleDto>> getAvailableTrainingsByInternelUserId(@PathVariable String internelUserId) {
+        log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 API 호출 - internelUserId: {}", internelUserId);
+        List<TrainingProgramSimpleDto> result = employeeService.getAvailableTrainingsByInternelUserId(internelUserId);
+        log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 성공 - internelUserId: {}, availableCount: {}",
+                internelUserId, result.size());
+        return ApiResponse.success(result, "수강 가능한 교육 프로그램 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * CustomerUser ID로 고객 사용자 상세 정보 조회
+     */
+    @GetMapping("/customers/by-customer-user/{customerUserId}")
+    public ApiResponse<CustomerUserDetailDto> getCustomerUserDetailByUserId(@PathVariable String customerUserId) {
+        log.info("CustomerUser ID로 고객 사용자 상세 정보 조회 API 호출 - customerUserId: {}", customerUserId);
+        CustomerUserDetailDto result = customerUserService.getCustomerUserDetailByUserId(customerUserId);
+        log.info("CustomerUser ID로 고객 사용자 상세 정보 조회 성공 - customerUserId: {}, customerName: {}",
+                customerUserId, result.getCustomerName());
+        return ApiResponse.success(result, "고객 사용자 상세 정보를 조회했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -729,25 +768,58 @@ public class HrmController {
     }
 
     /**
-     * 출근 처리
+     * 출근 처리 (InternelUser ID 기반)
      */
     @PatchMapping("/attendance/check-in")
     public ApiResponse<Void> checkIn(@RequestBody CheckInRequestDto requestDto) {
-        log.info("출근 처리 API 호출 - employeeId: {}", requestDto.getEmployeeId());
-        attendanceService.checkIn(requestDto.getEmployeeId());
-        log.info("출근 처리 성공 - employeeId: {}", requestDto.getEmployeeId());
+        log.info("출근 처리 API 호출 - internelUserId: {}", requestDto.getEmployeeId());
+        attendanceService.checkInByInternelUserId(requestDto.getEmployeeId());
+        log.info("출근 처리 성공 - internelUserId: {}", requestDto.getEmployeeId());
         return ApiResponse.success(null, "출근 처리가 완료되었습니다.", HttpStatus.OK);
     }
 
     /**
-     * 퇴근 처리
+     * 퇴근 처리 (InternelUser ID 기반)
      */
     @PatchMapping("/attendance/check-out")
     public ApiResponse<Void> checkOut(@RequestBody CheckOutRequestDto requestDto) {
-        log.info("퇴근 처리 API 호출 - employeeId: {}", requestDto.getEmployeeId());
-        attendanceService.checkOut(requestDto.getEmployeeId());
-        log.info("퇴근 처리 성공 - employeeId: {}", requestDto.getEmployeeId());
+        log.info("퇴근 처리 API 호출 - internelUserId: {}", requestDto.getEmployeeId());
+        attendanceService.checkOutByInternelUserId(requestDto.getEmployeeId());
+        log.info("퇴근 처리 성공 - internelUserId: {}", requestDto.getEmployeeId());
         return ApiResponse.success(null, "퇴근 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUser ID로 출근 처리
+     */
+    @PatchMapping("/attendance/check-in-by-internel-user")
+    public ApiResponse<Void> checkInByInternelUserId(@RequestBody CheckInRequestDto requestDto) {
+        log.info("InternelUser ID로 출근 처리 API 호출 - internelUserId: {}", requestDto.getEmployeeId());
+        attendanceService.checkInByInternelUserId(requestDto.getEmployeeId());
+        log.info("InternelUser ID로 출근 처리 성공 - internelUserId: {}", requestDto.getEmployeeId());
+        return ApiResponse.success(null, "출근 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUser ID로 퇴근 처리
+     */
+    @PatchMapping("/attendance/check-out-by-internel-user")
+    public ApiResponse<Void> checkOutByInternelUserId(@RequestBody CheckOutRequestDto requestDto) {
+        log.info("InternelUser ID로 퇴근 처리 API 호출 - internelUserId: {}", requestDto.getEmployeeId());
+        attendanceService.checkOutByInternelUserId(requestDto.getEmployeeId());
+        log.info("InternelUser ID로 퇴근 처리 성공 - internelUserId: {}", requestDto.getEmployeeId());
+        return ApiResponse.success(null, "퇴근 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUser ID로 출퇴근 기록 목록 조회
+     */
+    @GetMapping("/employees/{internelUserId}/attendance-records")
+    public ApiResponse<List<AttendanceRecordDto>> getAttendanceRecordsByInternelUserId(@PathVariable String internelUserId) {
+        log.info("InternelUser ID로 출퇴근 기록 목록 조회 API 호출 - internelUserId: {}", internelUserId);
+        List<AttendanceRecordDto> result = attendanceService.getAttendanceRecordsByInternelUserId(internelUserId);
+        log.info("InternelUser ID로 출퇴근 기록 목록 조회 성공 - internelUserId: {}, recordCount: {}", internelUserId, result.size());
+        return ApiResponse.success(result, "출퇴근 기록 목록을 조회했습니다.", HttpStatus.OK);
     }
 
     /**

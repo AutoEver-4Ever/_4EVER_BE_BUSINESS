@@ -37,6 +37,15 @@ public interface AttendanceRepositoryCustom {
     Page<AttendanceListItemDto> findAttendanceList(AttendanceListSearchConditionVo condition, Pageable pageable);
 
     /**
+     * 출퇴근 기록 Entity 목록 조회 (실시간 계산용)
+     *
+     * @param condition 검색 조건
+     * @param pageable  페이징 정보
+     * @return Page<Attendance>
+     */
+    Page<Attendance> findAttendanceEntities(AttendanceListSearchConditionVo condition, Pageable pageable);
+
+    /**
      * 오늘 날짜의 특정 직원 출퇴근 기록 조회
      *
      * @param employeeId 직원 ID

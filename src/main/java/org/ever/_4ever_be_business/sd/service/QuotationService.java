@@ -52,6 +52,14 @@ public interface QuotationService {
     void confirmQuotation(String quotationId);
 
     /**
+     * 견적서 거부
+     *
+     * @param quotationId 견적서 ID
+     * @param reason 거부 사유
+     */
+    void rejectQuotation(String quotationId, String reason);
+
+    /**
      * 재고 확인
      *
      * @param requestDto 재고 확인 요청

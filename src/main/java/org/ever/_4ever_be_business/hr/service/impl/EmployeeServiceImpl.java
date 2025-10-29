@@ -14,6 +14,18 @@ import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeTrainingItemDto;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeWithTrainingDto;
+import org.ever._4ever_be_business.hr.dto.response.TrainingProgramSimpleDto;
+import org.ever._4ever_be_business.hr.entity.Employee;
+import org.ever._4ever_be_business.hr.entity.EmployeeTraining;
+import org.ever._4ever_be_business.hr.entity.InternelUser;
+import org.ever._4ever_be_business.hr.entity.Position;
+import org.ever._4ever_be_business.hr.entity.Training;
+import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
+import org.ever._4ever_be_business.hr.repository.EmployeeTrainingRepository;
+import org.ever._4ever_be_business.hr.repository.PositionRepository;
+import org.ever._4ever_be_business.hr.repository.TrainingRepository;
 import org.ever._4ever_be_business.hr.entity.*;
 import org.ever._4ever_be_business.hr.enums.UserStatus;
 import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
@@ -30,6 +42,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -38,25 +55,58 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeDAO employeeDAO;
     private final EmployeeRepository employeeRepository;
     private final PositionRepository positionRepository;
-    private final DepartmentRepository departmentRepository;
     private final TrainingRepository trainingRepository;
-    private final InternelUserRepository internalUserRepository;
     private final EmployeeTrainingRepository employeeTrainingRepository;
-    private final AsyncResultManager<CreateAuthUserResultEvent> asyncResultManager;
+    private final DepartmentRepository departmentRepository;
+    private final InternelUserRepository internalUserRepository;
+    private final AsyncResultManager asyncResultManager;
     private final SagaTransactionManager sagaManager;
     private final UserServicePort userServicePort;
-
 
     @Override
     @Transactional(readOnly = true)
     public EmployeeDetailDto getEmployeeDetail(String employeeId) {
         log.info("직원 상세 정보 조회 요청 - employeeId: {}", employeeId);
 
-        EmployeeDetailDto result = employeeDAO.findEmployeeDetailById(employeeId)
+        EmployeeDetailDto employeeDetail = employeeDAO.findEmployeeDetailById(employeeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
 
-        log.info("직원 상세 정보 조회 성공 - employeeId: {}, employeeName: {}",
-                employeeId, result.getName());
+        // 교육 이력 조회
+        List<EmployeeTraining> employeeTrainings = employeeTrainingRepository.findByEmployeeId(employeeId);
+
+        List<EmployeeTrainingItemDto> trainingItems = employeeTrainings.stream()
+                .map(et -> {
+                    Training training = et.getTraining();
+                    return new EmployeeTrainingItemDto(
+                            training.getId(),
+                            training.getTrainingName(),
+                            training.getCategory() != null ? training.getCategory().name() : null,
+                            training.getDurationHours(),
+                            et.getCompletionStatus()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 교육 이력을 포함한 DTO 재생성
+        EmployeeDetailDto result = new EmployeeDetailDto(
+                employeeDetail.getEmployeeId(),
+                employeeDetail.getEmployeeNumber(),
+                employeeDetail.getName(),
+                employeeDetail.getEmail(),
+                employeeDetail.getPhone(),
+                employeeDetail.getPosition(),
+                employeeDetail.getDepartment(),
+                employeeDetail.getStatusCode(),
+                employeeDetail.getHireDate(),
+                employeeDetail.getBirthDate(),
+                employeeDetail.getAddress(),
+                employeeDetail.getCreatedAt(),
+                employeeDetail.getUpdatedAt(),
+                trainingItems
+        );
+
+        log.info("직원 상세 정보 조회 성공 - employeeId: {}, employeeName: {}, trainingCount: {}",
+                employeeId, result.getName(), trainingItems.size());
 
         return result;
     }
@@ -129,6 +179,90 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         log.info("교육 프로그램 신청 성공 - employeeId: {}, trainingId: {}, trainingName: {}",
                 requestDto.getEmployeeId(), training.getId(), training.getTrainingName());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeWithTrainingDto getEmployeeWithTrainingByInternelUserId(String internelUserId) {
+        log.info("InternelUser ID로 직원 정보 및 교육 이력 조회 요청 - internelUserId: {}", internelUserId);
+
+        // 1. InternelUser ID로 Employee 조회
+        Employee employee = employeeRepository.findByInternelUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
+
+        // 2. Employee 상세 정보 조회 (기존 메서드 재사용)
+        EmployeeDetailDto employeeDetail = employeeDAO.findEmployeeDetailById(employee.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 상세 정보를 찾을 수 없습니다."));
+
+        // 3. EmployeeTraining 목록 조회
+        List<EmployeeTraining> employeeTrainings = employeeTrainingRepository.findByEmployeeId(employee.getId());
+
+        // 4. EmployeeTrainingItemDto 리스트 생성
+        List<EmployeeTrainingItemDto> trainingItems = employeeTrainings.stream()
+                .map(et -> {
+                    Training training = et.getTraining();
+                    return new EmployeeTrainingItemDto(
+                            training.getId(),
+                            training.getTrainingName(),
+                            training.getCategory() != null ? training.getCategory().name() : null,
+                            training.getDurationHours(),
+                            et.getCompletionStatus()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 5. EmployeeWithTrainingDto 생성 및 반환
+        EmployeeWithTrainingDto result = new EmployeeWithTrainingDto(
+                employeeDetail.getEmployeeId(),
+                employeeDetail.getEmployeeNumber(),
+                employeeDetail.getName(),
+                employeeDetail.getEmail(),
+                employeeDetail.getPhone(),
+                employeeDetail.getPosition(),
+                employeeDetail.getDepartment(),
+                employeeDetail.getStatusCode(),
+                employeeDetail.getHireDate(),
+                employeeDetail.getBirthDate(),
+                employeeDetail.getAddress(),
+                employeeDetail.getCreatedAt(),
+                employeeDetail.getUpdatedAt(),
+                trainingItems
+        );
+
+        log.info("InternelUser ID로 직원 정보 및 교육 이력 조회 성공 - internelUserId: {}, employeeId: {}, trainingCount: {}",
+                internelUserId, employee.getId(), trainingItems.size());
+
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TrainingProgramSimpleDto> getAvailableTrainingsByInternelUserId(String internelUserId) {
+        log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 요청 - internelUserId: {}", internelUserId);
+
+        // 1. InternelUser ID로 Employee 조회
+        Employee employee = employeeRepository.findByInternelUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
+
+        // 2. 해당 직원이 수강 중인 Training ID 목록 조회
+        List<EmployeeTraining> employeeTrainings = employeeTrainingRepository.findByEmployeeId(employee.getId());
+        List<String> enrolledTrainingIds = employeeTrainings.stream()
+                .map(et -> et.getTraining().getId())
+                .collect(Collectors.toList());
+
+        log.debug("수강 중인 교육 프로그램 수: {}", enrolledTrainingIds.size());
+
+        // 3. 전체 Training 중에서 수강 중이지 않고, RECRUITING 상태가 아닌 것만 조회
+        List<TrainingProgramSimpleDto> availableTrainings = trainingRepository.findAll().stream()
+                .filter(training -> !enrolledTrainingIds.contains(training.getId())) // 수강 중이지 않은 것
+                .filter(training -> training.getTrainingStatus() != org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING) // RECRUITING 제외
+                .map(training -> new TrainingProgramSimpleDto(training.getId(), training.getTrainingName()))
+                .collect(Collectors.toList());
+
+        log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 성공 - internelUserId: {}, availableCount: {}",
+                internelUserId, availableTrainings.size());
+
+        return availableTrainings;
     }
 
     @Override

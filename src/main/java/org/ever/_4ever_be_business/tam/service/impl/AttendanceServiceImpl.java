@@ -8,16 +8,26 @@ import org.ever._4ever_be_business.hr.entity.Employee;
 import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
 import org.ever._4ever_be_business.tam.dao.AttendanceDAO;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
+import org.ever._4ever_be_business.tam.dto.response.AttendanceRecordDto;
 import org.ever._4ever_be_business.tam.entity.Attendance;
+import org.ever._4ever_be_business.tam.enums.AttendanceStatus;
 import org.ever._4ever_be_business.tam.repository.AttendanceRepository;
 import org.ever._4ever_be_business.tam.service.AttendanceService;
 import org.ever._4ever_be_business.tam.vo.AttendanceListSearchConditionVo;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,12 +44,75 @@ public class AttendanceServiceImpl implements AttendanceService {
         log.info("출퇴근 기록 조회 요청 - employeeId: {}, startDate: {}, endDate: {}, status: {}",
                 condition.getEmployeeId(), condition.getStartDate(), condition.getEndDate(), condition.getStatus());
 
-        Page<AttendanceListItemDto> result = attendanceDAO.findAttendanceList(condition, pageable);
+        // Entity 조회
+        Page<Attendance> entityPage = attendanceDAO.findAttendanceEntities(condition, pageable);
+
+        // DTO로 변환 (실시간 계산 적용)
+        List<AttendanceListItemDto> dtoList = entityPage.getContent().stream()
+                .map(this::convertToAttendanceListItemDto)
+                .collect(Collectors.toList());
+
+        Page<AttendanceListItemDto> result = new PageImpl<>(dtoList, pageable, entityPage.getTotalElements());
 
         log.info("출퇴근 기록 조회 성공 - totalElements: {}, totalPages: {}",
                 result.getTotalElements(), result.getTotalPages());
 
         return result;
+    }
+
+    /**
+     * Attendance Entity를 AttendanceListItemDto로 변환 (실시간 계산 적용)
+     */
+    private AttendanceListItemDto convertToAttendanceListItemDto(Attendance attendance) {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+        // 근무 시간 계산 (실시간)
+        Integer workingHours = 0;
+        if (attendance.getCheckIn() != null) {
+            LocalDateTime endTime = attendance.getCheckOut() != null ? attendance.getCheckOut() : now;
+            long totalMinutes = Duration.between(attendance.getCheckIn(), endTime).toMinutes();
+            workingHours = (int) (totalMinutes / 60);
+        }
+
+        // 초과 근무 시간 계산 (18시 이후, 실시간)
+        Integer overtimeHours = 0;
+        if (attendance.getCheckIn() != null) {
+            LocalDate workDateLocal = attendance.getCheckIn().toLocalDate();
+            LocalDateTime endOfWorkDay = LocalDateTime.of(workDateLocal, LocalTime.of(18, 0));
+            LocalDateTime endTime = attendance.getCheckOut() != null ? attendance.getCheckOut() : now;
+
+            if (endTime.isAfter(endOfWorkDay)) {
+                long overtimeMinutes = Duration.between(endOfWorkDay, endTime).toMinutes();
+                overtimeHours = (int) (overtimeMinutes / 60);
+            }
+        }
+
+        return new AttendanceListItemDto(
+                attendance.getId(),
+                attendance.getEmployee().getId(),
+                attendance.getEmployee().getInternelUser().getName(),
+                attendance.getEmployee().getInternelUser().getEmployeeCode(),
+                attendance.getWorkDate() != null ? attendance.getWorkDate().format(dateFormatter) : null,
+                attendance.getCheckIn() != null ? attendance.getCheckIn().format(timeFormatter) : null,
+                attendance.getCheckOut() != null ? attendance.getCheckOut().format(timeFormatter) : null,
+                attendance.getStatus() != null ? attendance.getStatus().name() : "NORMAL",
+                "OFFICE",
+                "본사",
+                "",
+                workingHours,
+                overtimeHours,
+                "APPROVED",
+                "",
+                "",
+                attendance.getCreatedAt() != null ? attendance.getCreatedAt().format(dateFormatter) : null,
+                attendance.getUpdatedAt() != null ? attendance.getUpdatedAt().format(dateFormatter) : null,
+                "개발팀",
+                attendance.getEmployee().getInternelUser().getPosition().getPositionName(),
+                attendance.getStatus() == AttendanceStatus.LATE,
+                attendance.getStatus() == AttendanceStatus.EARLY_LEAVE
+        );
     }
 
     @Override
@@ -89,5 +162,117 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         log.info("퇴근 처리 성공 - employeeId: {}, attendanceId: {}, workMinutes: {}, overtimeMinutes: {}",
                 employeeId, attendance.getId(), attendance.getWorkMinutes(), attendance.getOvertimeMinutes());
+    }
+
+    @Override
+    @Transactional
+    public void checkInByInternelUserId(String internelUserId) {
+        log.info("InternelUser ID로 출근 처리 요청 - internelUserId: {}", internelUserId);
+
+        // 1. InternelUser ID로 Employee 조회
+        Employee employee = employeeRepository.findByInternelUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
+
+        // 2. Employee ID로 checkIn 처리
+        checkIn(employee.getId());
+
+        log.info("InternelUser ID로 출근 처리 성공 - internelUserId: {}, employeeId: {}", internelUserId, employee.getId());
+    }
+
+    @Override
+    @Transactional
+    public void checkOutByInternelUserId(String internelUserId) {
+        log.info("InternelUser ID로 퇴근 처리 요청 - internelUserId: {}", internelUserId);
+
+        // 1. InternelUser ID로 Employee 조회
+        Employee employee = employeeRepository.findByInternelUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
+
+        // 2. Employee ID로 checkOut 처리
+        checkOut(employee.getId());
+
+        log.info("InternelUser ID로 퇴근 처리 성공 - internelUserId: {}, employeeId: {}", internelUserId, employee.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AttendanceRecordDto> getAttendanceRecordsByInternelUserId(String internelUserId) {
+        log.info("InternelUser ID로 출퇴근 기록 목록 조회 요청 - internelUserId: {}", internelUserId);
+
+        // 1. InternelUser ID로 Employee 조회
+        Employee employee = employeeRepository.findByInternelUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
+
+        // 2. Employee의 모든 Attendance 조회
+        List<Attendance> attendances = attendanceRepository.findAllByEmployeeIdOrderByWorkDateDesc(employee.getId());
+
+        // 3. AttendanceRecordDto로 변환
+        List<AttendanceRecordDto> result = attendances.stream()
+                .map(this::convertToAttendanceRecordDto)
+                .collect(Collectors.toList());
+
+        log.info("InternelUser ID로 출퇴근 기록 목록 조회 성공 - internelUserId: {}, recordCount: {}", internelUserId, result.size());
+
+        return result;
+    }
+
+    private AttendanceRecordDto convertToAttendanceRecordDto(Attendance attendance) {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
+        // workDate
+        String workDate = attendance.getWorkDate() != null
+                ? attendance.getWorkDate().format(dateFormatter)
+                : null;
+
+        // checkInTime
+        String checkInTime = attendance.getCheckIn() != null
+                ? attendance.getCheckIn().format(dateTimeFormatter)
+                : null;
+
+        // checkOutTime
+        String checkOutTime = attendance.getCheckOut() != null
+                ? attendance.getCheckOut().format(dateTimeFormatter)
+                : null;
+
+        // totalWorkMinutes 계산
+        Long totalWorkMinutes = 0L;
+        if (attendance.getCheckIn() != null) {
+            LocalDateTime endTime = attendance.getCheckOut() != null ? attendance.getCheckOut() : now;
+            totalWorkMinutes = Duration.between(attendance.getCheckIn(), endTime).toMinutes();
+        }
+
+        // overtimeMinutes 계산 (18시 이후)
+        Long overtimeMinutes = 0L;
+        if (attendance.getCheckIn() != null) {
+            LocalDate workDateLocal = attendance.getCheckIn().toLocalDate();
+            LocalDateTime endOfWorkDay = LocalDateTime.of(workDateLocal, LocalTime.of(18, 0)); // 18:00
+
+            LocalDateTime endTime = attendance.getCheckOut() != null ? attendance.getCheckOut() : now;
+
+            if (endTime.isAfter(endOfWorkDay)) {
+                overtimeMinutes = Duration.between(endOfWorkDay, endTime).toMinutes();
+            }
+        }
+
+        // statusCode 필터링 (NORMAL, LATE, EARLY_LEAVE, ABSENT만)
+        String statusCode = "NORMAL";
+        if (attendance.getStatus() != null) {
+            AttendanceStatus status = attendance.getStatus();
+            if (status == AttendanceStatus.NORMAL || status == AttendanceStatus.LATE
+                    || status == AttendanceStatus.EARLY_LEAVE || status == AttendanceStatus.ABSENT) {
+                statusCode = status.name();
+            }
+        }
+
+        return new AttendanceRecordDto(
+                workDate,
+                checkInTime,
+                checkOutTime,
+                totalWorkMinutes,
+                overtimeMinutes,
+                statusCode
+        );
     }
 }

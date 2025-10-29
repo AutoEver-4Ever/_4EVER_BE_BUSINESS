@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmployeeDetailDto {
+public class EmployeeWithTrainingDto {
     @JsonProperty("employeeId")
     private String employeeId;
 

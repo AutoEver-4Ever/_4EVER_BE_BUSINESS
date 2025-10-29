@@ -220,6 +220,59 @@ public class AttendanceRepositoryImpl implements AttendanceRepositoryCustom {
     }
 
     @Override
+    public Page<Attendance> findAttendanceEntities(AttendanceListSearchConditionVo condition, Pageable pageable) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // 동적 where 조건
+        BooleanExpression whereClause = Expressions.asBoolean(true).isTrue();
+
+        if (condition.getEmployeeId() != null && !condition.getEmployeeId().isEmpty()) {
+            whereClause = whereClause.and(employee.id.eq(condition.getEmployeeId()));
+        }
+
+        if (condition.getStartDate() != null && !condition.getStartDate().isEmpty()) {
+            LocalDate startDate = LocalDate.parse(condition.getStartDate(), dateFormatter);
+            whereClause = whereClause.and(attendance.workDate.goe(startDate.atStartOfDay()));
+        }
+
+        if (condition.getEndDate() != null && !condition.getEndDate().isEmpty()) {
+            LocalDate endDate = LocalDate.parse(condition.getEndDate(), dateFormatter);
+            whereClause = whereClause.and(attendance.workDate.loe(endDate.atTime(23, 59, 59)));
+        }
+
+        if (condition.getStatus() != null && !condition.getStatus().isEmpty()) {
+            try {
+                AttendanceStatus status = AttendanceStatus.valueOf(condition.getStatus());
+                whereClause = whereClause.and(attendance.status.eq(status));
+            } catch (IllegalArgumentException e) {
+                // Invalid status, ignore
+            }
+        }
+
+        // Count query
+        Long total = queryFactory
+                .select(attendance.count())
+                .from(attendance)
+                .join(attendance.employee, employee)
+                .where(whereClause)
+                .fetchOne();
+
+        // Data query with fetch join
+        List<Attendance> content = queryFactory
+                .selectFrom(attendance)
+                .join(attendance.employee, employee).fetchJoin()
+                .join(employee.internelUser, internelUser).fetchJoin()
+                .join(internelUser.position, position).fetchJoin()
+                .where(whereClause)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(attendance.workDate.desc(), attendance.id.desc())
+                .fetch();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
     public Optional<Attendance> findTodayAttendanceByEmployeeId(String employeeId) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();

@@ -214,6 +214,7 @@ public class SdController {
 
     /**
      * 견적서 생성
+     * TODO : 영업 role의 유저들에게 알람을 보내야합니다.
      */
     @PostMapping("/quotations")
     public ApiResponse<Map<String, String>> createQuotation(@RequestBody CreateQuotationRequestDto dto) {
@@ -226,6 +227,7 @@ public class SdController {
 
     /**
      * 견적서 승인 및 주문 생성
+     * TODO : 고객사 ID에 해당하는 유저들 혹은 고객ID에 해당하는 유저에게 알람을 보내야합니다.
      */
     @PostMapping("/quotations/{quotationId}/approve-order")
     public ApiResponse<Void> approveQuotation(
@@ -246,6 +248,20 @@ public class SdController {
         quotationService.confirmQuotation(dto.getQuotationId());
         log.info("견적서 검토 확정 성공 - quotationId: {}", dto.getQuotationId());
         return ApiResponse.success(null, "견적서가 검토 확정되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 견적서 거부
+     * TODO : 고객사 ID에 해당하는 유저들 혹은 고객 ID에 해당하는 유저에게 알람을 보내야합니다.
+     */
+    @PostMapping("/quotations/{quotationId}/rejected")
+    public ApiResponse<Void> rejectQuotation(
+            @PathVariable String quotationId,
+            @RequestBody RejectQuotationRequestDto dto) {
+        log.info("견적서 거부 API 호출 - quotationId: {}, reason: {}", quotationId, dto.getReason());
+        quotationService.rejectQuotation(quotationId, dto.getReason());
+        log.info("견적서 거부 성공 - quotationId: {}", quotationId);
+        return ApiResponse.success(null, "견적서가 거부되었습니다.", HttpStatus.OK);
     }
 
     /**

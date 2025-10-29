@@ -69,9 +69,18 @@ public class QuotationApproval extends TimeStamp {
      * @param employeeId 승인한 직원 ID
      */
     public void approveAndReadyForShipment(String employeeId) {
-        this.approvalStatus = ApprovalStatus.READY_FOR_SHIPMENT;
+        this.approvalStatus = ApprovalStatus.APPROVAL;
         this.approvedBy = employeeId;
         this.approvedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 견적서 거부 처리
+     * @param reason 거부 사유
+     */
+    public void reject(String reason) {
+        this.approvalStatus = ApprovalStatus.REJECTED;
+        this.rejectedReason = reason;
     }
 
     @PrePersist
