@@ -6,7 +6,11 @@ import org.ever._4ever_be_business.sd.dto.response.CustomerDetailDto;
 import org.ever._4ever_be_business.sd.dto.response.CustomerListResponseDto;
 import org.ever._4ever_be_business.sd.vo.CustomerDetailVo;
 import org.ever._4ever_be_business.sd.vo.CustomerSearchConditionVo;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
+import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.async.DeferredResult;
 
 public interface SdCustomerService {
     /**
@@ -30,9 +34,11 @@ public interface SdCustomerService {
      * 고객사 등록
      *
      * @param dto 고객사 등록 요청 정보
-     * @return 등록된 고객사 ID
      */
-    String createCustomer(CreateCustomerRequestDto dto);
+    void createCustomer(
+        CreateCustomerRequestDto dto,
+        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+    );
 
     /**
      * 고객사 정보 수정

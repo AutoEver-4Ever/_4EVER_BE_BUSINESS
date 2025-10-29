@@ -25,7 +25,10 @@ public class CreateAuthUserResultListener {
     private final KafkaProducerService kafkaProducerService;
 
     @KafkaListener(
-            topics = KafkaTopicConfig.AUTH_USER_RESULT_TOPIC,
+            topics = {
+                KafkaTopicConfig.AUTH_USER_RESULT_TOPIC,
+                KafkaTopicConfig.CUSTOMER_USER_RESULT_TOPIC
+            },
             groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactory"
     )
@@ -36,7 +39,7 @@ public class CreateAuthUserResultListener {
             @Header(KafkaHeaders.OFFSET) long offset,
             Acknowledgment acknowledgment
     ) {
-        log.info("[KAFKA] 내부 사용자 생성 결과 수신 - topic: {}, partition: {}, offset: {}, transactionId: {}, success: {}",
+        log.info("[KAFKA] 사용자 생성 결과 수신 - topic: {}, partition: {}, offset: {}, transactionId: {}, success: {}",
                 topic, partition, offset, event.getTransactionId(), event.isSuccess());
 
         String transactionId = event.getTransactionId();
@@ -57,14 +60,14 @@ public class CreateAuthUserResultListener {
                 asyncResultManager.setSuccessResult(
                         transactionId,
                         event,
-                        "[SAGA][SUCCESS] 내부 사용자 생성이 완료되었습니다.",
+                        "[SAGA][SUCCESS] 사용자 생성이 완료되었습니다.",
                         HttpStatus.CREATED
                 );
-                log.info("[KAFKA] 내부 사용자 생성 성공 처리 완료 - transactionId: {}", transactionId);
+                log.info("[KAFKA] 사용자 생성 성공 처리 완료 - transactionId: {}", transactionId);
             } else {
                 asyncResultManager.setErrorResult(
                         transactionId,
-                        "[SAGA][FAIL] 내부 사용자 생성 실패: " + event.getFailureReason(),
+                        "[SAGA][FAIL] 사용자 생성 실패: " + event.getFailureReason(),
                         HttpStatus.INTERNAL_SERVER_ERROR
                 );
                 publishRollbackEvent(event);

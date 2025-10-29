@@ -104,6 +104,13 @@ public class CustomerCompany extends TimeStamp {
     }
 
     /**
+     * 고객사 담당자 지정
+     */
+    public void assignCustomerUser(String customerUserId) {
+        this.customerUserId = customerUserId;
+    }
+
+    /**
      * 고객사 활성화
      */
     public void activate() {
