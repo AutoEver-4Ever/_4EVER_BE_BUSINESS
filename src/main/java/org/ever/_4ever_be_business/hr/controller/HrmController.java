@@ -7,11 +7,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.hr.dto.request.*;
 import org.ever._4ever_be_business.hr.dto.response.*;
+import org.ever._4ever_be_business.hr.entity.Department;
 import org.ever._4ever_be_business.hr.entity.InternelUser;
+import org.ever._4ever_be_business.hr.entity.Position;
 import org.ever._4ever_be_business.hr.enums.LeaveType;
+import org.ever._4ever_be_business.hr.enums.PayrollStatus;
 import org.ever._4ever_be_business.hr.enums.TrainingCategory;
 import org.ever._4ever_be_business.hr.enums.TrainingStatus;
+import org.ever._4ever_be_business.tam.enums.AttendanceStatus;
+import org.ever._4ever_be_business.hr.repository.DepartmentRepository;
 import org.ever._4ever_be_business.hr.repository.InternelUserRepository;
+import org.ever._4ever_be_business.hr.repository.PositionRepository;
+import org.ever._4ever_be_business.hr.repository.TrainingRepository;
 import org.ever._4ever_be_business.hr.service.*;
 import org.ever._4ever_be_business.hr.vo.*;
 import org.ever._4ever_be_business.sd.dto.response.PageInfo;
@@ -20,6 +27,7 @@ import org.ever._4ever_be_business.tam.dto.request.CheckInRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.CheckOutRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.UpdateTimeRecordDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
+import org.ever._4ever_be_business.tam.dto.response.AttendanceStatusDto;
 import org.ever._4ever_be_business.tam.dto.response.TimeRecordDetailDto;
 import org.ever._4ever_be_business.tam.dto.response.TimeRecordListItemDto;
 import org.ever._4ever_be_business.tam.service.AttendanceService;
@@ -55,6 +63,9 @@ public class HrmController {
     private final TimeRecordService timeRecordService;
     private final AttendanceService attendanceService;
     private final InternelUserRepository internelUserRepository;
+    private final DepartmentRepository departmentRepository;
+    private final PositionRepository positionRepository;
+    private final TrainingRepository trainingRepository;
 
     // ==================== Statistics ====================
 
@@ -114,6 +125,34 @@ public class HrmController {
         return ApiResponse.success(result, "부서 상세 정보 조회에 성공했습니다.", HttpStatus.OK);
     }
 
+    /**
+     * 전체 부서 목록 조회 (ID, Name만)
+     */
+    @GetMapping("/departments/simple")
+    public ApiResponse<List<DepartmentSimpleDto>> getAllDepartments() {
+        log.info("전체 부서 목록 조회 API 호출");
+
+        List<DepartmentSimpleDto> result = departmentRepository.findAll().stream()
+                .map(dept -> new DepartmentSimpleDto(dept.getId(), dept.getDepartmentName()))
+                .collect(java.util.stream.Collectors.toList());
+
+        log.info("전체 부서 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "부서 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 부서 구성원 목록 조회 (ID, Name만)
+     */
+    @GetMapping("/departments/{departmentId}/members")
+    public ApiResponse<List<DepartmentMemberDto>> getDepartmentMembers(@PathVariable String departmentId) {
+        log.info("부서 구성원 목록 조회 API 호출 - departmentId: {}", departmentId);
+
+        List<DepartmentMemberDto> result = departmentService.getDepartmentMembers(departmentId);
+
+        log.info("부서 구성원 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "부서 구성원 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
     // ==================== Positions ====================
 
     /**
@@ -137,6 +176,21 @@ public class HrmController {
         log.info("직급 상세 정보 조회 성공 - positionId: {}, positionName: {}, headCount: {}",
                 positionId, result.getPositionName(), result.getHeadCount());
         return ApiResponse.success(result, "직급 상세 정보를 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 전체 직급 목록 조회 (ID, Name만)
+     */
+    @GetMapping("/positions/simple")
+    public ApiResponse<List<PositionSimpleDto>> getAllPositions() {
+        log.info("전체 직급 목록 조회 API 호출");
+
+        List<PositionSimpleDto> result = positionRepository.findAll().stream()
+                .map(pos -> new PositionSimpleDto(pos.getId(), pos.getPositionName()))
+                .collect(java.util.stream.Collectors.toList());
+
+        log.info("전체 직급 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "직급 목록을 조회했습니다.", HttpStatus.OK);
     }
 
     // ==================== Employees ====================
@@ -339,6 +393,46 @@ public class HrmController {
         return ApiResponse.success(null, "급여가 생성되었습니다.", HttpStatus.CREATED);
     }
 
+    /**
+     * 급여 상태 목록 조회 (enum 전체)
+     */
+    @GetMapping("/payroll/statuses")
+    public ApiResponse<List<PayrollStatusDto>> getAllPayrollStatuses() {
+        log.info("급여 상태 목록 조회 API 호출");
+
+        List<PayrollStatusDto> result = java.util.Arrays.stream(PayrollStatus.values())
+                .map(status -> new PayrollStatusDto(
+                        status.name(),
+                        getPayrollStatusDescription(status)
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+        log.info("급여 상태 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "급여 상태 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    private String getPayrollStatusDescription(PayrollStatus status) {
+        return switch (status) {
+            case DRAFT -> "초안(집계 전)";
+            case PENDING_APPROVAL -> "승인 대기";
+            case APPROVED -> "승인 완료";
+            case CALCULATING -> "급여 계산 중";
+            case CALCULATED -> "계산 완료(전표/지급 전 검증 단계)";
+            case PENDING_PAYMENT -> "지급 지시 대기(이체 파일/펌뱅킹 전)";
+            case PAID -> "지급 완료(은행 이체/현금 지급 완료)";
+            case PARTIALLY_PAID -> "일부 지급";
+            case POSTING -> "회계 반영 중";
+            case POSTED -> "회계 반영 완료(전표 확정)";
+            case ON_HOLD -> "보류(이의제기/감사)";
+            case ADJUSTING -> "정정 처리 중(추가공제/보너스/소급)";
+            case ADJUSTED -> "정정 반영 완료";
+            case FAILED -> "계산/지급/전표 어느 단계에서든 실패";
+            case CANCELLED -> "승인 전 취소";
+            case REVERSED -> "지급/전표 이후 취소(역분개/반제)";
+            case CLOSED -> "마감(추가 변경 불가)";
+        };
+    }
+
     // ==================== Training ====================
 
     /**
@@ -415,6 +509,83 @@ public class HrmController {
         trainingService.updateTrainingProgram(programId, requestDto);
         log.info("교육 프로그램 수정 성공 - programId: {}", programId);
         return ApiResponse.success(null, "교육 프로그램이 수정되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 교육 카테고리 목록 조회 (enum 전체)
+     */
+    @GetMapping("/trainings/categories")
+    public ApiResponse<List<TrainingCategoryDto>> getAllTrainingCategories() {
+        log.info("교육 카테고리 목록 조회 API 호출");
+
+        List<TrainingCategoryDto> result = java.util.Arrays.stream(TrainingCategory.values())
+                .map(category -> new TrainingCategoryDto(
+                        category.name(),
+                        getTrainingCategoryDescription(category)
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+        log.info("교육 카테고리 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "교육 카테고리 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    private String getTrainingCategoryDescription(TrainingCategory category) {
+        return switch (category) {
+            case BASIC_TRAINING -> "기본 교육";
+            case TECHNICAL_TRAINING -> "기술 교육";
+            case SOFT_SKILL_TRAINING -> "소프트 스킬 교육";
+            case MARKETING_TRAINING -> "마케팅 교육";
+            case INTERNSHIP -> "인턴십: 정식 채용 전 실무 경험 중심의 프로그램";
+            case ONBOARDING -> "온보딩: 신입/이직자 대상 회사 적응 및 기본교육";
+            case TRAINING -> "일반 직무교육: 업무 역량 강화를 위한 사내/외 교육";
+            case WORKSHOP -> "워크숍: 팀 단위 문제 해결, 협업, 조직문화 중심의 단기 프로그램";
+            case SEMINAR -> "세미나: 특정 주제에 대한 단기 발표/토론 세션";
+            case COURSE -> "코스형 교육: 정규 과정 형태의 교육";
+            case CERTIFICATION -> "자격 취득 교육: 자격증 준비나 인증 관련 교육";
+            case COMPLIANCE -> "준법/윤리 교육: 법정의무교육, 개인정보보호, 성희롱 방지 등";
+            case SAFETY -> "안전교육: 산업안전, 보건, 소방 등 필수 안전 관련 교육";
+            case LEADERSHIP -> "리더십 교육: 관리자, 팀장 대상 리더십/코칭 스킬 강화";
+            case TECHNICAL -> "기술교육: IT/개발/엔지니어링 등 전문 기술 중심";
+            case SOFT_SKILL -> "소프트스킬: 커뮤니케이션, 협업, 문제해결 등 비기술 역량";
+            case LANGUAGE -> "어학 교육: 영어, 일본어 등 언어 역량 향상";
+            case SALES -> "영업/CS 관련 교육";
+            case MANAGEMENT -> "경영, 전략, 재무 등 관리직 중심 교육";
+            case EXTERNAL -> "외부 위탁 교육: 외부 기관/대학/온라인 플랫폼 교육";
+            case MANDATORY -> "법정의무교육: 정부/기관에서 의무화된 교육";
+            case MENTORING -> "멘토링/코칭 프로그램";
+            case OTHER -> "기타 교육";
+        };
+    }
+
+    /**
+     * 전체 교육 프로그램 목록 조회 (ID, Name만)
+     */
+    @GetMapping("/trainings/programs")
+    public ApiResponse<List<TrainingProgramSimpleDto>> getAllTrainingPrograms() {
+        log.info("전체 교육 프로그램 목록 조회 API 호출");
+
+        List<TrainingProgramSimpleDto> result = trainingRepository.findAll().stream()
+                .map(training -> new TrainingProgramSimpleDto(training.getId(), training.getTrainingName()))
+                .collect(java.util.stream.Collectors.toList());
+
+        log.info("전체 교육 프로그램 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "교육 프로그램 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 교육 완료 상태 목록 조회
+     */
+    @GetMapping("/trainings/completion-statuses")
+    public ApiResponse<List<TrainingCompletionStatusDto>> getAllTrainingCompletionStatuses() {
+        log.info("교육 완료 상태 목록 조회 API 호출");
+
+        List<TrainingCompletionStatusDto> result = java.util.List.of(
+                new TrainingCompletionStatusDto("true", "완료"),
+                new TrainingCompletionStatusDto("false", "미완료")
+        );
+
+        log.info("교육 완료 상태 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "교육 완료 상태 목록을 조회했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -577,6 +748,38 @@ public class HrmController {
         attendanceService.checkOut(requestDto.getEmployeeId());
         log.info("퇴근 처리 성공 - employeeId: {}", requestDto.getEmployeeId());
         return ApiResponse.success(null, "퇴근 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 출퇴근 상태 목록 조회 (enum 전체)
+     */
+    @GetMapping("/attendance/statuses")
+    public ApiResponse<List<AttendanceStatusDto>> getAllAttendanceStatuses() {
+        log.info("출퇴근 상태 목록 조회 API 호출");
+
+        List<AttendanceStatusDto> result = java.util.Arrays.stream(AttendanceStatus.values())
+                .map(status -> new AttendanceStatusDto(
+                        status.name(),
+                        getAttendanceStatusDescription(status)
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+        log.info("출퇴근 상태 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "출퇴근 상태 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    private String getAttendanceStatusDescription(AttendanceStatus status) {
+        return switch (status) {
+            case NORMAL -> "정상 근무 (API 응답용)";
+            case ON_TIME -> "정상 출근";
+            case LATE -> "지각";
+            case ON_LEAVE -> "휴가";
+            case PRESENT -> "출근 (정상 근무)";
+            case ABSENT -> "결근";
+            case EARLY_LEAVE -> "조퇴";
+            case HOLIDAY -> "휴일 (공휴일/주말 등)";
+            case OFFICIAL_TRIP -> "출장";
+        };
     }
 
     // ==================== HRM Employee Info ====================

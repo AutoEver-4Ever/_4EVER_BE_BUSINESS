@@ -10,6 +10,7 @@ import org.ever._4ever_be_business.hr.dao.DepartmentDAO;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentEmployeeDto;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentListItemDto;
+import org.ever._4ever_be_business.hr.dto.response.DepartmentMemberDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -215,6 +216,28 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         log.debug("부서 목록 조회 완료 - total: {}, size: {}", total, content.size());
 
         return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public List<DepartmentMemberDto> findDepartmentMembers(String departmentId) {
+        log.debug("부서 구성원 목록 조회 시작 - departmentId: {}", departmentId);
+
+        List<DepartmentMemberDto> members = queryFactory
+                .select(Projections.constructor(
+                        DepartmentMemberDto.class,
+                        employee.id,
+                        internelUser.name
+                ))
+                .from(employee)
+                .innerJoin(employee.internelUser, internelUser)
+                .innerJoin(internelUser.position, position)
+                .where(position.department.id.eq(departmentId))
+                .orderBy(internelUser.hireDate.asc())
+                .fetch();
+
+        log.debug("부서 구성원 목록 조회 완료 - size: {}", members.size());
+
+        return members;
     }
 
     /**
