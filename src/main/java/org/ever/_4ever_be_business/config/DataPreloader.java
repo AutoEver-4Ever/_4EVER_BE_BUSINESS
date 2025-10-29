@@ -3,11 +3,11 @@ package org.ever._4ever_be_business.config;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.company.repository.CustomerCompanyRepository;
 import org.ever._4ever_be_business.hr.entity.*;
 import org.ever._4ever_be_business.hr.enums.Gender;
+import org.ever._4ever_be_business.hr.enums.UserStatus;
 import org.ever._4ever_be_business.hr.repository.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -245,7 +245,8 @@ public class DataPreloader {
                         "010-1111-1111",                    // phoneNumber
                         LocalDateTime.of(2023, 1, 1, 0, 0),   // departmentStartAt
                         "학사",                              // education
-                        "신입"                               // career
+                        "신입",                               // career
+                        UserStatus.ACTIVE
                 ),
                 new InternelUser(
                         "internel2",
@@ -261,7 +262,8 @@ public class DataPreloader {
                         "010-2222-2222",
                         LocalDateTime.of(2021, 3, 1, 0, 0),
                         "석사",
-                        "경력 2년"
+                        "경력 2년",
+                        UserStatus.ACTIVE
                 ),
                 new InternelUser(
                         "internel3",
@@ -277,7 +279,8 @@ public class DataPreloader {
                         "010-3333-3333",
                         LocalDateTime.of(2018, 6, 1, 0, 0),
                         "학사",
-                        "경력 5년"
+                        "경력 5년",
+                        UserStatus.ACTIVE
                 )
         };
 

@@ -1,5 +1,7 @@
 package org.ever._4ever_be_business.hr.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
@@ -20,6 +22,7 @@ import org.ever._4ever_be_business.hr.repository.TrainingRepository;
 import org.ever._4ever_be_business.hr.service.*;
 import org.ever._4ever_be_business.hr.vo.*;
 import org.ever._4ever_be_business.sd.dto.response.PageInfo;
+import org.ever.event.CreateAuthUserResultEvent;
 import org.ever._4ever_be_business.tam.dto.request.CheckInRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.CheckOutRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.UpdateTimeRecordDto;
@@ -37,6 +40,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
@@ -830,5 +834,25 @@ public class HrmController {
 
         log.info("HRM 직원 기본 정보 다중 조회 성공 - 조회된 직원 수: {}", result.size());
         return ApiResponse.success(result, "성공 메시지", HttpStatus.OK);
+    }
+
+    @PostMapping("/employee-users")
+    @Operation(summary = "내부 사용자 생성", description = "내부 사용자 생성을 비동기로 처리합니다.")
+    public DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> createEmployeeUser(
+            @RequestBody @Valid EmployeeCreateRequestDto requestDto
+    ) {
+        log.info("[INFO] 내부 사용자(employee) 생성 API 호출 - requestDto: {}", requestDto);
+
+        // DeferredResult를 생성하여 30초(30000ms) 타임아웃 설정
+        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult = new DeferredResult<>(30000L);
+
+        deferredResult.onTimeout(() -> {
+            log.warn("[WARN] 내부 사용자 생성 처리 타임아웃 - email: {}", requestDto.getEmail());
+            deferredResult.setResult(ResponseEntity
+                    .status(HttpStatus.REQUEST_TIMEOUT)
+                    .body(ApiResponse.fail("[SAGA][FAIL] 처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
+        });
+        employeeService.createEmployee(requestDto, deferredResult);
+        return deferredResult;
     }
 }

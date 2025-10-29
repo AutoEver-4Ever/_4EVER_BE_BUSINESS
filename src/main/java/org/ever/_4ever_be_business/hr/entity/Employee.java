@@ -3,15 +3,18 @@ package org.ever._4ever_be_business.hr.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.ever._4ever_be_business.common.audit.EntityAuditListener;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
 
 import java.time.LocalDateTime;
 
+// 내부 직원의 메타 데이터
 @Entity
 @Table(name="employee")
 @NoArgsConstructor
 @Getter
+@EntityListeners(EntityAuditListener.class)
 public class Employee extends TimeStamp {
 
     @Id

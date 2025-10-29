@@ -2,31 +2,33 @@ package org.ever._4ever_be_business.hr.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.async.AsyncResultManager;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
+import org.ever._4ever_be_business.common.saga.SagaTransactionManager;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.dao.EmployeeDAO;
+import org.ever._4ever_be_business.hr.dto.request.EmployeeCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
-import org.ever._4ever_be_business.hr.entity.Employee;
-import org.ever._4ever_be_business.hr.entity.EmployeeTraining;
-import org.ever._4ever_be_business.hr.entity.InternelUser;
-import org.ever._4ever_be_business.hr.entity.Position;
-import org.ever._4ever_be_business.hr.entity.Training;
-import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
-import org.ever._4ever_be_business.hr.repository.EmployeeTrainingRepository;
-import org.ever._4ever_be_business.hr.repository.PositionRepository;
-import org.ever._4ever_be_business.hr.repository.TrainingRepository;
+import org.ever._4ever_be_business.hr.entity.*;
+import org.ever._4ever_be_business.hr.enums.UserStatus;
+import org.ever._4ever_be_business.hr.integration.port.UserServicePort;
+import org.ever._4ever_be_business.hr.repository.*;
 import org.ever._4ever_be_business.hr.service.EmployeeService;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
+import org.ever.event.CreateAuthUserEvent;
+import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import org.springframework.web.context.request.async.DeferredResult;
 
 @Slf4j
 @Service
@@ -36,8 +38,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeDAO employeeDAO;
     private final EmployeeRepository employeeRepository;
     private final PositionRepository positionRepository;
+    private final DepartmentRepository departmentRepository;
     private final TrainingRepository trainingRepository;
+    private final InternelUserRepository internalUserRepository;
     private final EmployeeTrainingRepository employeeTrainingRepository;
+    private final AsyncResultManager<CreateAuthUserResultEvent> asyncResultManager;
+    private final SagaTransactionManager sagaManager;
+    private final UserServicePort userServicePort;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -121,5 +129,88 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         log.info("교육 프로그램 신청 성공 - employeeId: {}, trainingId: {}, trainingName: {}",
                 requestDto.getEmployeeId(), training.getId(), training.getTrainingName());
+    }
+
+    @Override
+    public void createEmployee(
+            EmployeeCreateRequestDto requestDto,
+            DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+    ) {
+        // 트랜잭션 id 생성
+        String transactionId = UuidV7Generator.generate();
+
+        asyncResultManager.registerResult(transactionId, deferredResult);
+        log.info("[INFO] 내부 사용자 등록 시작 - name: {}, email: {}", requestDto.getName(), requestDto.getEmail());
+
+        sagaManager.executeSagaWithId(transactionId, () -> {
+            try {
+                Position position = positionRepository.findById(requestDto.getPositionId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 직급 정보를 찾을 수 없습니다."));
+
+                Department requestedDepartment = departmentRepository.findById(requestDto.getDepartmentId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "[ERROR] 부서 정보를 찾을 수 없습니다."));
+
+                String userId = UuidV7Generator.generate();
+                String employeeCode = "EMP-" + generateNumberByUuidLast7(userId);
+                String address = requestDto.getBaseAddress() + " " + requestDto.getDetailAddress();
+
+                InternelUser internalUser = InternelUser.createNewInternalUser(
+                    userId,
+                    requestDto.getName(),
+                    employeeCode,
+                    position,
+                    requestDto.getBirthDate(),
+                    requestDto.getHireDate(),
+                    address,
+                    requestDto.getEmail(),
+                    requestDto.getPhoneNumber(),
+                    UserStatus.ACTIVE
+                );
+                internalUserRepository.save(internalUser);
+
+                Employee employee = new Employee(internalUser, 15L, null);
+                employeeRepository.save(employee);
+
+                CreateAuthUserEvent event = CreateAuthUserEvent.builder()
+                    .eventId(UuidV7Generator.generate())
+                    .transactionId(transactionId)
+                    .success(true)      // 여기는 성공한 경우임.
+                    .userId(userId)
+                    .email(requestDto.getEmail())
+                    .departmentCode(requestedDepartment.getDepartmentCode())
+                    .positionCode(position.getPositionCode())
+                    .build();
+
+                userServicePort.createAuthUserPort(event)
+                    .exceptionally(error -> {
+                        asyncResultManager.setErrorResult(
+                            transactionId,
+                            "[SAGA][FAIL] 사용자 계정 생성 요청 발행 실패: " + error.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                        );
+                        return null;
+                    });
+                return null;
+            } catch (Exception error) {
+                asyncResultManager.setErrorResult(
+                    transactionId,
+                    "[SAGA][FAIL] 내부 사용자 생성 처리에 실패했습니다.: " + error.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR
+                );
+                throw error;
+            }
+        });
+    }
+
+    private String generateNumberByUuidLast7(String uuidId) {
+        if (uuidId == null || uuidId.isEmpty()) {
+            throw new IllegalArgumentException("[ERROR] UUID가 null 이거나 비어있습니다.");
+        }
+        String compactUuid = uuidId.replaceAll("-", "");
+        log.info("[INFO] Number로 사용될 생성된 uuid: {}", compactUuid);
+        if (compactUuid.length() < 7) {
+            throw new IllegalArgumentException("패딩된 uuid가 7자리 이하 이므로 Number를 생성할 수 없습니다. uuidId를 점검해주세요");
+        }
+        return compactUuid.substring(compactUuid.length() - 7);
     }
 }

@@ -34,6 +34,7 @@ public class KafkaTopicConfig {
     public static final String USER_CREATION_FAILED_TOPIC = "user-creation-failed";
     public static final String USER_ROLLBACK_TOPIC = "user-rollback";
     public static final String PROCESS_COMPLETED_TOPIC = "process-completed";
+    public static final String AUTH_USER_RESULT_TOPIC = "auth-user-result";
 
 
     // 고객사 생성 토픽
