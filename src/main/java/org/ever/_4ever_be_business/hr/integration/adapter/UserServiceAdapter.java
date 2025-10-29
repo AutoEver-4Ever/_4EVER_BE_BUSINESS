@@ -61,7 +61,10 @@ public class UserServiceAdapter implements UserServicePort {
 
     @Override
     public CompletableFuture<Void> createAuthUserPort(CreateAuthUserEvent request) {
-        return null;
+        log.warn("[HTTP ADAPTER] createAuthUserPort 호출은 아직 구현되지 않았습니다. request: {}", request);
+        return CompletableFuture.failedFuture(
+                new UnsupportedOperationException("HTTP 기반 사용자 생성 호출이 아직 구현되지 않았습니다.")
+        );
     }
 
 }

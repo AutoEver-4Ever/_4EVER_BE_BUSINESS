@@ -33,6 +33,6 @@ public class MockUserServiceAdapter implements UserServicePort {
     @Override
     public CompletableFuture<Void> createAuthUserPort(CreateAuthUserEvent request) {
         log.info("[MOCK ADAPTER] createInternalUserAccount 호출");
-        return null;
+        return CompletableFuture.completedFuture(null);
     }
 }
