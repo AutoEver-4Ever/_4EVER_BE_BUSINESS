@@ -3,6 +3,7 @@ package org.ever._4ever_be_business.hr.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.ever._4ever_be_business.common.audit.Auditable;
 import org.ever._4ever_be_business.common.audit.EntityAuditListener;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @EntityListeners(EntityAuditListener.class)
-public class InternelUser extends TimeStamp {
+public class InternelUser extends TimeStamp implements Auditable {
 
     @Id
     @Column(length = 36)
@@ -196,5 +197,16 @@ public class InternelUser extends TimeStamp {
         if (this.status == null) {
             this.status = UserStatus.ACTIVE; // 기본값
         }
+    }
+
+    // Auditable 인터페이스 구현
+    @Override
+    public String getAuditableId() {
+        return id.toString();
+    }
+
+    @Override
+    public String getAuditableType() {
+        return "internelUser";
     }
 }

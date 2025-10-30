@@ -3,6 +3,7 @@ package org.ever._4ever_be_business.infrastructure.kafka.consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.async.AsyncResultManager;
+import org.ever._4ever_be_business.common.saga.SagaCompensationService;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.infrastructure.kafka.config.KafkaTopicConfig;
 import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
@@ -23,6 +24,7 @@ public class CreateAuthUserResultListener {
 
     private final AsyncResultManager<CreateAuthUserResultEvent> asyncResultManager;
     private final KafkaProducerService kafkaProducerService;
+    private final SagaCompensationService sagaCompensationService;
 
     @KafkaListener(
             topics = {
@@ -70,7 +72,8 @@ public class CreateAuthUserResultListener {
                         "[SAGA][FAIL] 사용자 생성 실패: " + event.getFailureReason(),
                         HttpStatus.INTERNAL_SERVER_ERROR
                 );
-                publishRollbackEvent(event);
+//                publishRollbackEvent(event);
+                sagaCompensationService.compensate(transactionId);
             }
 
             acknowledgment.acknowledge();
