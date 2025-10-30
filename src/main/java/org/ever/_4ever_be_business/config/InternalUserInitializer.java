@@ -30,84 +30,84 @@ public class InternalUserInitializer implements CommandLineRunner {
 
     private static final List<SeedUser> INTERNAL_USERS = List.of(
         new SeedUser(
-            "1f0b4b1b-43f0-6735-befc-ff061e0fbaad", // hrm-user@everp.com
+            "019a357e-bd3f-d1d8-afff-3b26eec14ab5", // hrm-user@everp.com
             "hrm-user@everp.com",
             "HRM 사용자",
             "EMP-HRM-001",
             POSITION_CODE_EMPLOYEE
         ),
         new SeedUser(
-            "1f0b4b1b-44bb-6166-befc-ff061e0fbaad", // hrm-admin@everp.com
+            "019a357e-bd3f-7150-d6a7-8533d5876769", // hrm-admin@everp.com
             "hrm-admin@everp.com",
             "HRM 관리자",
             "EMP-HRM-ADMIN-001",
             POSITION_CODE_MANAGER
         ),
         new SeedUser(
-            "1f0b4b1b-3d63-633d-befc-ff061e0fbaad", // mm-user@everp.com
+            "019a357e-bd3f-3d22-ace8-7b339c303573", // mm-user@everp.com
             "mm-user@everp.com",
             "MM 사용자",
             "EMP-MM-001",
             POSITION_CODE_EMPLOYEE
         ),
         new SeedUser(
-            "1f0b4b1b-3e61-61be-befc-ff061e0fbaad", // mm-admin@everp.com
+            "019a357e-bd3f-1015-0ef6-c9a4ee00c9c4", // mm-admin@everp.com
             "mm-admin@everp.com",
             "MM 관리자",
             "EMP-MM-ADMIN-001",
             POSITION_CODE_MANAGER
         ),
         new SeedUser(
-            "1f0b4b1b-3f52-6cef-befc-ff061e0fbaad", // sd-user@everp.com
+            "019a357e-bd3f-1385-2ed7-d8661e4f4608", // sd-user@everp.com
             "sd-user@everp.com",
             "SD 사용자",
             "EMP-SD-001",
             POSITION_CODE_EMPLOYEE
         ),
         new SeedUser(
-            "1f0b4b1b-401b-6010-befc-ff061e0fbaad", // sd-admin@everp.com
+            "019a357e-bd3f-61f7-0f2a-4cac7ee80614", // sd-admin@everp.com
             "sd-admin@everp.com",
             "SD 관리자",
             "EMP-SD-ADMIN-001",
             POSITION_CODE_MANAGER
         ),
         new SeedUser(
-            "1f0b4b1b-40e3-6331-befc-ff061e0fbaad", // im-user@everp.com
+            "019a357e-bd3f-c6a1-12c3-b1d747113cf2", // im-user@everp.com
             "im-user@everp.com",
             "IM 사용자",
             "EMP-IM-001",
             POSITION_CODE_EMPLOYEE
         ),
         new SeedUser(
-            "1f0b4b1b-41a6-6832-befc-ff061e0fbaad", // im-admin@everp.com
+            "019a357e-bd3f-2511-95fb-838c11aee27a", // im-admin@everp.com
             "im-admin@everp.com",
             "IM 관리자",
             "EMP-IM-ADMIN-001",
             POSITION_CODE_MANAGER
         ),
         new SeedUser(
-            "1f0b4b1b-4267-6623-befc-ff061e0fbaad", // fcm-user@everp.com
+            "019a357e-bd3f-c1f8-2d52-960d438eaccf", // fcm-user@everp.com
             "fcm-user@everp.com",
             "FCM 사용자",
             "EMP-FCM-001",
             POSITION_CODE_EMPLOYEE
         ),
         new SeedUser(
-            "1f0b4b1b-432d-6234-befc-ff061e0fbaad", // fcm-admin@everp.com
+            "019a357e-bd3f-c724-2ef4-c8b96914e35f", // fcm-admin@everp.com
             "fcm-admin@everp.com",
             "FCM 관리자",
             "EMP-FCM-ADMIN-001",
             POSITION_CODE_MANAGER
         ),
         new SeedUser(
-            "1f0b4b1b-4580-6d77-befc-ff061e0fbaad", // pp-user@everp.com
+            "019a357e-bd3f-c8b0-3723-da17d92cfd5f", // pp-user@everp.com
             "pp-user@everp.com",
             "PP 사용자",
             "EMP-PP-001",
             POSITION_CODE_EMPLOYEE
         ),
         new SeedUser(
-            "1f0b4b1b-4644-6278-befc-ff061e0fbaad", // pp-admin@everp.com
+            "019a357e-bd3f-ef34-2deb-286b7a1ecec0", // pp-admin@everp.com
             "pp-admin@everp.com",
             "PP 관리자",
             "EMP-PP-ADMIN-001",

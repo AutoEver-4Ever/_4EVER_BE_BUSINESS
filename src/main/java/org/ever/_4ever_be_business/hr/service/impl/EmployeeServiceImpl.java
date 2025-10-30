@@ -1,11 +1,14 @@
 package org.ever._4ever_be_business.hr.service.impl;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.async.AsyncResultManager;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
+import org.ever._4ever_be_business.common.saga.CompensationHandler;
+import org.ever._4ever_be_business.common.saga.SagaCompensationService;
 import org.ever._4ever_be_business.common.saga.SagaTransactionManager;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.hr.dao.EmployeeDAO;
@@ -62,6 +65,34 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final AsyncResultManager asyncResultManager;
     private final SagaTransactionManager sagaManager;
     private final UserServicePort userServicePort;
+    private final SagaCompensationService compensationService;
+
+    @PostConstruct
+    public void init() {
+        // 엔티티에 대한 보상 핸들러 등록
+        compensationService.registerCompensationHandler("internelUser", new CompensationHandler() {
+            @Override
+            public void restore(Object entity) {
+                if (entity instanceof InternelUser) {
+                    InternelUser internelUser = (InternelUser) entity;
+                    log.info("엔티티 복원: id={}", internelUser.getId());
+                    internalUserRepository.save(internelUser);
+                }
+            }
+
+            @Override
+            public void delete(String entityId) {
+                log.info("엔티티 삭제: id={}", entityId);
+                internalUserRepository.findById(entityId)
+                    .ifPresent(internalUserRepository::delete);
+            }
+
+            @Override
+            public Class<?> getEntityClass() {
+                return InternelUser.class;
+            }
+        });
+    }
 
     @Override
     @Transactional(readOnly = true)

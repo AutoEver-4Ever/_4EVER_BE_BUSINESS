@@ -21,14 +21,14 @@ public class CustomerUserInitializer implements CommandLineRunner {
 
     private static final List<SeedCustomerUser> CUSTOMER_USERS = List.of(
         new SeedCustomerUser(
-            "1f0b4b1b-4707-6779-befc-ff061e0fbaad", // customer-user@everp.com
+            "019a357e-bd3f-90d0-ab33-eba47eedb4f8", // customer-user@everp.com
             "customer-user@everp.com",
             "고객 사용자",
             "CUST-USER-001",
             "CUST-001"
         ),
         new SeedCustomerUser(
-            "1f0b4b1b-47ca-6c7a-befc-ff061e0fbaad", // customer-admin@everp.com
+            "019a357e-bd3f-6f9b-5b64-20e2abea5672", // customer-admin@everp.com
             "customer-admin@everp.com",
             "고객 관리자",
             "CUST-USER-ADMIN-001",
