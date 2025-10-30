@@ -15,6 +15,12 @@ public class HrmEmployeeBasicInfoDto {
     @JsonProperty("name")
     private String name;
 
+    @JsonProperty("departmentId")
+    private String departmentId;
+
+    @JsonProperty("departmentName")
+    private String departmentName;
+
     @JsonProperty("phoneNumber")
     private String phoneNumber;
 

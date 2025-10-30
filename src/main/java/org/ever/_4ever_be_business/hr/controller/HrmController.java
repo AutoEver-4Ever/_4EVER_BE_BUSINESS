@@ -887,6 +887,8 @@ public class HrmController {
         HrmEmployeeBasicInfoDto result = new HrmEmployeeBasicInfoDto(
                 internelUser.getUserId(),
                 internelUser.getName(),
+                internelUser.getPosition().getDepartment().getId(),
+                internelUser.getPosition().getDepartment().getDepartmentName(),
                 internelUser.getPhoneNumber(),
                 internelUser.getEmail()
         );
@@ -911,6 +913,8 @@ public class HrmController {
                         return new HrmEmployeeBasicInfoDto(
                                 internelUser.getUserId(),
                                 internelUser.getName(),
+                                internelUser.getPosition().getDepartment().getId(),
+                                internelUser.getPosition().getDepartment().getDepartmentName(),
                                 internelUser.getPhoneNumber(),
                                 internelUser.getEmail()
                         );
