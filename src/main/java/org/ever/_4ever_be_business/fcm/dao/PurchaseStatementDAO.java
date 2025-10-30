@@ -34,4 +34,20 @@ public interface PurchaseStatementDAO {
             LocalDate endDate,
             Pageable pageable
     );
+
+    /**
+     * 특정 Supplier Company ID로 매입전표 목록 조회 (페이징, 필터링)
+     *
+     * @param supplierCompanyId 공급업체 ID
+     * @param startDate 시작일 (optional)
+     * @param endDate 종료일 (optional)
+     * @param pageable 페이징 정보
+     * @return 매입전표 목록
+     */
+    Page<PurchaseStatementListItemInfoDto> findPurchaseStatementListBySupplierCompanyId(
+            String supplierCompanyId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    );
 }

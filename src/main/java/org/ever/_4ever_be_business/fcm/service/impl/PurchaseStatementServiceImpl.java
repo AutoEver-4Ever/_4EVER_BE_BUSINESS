@@ -191,4 +191,86 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
 
         return new PageImpl<>(content, pageable, statementInfoPage.getTotalElements());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PurchaseStatementListItemDto> getPurchaseStatementListBySupplierUserId(
+            String supplierUserId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+        log.info("Supplier User ID로 매입전표 목록 조회 요청 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                supplierUserId, startDate, endDate, pageable.getPageNumber(), pageable.getPageSize());
+
+        // 1. SCM 서비스를 통해 supplierUserId로 supplierCompanyId 조회
+        String supplierCompanyId = supplierCompanyServicePort.getSupplierCompanyIdByUserId(supplierUserId);
+        log.info("Supplier Company ID 조회 성공 - supplierUserId: {}, supplierCompanyId: {}", supplierUserId, supplierCompanyId);
+
+        // 2. DAO에서 해당 supplierCompanyId로 매입전표 목록 조회
+        Page<PurchaseStatementListItemInfoDto> statementInfoPage = purchaseStatementDAO.findPurchaseStatementListBySupplierCompanyId(
+                supplierCompanyId, startDate, endDate, pageable
+        );
+
+        List<PurchaseStatementListItemInfoDto> statementInfos = statementInfoPage.getContent();
+
+        if (statementInfos.isEmpty()) {
+            log.info("매입전표 목록 조회 완료 - 결과 없음 (supplierUserId: {})", supplierUserId);
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        // 3. SCM에서 supplier company 정보 조회 (단일 조회)
+        SupplierCompanyResponseDto supplierCompany = supplierCompanyServicePort.getSupplierCompanyById(supplierCompanyId);
+
+        // 4. SCM에서 product order 정보 조회 (totalAmount)
+        List<String> productOrderIds = statementInfos.stream()
+                .map(PurchaseStatementListItemInfoDto::getProductOrderId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<ProductOrderInfosResponseDto.ProductOrderInfoItem> productOrderInfos = productOrderServicePort.getProductOrderInfosByIds(productOrderIds);
+
+        Map<String, BigDecimal> productOrderTotalAmountMap = productOrderInfos.stream()
+                .collect(Collectors.toMap(
+                        ProductOrderInfosResponseDto.ProductOrderInfoItem::getProductOrderId,
+                        ProductOrderInfosResponseDto.ProductOrderInfoItem::getTotalAmount
+                ));
+
+        // 5. DTO 조립
+        List<PurchaseStatementListItemDto> content = statementInfos.stream()
+                .map(info -> {
+                    String productOrderId = info.getProductOrderId();
+                    BigDecimal totalAmount = productOrderTotalAmountMap.get(productOrderId);
+
+                    PurchaseStatementConnectionDto connection = new PurchaseStatementConnectionDto(
+                            supplierCompany.getCompanyId(),
+                            supplierCompany.getCompanyNumber(),
+                            supplierCompany.getCompanyName()
+                    );
+
+                    String referenceCode = "PO-" + info.getProductOrderId();
+
+                    PurchaseStatementReferenceDto reference = new PurchaseStatementReferenceDto(
+                            info.getProductOrderId(),
+                            referenceCode
+                    );
+
+                    return new PurchaseStatementListItemDto(
+                            info.getInvoiceId(),
+                            info.getInvoiceCode(),
+                            connection,
+                            totalAmount != null ? totalAmount : BigDecimal.ZERO,
+                            info.getIssueDate(),
+                            info.getDueDate(),
+                            info.getStatus(),
+                            referenceCode,
+                            reference
+                    );
+                })
+                .collect(Collectors.toList());
+
+        log.info("Supplier User ID로 매입전표 목록 조회 성공 - supplierUserId: {}, total: {}, size: {}",
+                supplierUserId, statementInfoPage.getTotalElements(), content.size());
+
+        return new PageImpl<>(content, pageable, statementInfoPage.getTotalElements());
+    }
 }

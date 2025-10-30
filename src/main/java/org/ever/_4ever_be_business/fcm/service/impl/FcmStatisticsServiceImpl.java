@@ -63,12 +63,8 @@ public class FcmStatisticsServiceImpl implements FcmStatisticsService {
         BigDecimal currentTotalPurchases = fcmStatisticsDAO.calculateTotalPurchases(
                 currentPeriod[0], currentPeriod[1]
         );
-        BigDecimal currentNetProfit = fcmStatisticsDAO.calculateNetProfit(
-                currentPeriod[0], currentPeriod[1]
-        );
-        BigDecimal currentAccountsReceivable = fcmStatisticsDAO.calculateAccountsReceivable(
-                currentPeriod[0], currentPeriod[1]
-        );
+        // 순이익 = 총 매출 - 총 매입
+        BigDecimal currentNetProfit = currentTotalSales.subtract(currentTotalPurchases);
 
         // 이전 기간 데이터
         BigDecimal previousTotalSales = fcmStatisticsDAO.calculateTotalSales(
@@ -77,23 +73,17 @@ public class FcmStatisticsServiceImpl implements FcmStatisticsService {
         BigDecimal previousTotalPurchases = fcmStatisticsDAO.calculateTotalPurchases(
                 previousPeriod[0], previousPeriod[1]
         );
-        BigDecimal previousNetProfit = fcmStatisticsDAO.calculateNetProfit(
-                previousPeriod[0], previousPeriod[1]
-        );
-        BigDecimal previousAccountsReceivable = fcmStatisticsDAO.calculateAccountsReceivable(
-                previousPeriod[0], previousPeriod[1]
-        );
+        // 이전 기간 순이익 = 총 매출 - 총 매입
+        BigDecimal previousNetProfit = previousTotalSales.subtract(previousTotalPurchases);
 
         // 증감률 계산
         Double salesDeltaRate = calculateDeltaRate(currentTotalSales, previousTotalSales);
         Double purchasesDeltaRate = calculateDeltaRate(currentTotalPurchases, previousTotalPurchases);
         Double netProfitDeltaRate = calculateDeltaRate(currentNetProfit, previousNetProfit);
-        Double accountsReceivableDeltaRate = calculateDeltaRate(currentAccountsReceivable, previousAccountsReceivable);
 
         return new FcmPeriodStatisticsDto(
                 new FcmStatisticsValueDto(currentTotalPurchases, purchasesDeltaRate),
                 new FcmStatisticsValueDto(currentNetProfit, netProfitDeltaRate),
-                new FcmStatisticsValueDto(currentAccountsReceivable, accountsReceivableDeltaRate),
                 new FcmStatisticsValueDto(currentTotalSales, salesDeltaRate)
         );
     }

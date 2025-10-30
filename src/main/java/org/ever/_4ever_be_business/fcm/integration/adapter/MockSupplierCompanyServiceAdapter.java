@@ -34,4 +34,11 @@ public class MockSupplierCompanyServiceAdapter implements SupplierCompanyService
         log.info("[MOCK ADAPTER] getSupplierCompaniesByIds 호출 - supplierCompanyIds: {}", supplierCompanyIds);
         return mockDataProvider.createMockSupplierCompanies(supplierCompanyIds);
     }
+
+    @Override
+    public String getSupplierCompanyIdByUserId(String supplierUserId) {
+        log.info("[MOCK ADAPTER] getSupplierCompanyIdByUserId 호출 - supplierUserId: {}", supplierUserId);
+        // Mock 데이터: supplierUserId를 기반으로 고정된 supplierCompanyId 반환
+        return "mock-supplier-company-" + supplierUserId.substring(0, Math.min(8, supplierUserId.length()));
+    }
 }

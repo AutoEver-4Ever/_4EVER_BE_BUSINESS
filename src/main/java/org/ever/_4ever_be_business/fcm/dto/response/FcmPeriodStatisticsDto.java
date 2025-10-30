@@ -15,9 +15,6 @@ public class FcmPeriodStatisticsDto {
     @JsonProperty("net_profit")
     private FcmStatisticsValueDto netProfit;
 
-    @JsonProperty("accounts_receivable")
-    private FcmStatisticsValueDto accountsReceivable;
-
     @JsonProperty("total_sales")
     private FcmStatisticsValueDto totalSales;
 }

@@ -215,4 +215,70 @@ public class PurchaseStatementDAOImpl implements PurchaseStatementDAO {
         private org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus status;
         private String productOrderId;
     }
+
+    @Override
+    public Page<PurchaseStatementListItemInfoDto> findPurchaseStatementListBySupplierCompanyId(
+            String supplierCompanyId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+        log.debug("Supplier Company ID로 매입전표 목록 조회 시작 - supplierCompanyId: {}, startDate: {}, endDate: {}",
+                supplierCompanyId, startDate, endDate);
+
+        // 동적 쿼리 생성 - supplierCompanyId와 날짜 필터 적용
+        JPAQuery<PurchaseStatementListProjection> query = queryFactory
+                .select(Projections.constructor(
+                        PurchaseStatementListProjection.class,
+                        purchaseVoucher.id.stringValue(),
+                        purchaseVoucher.voucherCode,
+                        purchaseVoucher.supplierCompanyId,
+                        purchaseVoucher.issueDate,
+                        purchaseVoucher.dueDate,
+                        purchaseVoucher.status,
+                        purchaseVoucher.productOrderId
+                ))
+                .from(purchaseVoucher)
+                .where(
+                        purchaseVoucher.supplierCompanyId.eq(supplierCompanyId),
+                        issueDateBetween(startDate, endDate)
+                );
+
+        // Total count
+        long total = query.fetchCount();
+
+        // 페이징된 데이터 조회
+        List<PurchaseStatementListProjection> statements = query
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(purchaseVoucher.issueDate.desc(), purchaseVoucher.id.desc())
+                .fetch();
+
+        // DTO 변환
+        List<PurchaseStatementListItemInfoDto> content = statements.stream()
+                .map(stmt -> {
+                    // 날짜 포맷팅
+                    String issueDate = stmt.getIssueDate() != null
+                            ? stmt.getIssueDate().toString().substring(0, 10)
+                            : null;
+                    String dueDate = stmt.getDueDate() != null
+                            ? stmt.getDueDate().toString().substring(0, 10)
+                            : null;
+
+                    return new PurchaseStatementListItemInfoDto(
+                            stmt.getInvoiceId(),
+                            stmt.getInvoiceCode(),
+                            stmt.getSupplierCompanyId(),
+                            issueDate,
+                            dueDate,
+                            stmt.getStatus().name(),
+                            stmt.getProductOrderId()
+                    );
+                })
+                .toList();
+
+        log.debug("Supplier Company ID로 매입전표 목록 조회 완료 - supplierCompanyId: {}, total: {}, size: {}",
+                supplierCompanyId, total, content.size());
+
+        return new PageImpl<>(content, pageable, total);
+    }
 }

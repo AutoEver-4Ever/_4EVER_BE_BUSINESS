@@ -24,4 +24,12 @@ public interface SupplierCompanyServicePort {
      * @return Supplier Company 정보 목록
      */
     SupplierCompaniesResponseDto getSupplierCompaniesByIds(List<String> supplierCompanyIds);
+
+    /**
+     * Supplier User ID로 Supplier Company ID 조회
+     *
+     * @param supplierUserId Supplier User ID
+     * @return Supplier Company ID
+     */
+    String getSupplierCompanyIdByUserId(String supplierUserId);
 }

@@ -59,6 +59,16 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
             }
         }
 
+        // 고객사 사용자 ID 필터 (CUSTOMER 유저용)
+        if (condition.getCustomerId() != null && !condition.getCustomerId().isEmpty()) {
+            builder.and(order.customerUserId.eq(condition.getCustomerId()));
+        }
+
+        // 내부 직원 ID 필터 (EMPLOYEE 유저용)
+        if (condition.getEmployeeId() != null && !condition.getEmployeeId().isEmpty()) {
+            builder.and(order.quotation.quotationApproval.approvedBy.eq(condition.getEmployeeId()));
+        }
+
         // 검색 조건 (type과 search 모두 있을 때만 검색)
         if (condition.getType() != null && !condition.getType().isEmpty() &&
                 condition.getSearch() != null && !condition.getSearch().isEmpty()) {

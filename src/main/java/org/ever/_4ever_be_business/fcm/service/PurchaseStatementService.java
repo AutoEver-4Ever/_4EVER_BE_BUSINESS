@@ -33,4 +33,21 @@ public interface PurchaseStatementService {
             LocalDate endDate,
             Pageable pageable
     );
+
+    /**
+     * Supplier User ID로 매입전표 목록 조회
+     * SCM 서비스를 통해 supplierCompanyId를 조회한 후 해당 공급업체의 매입전표를 반환
+     *
+     * @param supplierUserId 공급사 사용자 ID
+     * @param startDate 시작일 (optional)
+     * @param endDate 종료일 (optional)
+     * @param pageable 페이징 정보
+     * @return 매입전표 목록
+     */
+    Page<PurchaseStatementListItemDto> getPurchaseStatementListBySupplierUserId(
+            String supplierUserId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    );
 }

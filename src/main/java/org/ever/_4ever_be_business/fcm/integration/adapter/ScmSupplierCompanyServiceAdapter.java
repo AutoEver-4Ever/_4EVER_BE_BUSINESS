@@ -80,4 +80,32 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
             throw new RuntimeException("Error calling SCM SupplierCompany service (multiple)", e);
         }
     }
+
+    @Override
+    public String getSupplierCompanyIdByUserId(String supplierUserId) {
+        log.info("SCM SupplierCompany 서비스 호출 (by userId) - supplierUserId: {}", supplierUserId);
+
+        try {
+            Map<String, String> requestBody = Map.of("supplierUserId", supplierUserId);
+
+            ApiResponse<Map<String, String>> response = restClient.post()
+                    .uri(scmServiceUrl + "/scm/scm-pp/company/supplier")
+                    .body(requestBody)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<ApiResponse<Map<String, String>>>() {});
+
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                String supplierCompanyId = response.getData().get("supplierCompanyId");
+                log.info("SCM SupplierCompany 서비스 호출 성공 - supplierUserId: {}, supplierCompanyId: {}",
+                        supplierUserId, supplierCompanyId);
+                return supplierCompanyId;
+            } else {
+                log.error("SCM SupplierCompany 서비스 응답 실패 (by userId) - response: {}", response);
+                throw new RuntimeException("Failed to retrieve supplier company ID from SCM service");
+            }
+        } catch (Exception e) {
+            log.error("SCM SupplierCompany 서비스 호출 중 오류 발생 (by userId)", e);
+            throw new RuntimeException("Error calling SCM SupplierCompany service (by userId)", e);
+        }
+    }
 }

@@ -155,6 +155,8 @@ public class SdController {
      */
     @GetMapping("/orders")
     public ApiResponse<SalesOrderListResponseDto> getOrderList(
+            @RequestParam(required = false) String customerId,
+            @RequestParam(required = false) String employeeId,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String search,
@@ -162,10 +164,10 @@ public class SdController {
             @RequestParam(defaultValue = "ALL") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        log.info("주문 목록 조회 API 호출 - startDate: {}, endDate: {}, status: {}, type: {}, search: {}, page: {}, size: {}",
-                startDate, endDate, status, type, search, page, size);
+        log.info("주문 목록 조회 API 호출 - customerId: {}, employeeId: {}, startDate: {}, endDate: {}, status: {}, type: {}, search: {}, page: {}, size: {}",
+                customerId, employeeId, startDate, endDate, status, type, search, page, size);
 
-        OrderSearchConditionVo condition = new OrderSearchConditionVo(startDate, endDate, search, type, status);
+        OrderSearchConditionVo condition = new OrderSearchConditionVo(customerId, employeeId, startDate, endDate, search, type, status);
         Pageable pageable = PageRequest.of(page, size);
         SalesOrderListResponseDto result = sdOrderService.getOrderList(condition, pageable);
 
@@ -192,6 +194,7 @@ public class SdController {
      */
     @GetMapping("/quotations")
     public ApiResponse<Page<QuotationListItemDto>> getQuotationList(
+            @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(defaultValue = "ALL") String status,
@@ -200,10 +203,10 @@ public class SdController {
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        log.info("견적 목록 조회 API 호출 - startDate: {}, endDate: {}, status: {}, type: {}, search: {}, sort: {}, page: {}, size: {}",
-                startDate, endDate, status, type, search, sort, page, size);
+        log.info("견적 목록 조회 API 호출 - customerId: {}, startDate: {}, endDate: {}, status: {}, type: {}, search: {}, sort: {}, page: {}, size: {}",
+                customerId, startDate, endDate, status, type, search, sort, page, size);
 
-        QuotationSearchConditionVo condition = new QuotationSearchConditionVo(null, startDate, endDate, status, type, search, sort);
+        QuotationSearchConditionVo condition = new QuotationSearchConditionVo(null, customerId, startDate, endDate, status, type, search, sort);
         Pageable pageable = PageRequest.of(page, size);
         Page<QuotationListItemDto> result = quotationService.getQuotationList(condition, pageable);
 

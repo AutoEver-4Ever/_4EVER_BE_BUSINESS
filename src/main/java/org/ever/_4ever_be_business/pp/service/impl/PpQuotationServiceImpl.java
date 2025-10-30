@@ -30,6 +30,7 @@ public class PpQuotationServiceImpl implements PpQuotationService {
         // 1. 검색 조건 생성
         QuotationSearchConditionVo condition = new QuotationSearchConditionVo(
                 request.getQuotationId(),
+                null,  // customerId
                 null,  // startDate
                 null,  // endDate
                 null,  // status

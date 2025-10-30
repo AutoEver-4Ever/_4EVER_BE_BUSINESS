@@ -72,6 +72,11 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
             builder.and(quotation.id.eq(condition.getQuotationId()));
         }
 
+        // 고객사 사용자 ID 필터 (CUSTOMER 유저용)
+        if (condition.getCustomerId() != null && !condition.getCustomerId().isEmpty()) {
+            builder.and(quotation.customerUserId.eq(condition.getCustomerId()));
+        }
+
         // 날짜 범위 필터 (startDate ~ endDate)
         if (condition.getStartDate() != null && !condition.getStartDate().isEmpty()) {
             java.time.LocalDate startDate = java.time.LocalDate.parse(condition.getStartDate(), DATE_FORMATTER);
