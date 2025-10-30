@@ -34,4 +34,12 @@ public interface DepartmentDAO {
      * @return 구성원 목록
      */
     List<DepartmentMemberDto> findDepartmentMembers(String departmentId);
+
+    /**
+     * 부서 이름으로 해당 부서의 InternelUser userId 목록 조회
+     *
+     * @param departmentName 부서 이름 (예: "영업")
+     * @return userId 리스트
+     */
+    List<String> findInternalUserIdsByDepartmentName(String departmentName);
 }

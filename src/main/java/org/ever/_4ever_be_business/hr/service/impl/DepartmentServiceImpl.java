@@ -60,4 +60,13 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         return result;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getInternalUserIdsByDepartmentName(String departmentName) {
+        log.info("부서명으로 InternelUser userId 목록 조회 요청 - departmentName: {}", departmentName);
+        List<String> userIds = departmentDAO.findInternalUserIdsByDepartmentName(departmentName);
+        log.info("부서명으로 InternelUser userId 목록 조회 성공 - count: {}", userIds.size());
+        return userIds;
+    }
 }

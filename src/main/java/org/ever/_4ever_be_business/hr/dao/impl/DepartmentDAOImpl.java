@@ -26,6 +26,7 @@ import static org.ever._4ever_be_business.hr.entity.QDepartment.department;
 import static org.ever._4ever_be_business.hr.entity.QInternelUser.internelUser;
 import static org.ever._4ever_be_business.hr.entity.QEmployee.employee;
 import static org.ever._4ever_be_business.hr.entity.QPosition.position;
+import static org.ever._4ever_be_business.hr.entity.QInternelUser.internelUser;
 
 @Slf4j
 @Repository
@@ -238,6 +239,22 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         log.debug("부서 구성원 목록 조회 완료 - size: {}", members.size());
 
         return members;
+    }
+
+    @Override
+    public List<String> findInternalUserIdsByDepartmentName(String departmentName) {
+        log.debug("부서명으로 InternelUser userId 목록 조회 시작 - departmentName: {}", departmentName);
+
+        List<String> userIds = queryFactory
+            .select(internelUser.userId)
+            .from(internelUser)
+            .innerJoin(internelUser.position, position)
+            .innerJoin(position.department, department)
+            .where(department.departmentName.eq(departmentName))
+            .fetch();
+
+        log.debug("부서명으로 InternelUser userId 목록 조회 완료 - count: {}", userIds.size());
+        return userIds;
     }
 
     /**
