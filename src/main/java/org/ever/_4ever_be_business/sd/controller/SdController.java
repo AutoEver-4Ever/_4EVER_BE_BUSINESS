@@ -18,6 +18,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
+import org.ever.event.CreateAuthUserResultEvent;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -94,11 +96,20 @@ public class SdController {
      * 고객사 등록
      */
     @PostMapping("/customers")
-    public ApiResponse<Map<String, String>> createCustomer(@RequestBody CreateCustomerRequestDto dto) {
+    public DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> createCustomer(
+        @RequestBody CreateCustomerRequestDto dto
+    ) {
         log.info("고객사 등록 API 호출 - companyName: {}, businessNumber: {}", dto.getCompanyName(), dto.getBusinessNumber());
-        String customerId = customerService.createCustomer(dto);
-        log.info("고객사 등록 성공 - customerId: {}", customerId);
-        return ApiResponse.success(Map.of("customerId", customerId), "고객사가 등록되었습니다.", HttpStatus.CREATED);
+
+        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult = new DeferredResult<>(30000L);
+        deferredResult.onTimeout(() -> {
+            log.warn("[SAGA][TIMEOUT] 고객사 등록 처리 타임아웃 - businessNumber: {}", dto.getBusinessNumber());
+            deferredResult.setResult(ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
+                .body(ApiResponse.fail("[SAGA][FAIL] 처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
+        });
+
+        customerService.createCustomer(dto, deferredResult);
+        return deferredResult;
     }
 
     /**

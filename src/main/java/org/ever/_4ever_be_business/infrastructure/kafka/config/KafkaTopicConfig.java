@@ -35,6 +35,8 @@ public class KafkaTopicConfig {
     public static final String USER_ROLLBACK_TOPIC = "user-rollback";
     public static final String PROCESS_COMPLETED_TOPIC = "process-completed";
     public static final String AUTH_USER_RESULT_TOPIC = "auth-user-result";
+    public static final String CREATE_CUSTOMER_USER_TOPIC = "create-customer-user";
+    public static final String CUSTOMER_USER_RESULT_TOPIC = "customer-user-result";
 
 
     // 고객사 생성 토픽
@@ -140,6 +142,22 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic alarmEventTopic() {
         return TopicBuilder.name(ALARM_EVENT_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    @Bean
+    public NewTopic createCustomerUserTopic() {
+        return TopicBuilder.name(CREATE_CUSTOMER_USER_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    @Bean
+    public NewTopic customerUserResultTopic() {
+        return TopicBuilder.name(CUSTOMER_USER_RESULT_TOPIC)
             .partitions(3)
             .replicas(1)
             .build();

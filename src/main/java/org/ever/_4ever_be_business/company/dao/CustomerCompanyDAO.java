@@ -1,7 +1,7 @@
 package org.ever._4ever_be_business.company.dao;
 
-import org.ever._4ever_be_business.company.entity.CustomerCompany;
-import org.ever._4ever_be_business.hr.entity.CustomerUser;
+import java.util.Optional;
+import org.ever._4ever_be_business.company.dto.CustomerCreationResult;
 import org.ever._4ever_be_business.sd.dto.request.CreateCustomerRequestDto;
 import org.ever._4ever_be_business.sd.dto.request.UpdateCustomerRequestDto;
 import org.ever._4ever_be_business.sd.dto.response.CustomerDetailDto;
@@ -9,8 +9,6 @@ import org.ever._4ever_be_business.sd.dto.response.CustomerListItemDto;
 import org.ever._4ever_be_business.sd.vo.CustomerSearchConditionVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.util.Optional;
 
 public interface CustomerCompanyDAO {
     /**
@@ -34,9 +32,10 @@ public interface CustomerCompanyDAO {
      * 고객사 등록
      *
      * @param dto 고객사 등록 요청 정보
-     * @return 등록된 고객사 정보
+     * @param externalUserId Auth 서비스와 연동할 고객사 담당자 외부 사용자 ID
+     * @return 저장된 고객사와 담당자 정보
      */
-    CustomerCompany saveCustomer(CreateCustomerRequestDto dto);
+    CustomerCreationResult saveCustomer(CreateCustomerRequestDto dto, String externalUserId);
 
     /**
      * 고객사 정보 수정
