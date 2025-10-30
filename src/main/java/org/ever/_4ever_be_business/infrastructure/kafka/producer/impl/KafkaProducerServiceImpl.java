@@ -43,7 +43,7 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
 
     @Override
     public CompletableFuture<SendResult<String, Object>> sendAlarmEvent(AlarmEvent event) {
-        return sendEvent(ALARM_EVENT_TOPIC, event.getUserId(), event);
+        return sendEvent(ALARM_REQUEST_TOPIC, event.getAlarmId(), event);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
                     log.info("사용자 생성 이벤트 전송 성공: {}, offset: {}",
-                            event.getEventId(), result.getRecordMetadata().offset());
+                        event.getEventId(), result.getRecordMetadata().offset());
                 } else {
                     log.error("사용자 생성 이벤트 전송 실패: {}", ex.getMessage());
                 }

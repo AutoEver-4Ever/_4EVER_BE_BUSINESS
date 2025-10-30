@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.common.util.CodeGenerator;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
+import org.ever._4ever_be_business.hr.service.DepartmentService;
+import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
 import org.ever._4ever_be_business.order.dao.QuotationDAO;
 import org.ever._4ever_be_business.order.entity.*;
 import org.ever._4ever_be_business.order.enums.Unit;
@@ -29,6 +32,11 @@ import org.ever._4ever_be_business.sd.integration.port.ProductServicePort;
 import org.ever._4ever_be_business.sd.service.QuotationService;
 import org.ever._4ever_be_business.sd.vo.QuotationDetailVo;
 import org.ever._4ever_be_business.sd.vo.QuotationSearchConditionVo;
+import org.ever.event.AlarmEvent;
+import org.ever.event.alarm.AlarmType;
+import org.ever.event.alarm.LinkType;
+import org.ever.event.alarm.SourceType;
+import org.ever.event.alarm.TargetType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -47,6 +55,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QuotationServiceImpl implements QuotationService {
 
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final QuotationDAO quotationDAO;
     private final QuotationApprovalRepository quotationApprovalRepository;
     private final QuotationItemRepository quotationItemRepository;
@@ -57,8 +66,8 @@ public class QuotationServiceImpl implements QuotationService {
     private final InventoryServicePort inventoryServicePort;
     private final org.ever._4ever_be_business.hr.repository.CustomerUserRepository customerUserRepository;
     private final org.ever._4ever_be_business.company.repository.CustomerCompanyRepository customerCompanyRepository;
-
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final KafkaProducerService kafkaProducerService;
+    private final DepartmentService departmentService;
 
     @Override
     @Transactional(readOnly = true)
@@ -160,6 +169,10 @@ public class QuotationServiceImpl implements QuotationService {
         return result;
     }
 
+    /**
+     * 견적서 생성
+     * TODO : 영업 role의 유저들에게 알람을 보내야합니다.
+     */
     @Override
     @Transactional
     public String createQuotation(CreateQuotationRequestDto dto) {
@@ -230,9 +243,52 @@ public class QuotationServiceImpl implements QuotationService {
         log.info("견적서 생성 성공 - quotationId: {}, quotationCode: {}, totalAmount: {}",
                 savedQuotation.getId(), quotationCode, totalAmount);
 
+        // 영업 부서 이름으로 InternelUser userId 목록 조회 후 알림 발송
+        List<String> salesUserIds = departmentService.getInternalUserIdsByDepartmentName("영업");
+        log.info("영업 부서 InternelUser 수 - count: {}", salesUserIds.size());
+        for (String userId : salesUserIds) {
+            AlarmEvent alarmEventForCreate = AlarmEvent.builder()
+                .eventId(UuidV7Generator.generate())
+                .eventType(AlarmEvent.class.getName())
+                .timestamp(LocalDateTime.now())
+                .source(SourceType.BUSINESS.name())
+                .alarmId(UuidV7Generator.generate())
+                .alarmType(AlarmType.SD)
+                .targetId(userId)
+                .targetType(TargetType.EMPLOYEE)
+                .title("견적서 생성")
+                .message("새 견적서가 생성되었습니다. 견적ID=" + savedQuotation.getId())
+                .linkId(savedQuotation.getId())
+                .linkType(LinkType.QUOTATION)
+                .scheduledAt(null)
+                .build();
+
+            log.info("알림 요청 전송 준비 - alarmId: {}, targetId: {}, targetType: {}, linkType: {}",
+                alarmEventForCreate.getAlarmId(), userId, alarmEventForCreate.getTargetType(), alarmEventForCreate.getLinkType());
+            kafkaProducerService.sendAlarmEvent(alarmEventForCreate)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("알림 요청 전송 실패 - alarmId: {}, targetId: {}, error: {}",
+                            alarmEventForCreate.getAlarmId(), userId, ex.getMessage(), ex);
+                    } else if (result != null) {
+                        log.info("알림 요청 전송 성공 - topic: {}, partition: {}, offset: {}",
+                            result.getRecordMetadata().topic(),
+                            result.getRecordMetadata().partition(),
+                            result.getRecordMetadata().offset());
+                    } else {
+                        log.warn("알림 요청 전송 결과가 null 입니다 - alarmId: {}, targetId: {}",
+                            alarmEventForCreate.getAlarmId(), userId);
+                    }
+                });
+        }
+
         return savedQuotation.getId();
     }
 
+    /**
+     * 견적서 승인 및 주문 생성
+     * TODO : 고객사 ID에 해당하는 유저들 혹은 고객ID에 해당하는 유저에게 알람을 보내야합니다.
+     */
     @Override
     @Transactional
     public void approveQuotation(String quotationId, String employeeId) {
@@ -309,6 +365,38 @@ public class QuotationServiceImpl implements QuotationService {
         log.info("SalesVoucher 생성 완료 - voucherCode: {}", voucherCode);
 
         log.info("견적서 승인 및 주문 생성 완료 - quotationId: {}, orderId: {}", quotationId, order.getId());
+
+        AlarmEvent alarmEventForApprove = AlarmEvent.builder()
+            .eventId(UuidV7Generator.generate())
+            .eventType(AlarmEvent.class.getName())
+            .timestamp(LocalDateTime.now())
+            .source(SourceType.BUSINESS.name())
+            .alarmId(UuidV7Generator.generate())
+            .alarmType(AlarmType.SD)
+            .targetId(quotation.getCustomerUserId())
+            .targetType(TargetType.CUSTOMER)
+            .title("견적서 승인")
+            .message("견적서가 승인되었습니다. 견적ID=" + quotationId)
+            .linkId(quotationId)
+            .linkType(LinkType.QUOTATION)
+            .scheduledAt(null)
+            .build();
+
+        log.info("알림 요청 전송 준비 - alarmId: {}, targetType: {}, linkType: {}",
+            alarmEventForApprove.getAlarmId(), alarmEventForApprove.getTargetType(), alarmEventForApprove.getLinkType());
+        kafkaProducerService.sendAlarmEvent(alarmEventForApprove)
+            .whenComplete((result, ex) -> {
+                if (ex != null) {
+                    log.error("알림 요청 전송 실패 - alarmId: {}, error: {}", alarmEventForApprove.getAlarmId(), ex.getMessage(), ex);
+                } else if (result != null) {
+                    log.info("알림 요청 전송 성공 - topic: {}, partition: {}, offset: {}",
+                        result.getRecordMetadata().topic(),
+                        result.getRecordMetadata().partition(),
+                        result.getRecordMetadata().offset());
+                } else {
+                    log.warn("알림 요청 전송 결과가 null 입니다 - alarmId: {}", alarmEventForApprove.getAlarmId());
+                }
+            });
     }
 
     @Override
@@ -334,6 +422,10 @@ public class QuotationServiceImpl implements QuotationService {
                 quotationId, approval.getApprovalStatus());
     }
 
+    /**
+     * 견적서 거부
+     * TODO : 고객사 ID에 해당하는 유저들 혹은 고객 ID에 해당하는 유저에게 알람을 보내야합니다.
+     */
     @Override
     @Transactional
     public void rejectQuotation(String quotationId, String reason) {
@@ -354,6 +446,37 @@ public class QuotationServiceImpl implements QuotationService {
         quotationApprovalRepository.save(approval);
 
         log.info("견적서 거부 완료 - quotationId: {}, status: REJECTED", quotationId);
+
+        AlarmEvent alarmEventForReject = AlarmEvent.builder()
+            .eventId(UuidV7Generator.generate())
+            .eventType(AlarmEvent.class.getName())
+            .timestamp(LocalDateTime.now())
+            .source(SourceType.BUSINESS.name())
+            .alarmId(UuidV7Generator.generate())
+            .alarmType(AlarmType.SD)
+            .targetId(quotation.getCustomerUserId())
+            .targetType(TargetType.CUSTOMER)
+            .title("견적서 거부")
+            .message("견적서가 거부되었습니다. 사유=" + reason + ", 견적ID=" + quotationId)
+            .linkId(quotationId)
+            .linkType(LinkType.QUOTATION)
+            .scheduledAt(null)
+            .build();
+
+        log.info("알림 요청 전송 준비 - alarmId: {}, targetType: {}, linkType: {}",
+            alarmEventForReject.getAlarmId(), alarmEventForReject.getTargetType(), alarmEventForReject.getLinkType());
+        kafkaProducerService.sendAlarmEvent(alarmEventForReject).whenComplete((result, ex) -> {
+            if (ex != null) {
+                log.error("알림 요청 전송 실패 - alarmId: {}, error: {}", alarmEventForReject.getAlarmId(), ex.getMessage(), ex);
+            } else if (result != null) {
+                log.info("알림 요청 전송 성공 - topic: {}, partition: {}, offset: {}",
+                    result.getRecordMetadata().topic(),
+                    result.getRecordMetadata().partition(),
+                    result.getRecordMetadata().offset());
+            } else {
+                log.warn("알림 요청 전송 결과가 null 입니다 - alarmId: {}", alarmEventForReject.getAlarmId());
+            }
+        });
     }
 
     @Override
