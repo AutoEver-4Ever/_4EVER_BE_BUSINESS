@@ -36,6 +36,12 @@ public class KafkaTopicConfig {
     public static final String PROCESS_COMPLETED_TOPIC = "process-completed";
     public static final String AUTH_USER_RESULT_TOPIC = "auth-user-result";
 
+    // ALARM 서비스 토픽
+    public static final String ALARM_REQUEST_TOPIC = "alarm-request"; // 알림 요청
+    public static final String ALARM_SENT_STATUS_TOPIC = "alarm-sent-status"; // 알림 발송 상태
+    public static final String ALARM_SENT_TOPIC = "alarm-sent"; // 알림 발송
+    public static final String ALARM_REQUEST_STATUS_TOPIC = "alarm-request-status"; // 알림 요청 상태
+
 
     // 고객사 생성 토픽
     @Bean
