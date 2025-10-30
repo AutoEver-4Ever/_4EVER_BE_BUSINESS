@@ -150,4 +150,40 @@ public class KafkaTopicConfig {
             .replicas(1)
             .build();
     }
+
+    // 알림 요청 토픽
+    @Bean
+    public NewTopic alarmRequestTopic() {
+        return TopicBuilder.name(ALARM_REQUEST_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    // 알림 발송 상태 토픽
+    @Bean
+    public NewTopic alarmSentStatusTopic() {
+        return TopicBuilder.name(ALARM_SENT_STATUS_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    // 알림 발송 결과 토픽
+    @Bean
+    public NewTopic alarmSentTopic() {
+        return TopicBuilder.name(ALARM_SENT_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    // 알림 요청 상태 토픽
+    @Bean
+    public NewTopic alarmRequestStatusTopic() {
+        return TopicBuilder.name(ALARM_REQUEST_STATUS_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
 }
