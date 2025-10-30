@@ -5,6 +5,7 @@ import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.common.util.CodeGenerator;
 import org.ever._4ever_be_business.company.dao.CustomerCompanyDAO;
+import org.ever._4ever_be_business.company.dto.CustomerCreationResult;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.company.repository.CustomerCompanyRepository;
 import org.ever._4ever_be_business.hr.entity.CustomerUser;
@@ -40,7 +41,7 @@ public class CustomerCompanyDAOImpl implements CustomerCompanyDAO {
 
     @Override
     @Transactional
-    public CustomerCompany saveCustomer(CreateCustomerRequestDto dto) {
+    public CustomerCreationResult saveCustomer(CreateCustomerRequestDto dto, String externalUserId) {
         // 1. 고객사 코드 생성 (UUID v7 기반)
         String customerCode = CodeGenerator.generateCustomerCode();
 
@@ -61,21 +62,23 @@ public class CustomerCompanyDAOImpl implements CustomerCompanyDAO {
 
         CustomerCompany savedCompany = customerCompanyRepository.save(customerCompany);
 
-        // 3. CustomerUser 엔티티 생성 및 저장 (manager 정보)
+        CustomerUser savedManager = null;
         if (dto.getManager() != null) {
             CustomerUser customerUser = new CustomerUser(
-                    null,  // userId - 향후 Auth 서비스와 연동 시 사용
-                    dto.getManager().getName(),
-                    savedCompany,
-                    null,  // customerUserCode - 필요시 생성 로직 추가
-                    dto.getManager().getEmail(),
-                    dto.getManager().getMobile()
+                externalUserId,
+                dto.getManager().getName(),
+                savedCompany,
+                null,  // customerUserCode - 필요시 생성 로직 추가
+                dto.getManager().getEmail(),
+                dto.getManager().getMobile()
             );
-
-            customerUserRepository.save(customerUser);
+            savedManager = customerUserRepository.save(customerUser);
+            if (savedManager != null) {
+                savedCompany.assignCustomerUser(savedManager.getId());
+            }
         }
 
-        return savedCompany;
+        return new CustomerCreationResult(savedCompany, savedManager);
     }
 
     @Override
