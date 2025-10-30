@@ -114,7 +114,7 @@ public class PayrollServiceImpl implements PayrollService {
                         employee,
                         baseSalary,
                         overtimeSalary,
-                        PayrollStatus.PENDING_PAYMENT,  // 초기 상태: 지급 대기
+                        PayrollStatus.PAYROLL_UNPAID,  // 초기 상태: 미지급
                         netSalary,
                         null,  // payDate: 아직 지급 전
                         baseDate  // baseDate: 급여 기준일 (당월 1일)

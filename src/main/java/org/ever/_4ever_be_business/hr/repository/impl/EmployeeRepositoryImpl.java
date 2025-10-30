@@ -173,13 +173,13 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                         department.departmentName,                          // department
                         position.positionName,                              // position
                         new CaseBuilder()
-                                .when(employeeTraining.completionStatus.isTrue()
+                                .when(employeeTraining.completionStatus.eq(org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus.COMPLETED)
                                         .and(training.trainingStatus.eq(TrainingStatus.COMPLETED)))
                                 .then(1L)
                                 .otherwise(0L)
                                 .sum(),                                     // completedCount
                         new CaseBuilder()
-                                .when(employeeTraining.completionStatus.isFalse()
+                                .when(employeeTraining.completionStatus.eq(org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus.IN_PROGRESS)
                                         .and(training.trainingStatus.eq(TrainingStatus.IN_PROGRESS)))
                                 .then(1L)
                                 .otherwise(0L)
@@ -218,13 +218,13 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                         department.departmentName,                          // department
                         position.positionName,                              // position
                         new CaseBuilder()
-                                .when(employeeTraining.completionStatus.isTrue()
+                                .when(employeeTraining.completionStatus.eq(org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus.COMPLETED)
                                         .and(training.trainingStatus.eq(TrainingStatus.COMPLETED)))
                                 .then(1L)
                                 .otherwise(0L)
                                 .sum(),                                     // completedCount
                         new CaseBuilder()
-                                .when(employeeTraining.completionStatus.isFalse()
+                                .when(employeeTraining.completionStatus.eq(org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus.IN_PROGRESS)
                                         .and(training.trainingStatus.eq(TrainingStatus.IN_PROGRESS)))
                                 .then(1L)
                                 .otherwise(0L)

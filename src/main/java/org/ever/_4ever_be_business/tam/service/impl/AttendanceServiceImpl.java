@@ -111,7 +111,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 "개발팀",
                 attendance.getEmployee().getInternelUser().getPosition().getPositionName(),
                 attendance.getStatus() == AttendanceStatus.LATE,
-                attendance.getStatus() == AttendanceStatus.EARLY_LEAVE
+                false  // earlyLeave는 더 이상 사용하지 않음
         );
     }
 
@@ -256,12 +256,11 @@ public class AttendanceServiceImpl implements AttendanceService {
             }
         }
 
-        // statusCode 필터링 (NORMAL, LATE, EARLY_LEAVE, ABSENT만)
+        // statusCode 필터링 (NORMAL, LATE만)
         String statusCode = "NORMAL";
         if (attendance.getStatus() != null) {
             AttendanceStatus status = attendance.getStatus();
-            if (status == AttendanceStatus.NORMAL || status == AttendanceStatus.LATE
-                    || status == AttendanceStatus.EARLY_LEAVE || status == AttendanceStatus.ABSENT) {
+            if (status == AttendanceStatus.NORMAL || status == AttendanceStatus.LATE) {
                 statusCode = status.name();
             }
         }

@@ -82,7 +82,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                             training.getTrainingName(),
                             training.getCategory() != null ? training.getCategory().name() : null,
                             training.getDurationHours(),
-                            et.getCompletionStatus()
+                            et.getCompletionStatus() != null ? et.getCompletionStatus().name() : null
                     );
                 })
                 .collect(Collectors.toList());
@@ -172,7 +172,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         EmployeeTraining employeeTraining = new EmployeeTraining(
                 employee,
                 training,
-                false  // completionStatus: 신청 시점에는 미완료
+                org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus.IN_PROGRESS  // completionStatus: 신청 시점에는 진행중
         );
 
         employeeTrainingRepository.save(employeeTraining);
@@ -206,7 +206,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                             training.getTrainingName(),
                             training.getCategory() != null ? training.getCategory().name() : null,
                             training.getDurationHours(),
-                            et.getCompletionStatus()
+                            et.getCompletionStatus() != null ? et.getCompletionStatus().name() : null
                     );
                 })
                 .collect(Collectors.toList());

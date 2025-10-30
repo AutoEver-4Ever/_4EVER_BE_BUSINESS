@@ -11,5 +11,5 @@ public class AttendanceListSearchConditionVo {
     private String employeeId;
     private String startDate;    // YYYY-MM-DD
     private String endDate;      // YYYY-MM-DD
-    private String status;       // NORMAL, LATE, EARLY_LEAVE, ABSENT
+    private String status;       // NORMAL, LATE
 }

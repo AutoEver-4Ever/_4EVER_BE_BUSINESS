@@ -201,10 +201,7 @@ public class AttendanceRepositoryImpl implements AttendanceRepositoryCustom {
                                 .when(attendance.status.eq(AttendanceStatus.LATE))
                                 .then(true)
                                 .otherwise(false),                         // isLate
-                        Expressions.cases()
-                                .when(attendance.status.eq(AttendanceStatus.EARLY_LEAVE))
-                                .then(true)
-                                .otherwise(false)                          // isEarlyLeave
+                        Expressions.constant(false)                        // isEarlyLeave (더 이상 사용 안 함)
                 ))
                 .from(attendance)
                 .join(attendance.employee, employee)

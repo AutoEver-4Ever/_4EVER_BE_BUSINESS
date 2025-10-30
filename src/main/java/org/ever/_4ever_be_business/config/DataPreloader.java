@@ -430,7 +430,7 @@ public class DataPreloader {
         Training[] trainings = {
                 new Training(
                         "Spring Boot 심화 과정",
-                        org.ever._4ever_be_business.hr.enums.TrainingCategory.TECHNICAL,
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.TECHNICAL_TRAINING,
                         40L,
                         "온라인",
                         15L,
@@ -440,59 +440,37 @@ public class DataPreloader {
                         org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
                 ),
                 new Training(
-                        "리더십 역량 강화",
-                        org.ever._4ever_be_business.hr.enums.TrainingCategory.LEADERSHIP,
+                        "Java 프로그래밍 기초",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.BASIC_TRAINING,
                         24L,
                         "오프라인",
                         20L,
                         25,
-                        "중간 관리자를 위한 리더십 및 팀 관리 스킬",
+                        "Java 프로그래밍 언어의 기초 문법과 개념",
                         true,
                         org.ever._4ever_be_business.hr.enums.TrainingStatus.IN_PROGRESS
                 ),
                 new Training(
-                        "개인정보보호법 준수 교육",
-                        org.ever._4ever_be_business.hr.enums.TrainingCategory.COMPLIANCE,
-                        4L,
-                        "온라인",
-                        45L,
-                        50,
-                        "개인정보보호법 및 정보보안 의무 교육",
-                        true,
-                        org.ever._4ever_be_business.hr.enums.TrainingStatus.IN_PROGRESS
-                ),
-                new Training(
-                        "비즈니스 영어 회화",
-                        org.ever._4ever_be_business.hr.enums.TrainingCategory.LANGUAGE,
-                        60L,
-                        "오프라인",
-                        12L,
-                        20,
-                        "업무 상황에서 활용 가능한 실전 영어 회화",
-                        true,
-                        org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
-                ),
-                new Training(
-                        "데이터 분석 기초",
-                        org.ever._4ever_be_business.hr.enums.TrainingCategory.COURSE,
+                        "데이터베이스 기초",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.BASIC_TRAINING,
                         32L,
                         "온라인",
                         25L,
                         40,
-                        "Python 기반 데이터 분석 및 시각화 기초 과정",
+                        "SQL 기초 및 데이터베이스 설계 원칙",
                         true,
                         org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
                 ),
                 new Training(
-                        "산업안전보건교육",
-                        org.ever._4ever_be_business.hr.enums.TrainingCategory.SAFETY,
-                        8L,
-                        "오프라인",
-                        30L,
-                        50,
-                        "산업안전보건법에 따른 필수 안전 교육",
+                        "React 프론트엔드 개발",
+                        org.ever._4ever_be_business.hr.enums.TrainingCategory.TECHNICAL_TRAINING,
+                        48L,
+                        "온라인",
+                        18L,
+                        30,
+                        "React 라이브러리를 활용한 현대적 웹 개발",
                         true,
-                        org.ever._4ever_be_business.hr.enums.TrainingStatus.COMPLETED
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.IN_PROGRESS
                 )
         };
 

@@ -22,5 +22,5 @@ public class EmployeeTrainingItemDto {
     private Long durationHours;
 
     @JsonProperty("completionStatus")
-    private Boolean completionStatus;
+    private String completionStatus;  // TrainingCompletionStatus enum의 name()
 }

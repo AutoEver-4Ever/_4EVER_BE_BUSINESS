@@ -13,6 +13,7 @@ import org.ever._4ever_be_business.hr.entity.EmployeeTraining;
 import org.ever._4ever_be_business.hr.entity.InternelUser;
 import org.ever._4ever_be_business.hr.entity.Position;
 import org.ever._4ever_be_business.hr.entity.Training;
+import org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus;
 import org.ever._4ever_be_business.hr.enums.TrainingStatus;
 import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
 import org.ever._4ever_be_business.hr.repository.EmployeeTrainingRepository;
@@ -95,8 +96,8 @@ public class TrainingServiceImpl implements TrainingService {
                                     ? position.getDepartment().getDepartmentName()
                                     : "미지정",
                             position != null ? position.getPositionName() : "미지정",
-                            employeeTraining.getCompletionStatus() ? "COMPLETED" : "INCOMPLETED",
-                            employeeTraining.getUpdatedAt() != null && employeeTraining.getCompletionStatus()
+                            employeeTraining.getCompletionStatus() == TrainingCompletionStatus.COMPLETED ? "COMPLETED" : "INCOMPLETED",
+                            employeeTraining.getUpdatedAt() != null && employeeTraining.getCompletionStatus() == TrainingCompletionStatus.COMPLETED
                                     ? employeeTraining.getUpdatedAt().format(DATE_FORMATTER)
                                     : null
                     );
@@ -149,11 +150,11 @@ public class TrainingServiceImpl implements TrainingService {
 
         // 3. 통계 계산
         long completedCount = trainingHistory.stream()
-                .filter(EmployeeTraining::getCompletionStatus)
+                .filter(et -> et.getCompletionStatus() == TrainingCompletionStatus.COMPLETED)
                 .count();
 
         long requiredMissingCount = trainingHistory.stream()
-                .filter(et -> !et.getCompletionStatus())
+                .filter(et -> et.getCompletionStatus() == TrainingCompletionStatus.IN_PROGRESS)
                 .count();
 
         // 4. 프로그램 이력 변환
@@ -161,8 +162,8 @@ public class TrainingServiceImpl implements TrainingService {
                 .map(et -> new ProgramHistoryItemDto(
                         et.getTraining().getId(),
                         et.getTraining().getTrainingName(),
-                        et.getCompletionStatus() ? "COMPLETED" : "INCOMPLETED",
-                        et.getCompletionStatus() ? et.getUpdatedAt() : null
+                        et.getCompletionStatus() == TrainingCompletionStatus.COMPLETED ? "COMPLETED" : "INCOMPLETED",
+                        et.getCompletionStatus() == TrainingCompletionStatus.COMPLETED ? et.getUpdatedAt() : null
                 ))
                 .collect(Collectors.toList());
 
@@ -198,11 +199,11 @@ public class TrainingServiceImpl implements TrainingService {
 
                     // 통계 계산
                     long completedCount = trainingHistory.stream()
-                            .filter(EmployeeTraining::getCompletionStatus)
+                            .filter(et -> et.getCompletionStatus() == TrainingCompletionStatus.COMPLETED)
                             .count();
 
                     long inProgressCount = trainingHistory.stream()
-                            .filter(et -> !et.getCompletionStatus())
+                            .filter(et -> et.getCompletionStatus() == TrainingCompletionStatus.IN_PROGRESS)
                             .count();
 
                     return new EmployeeTrainingListItemDto(

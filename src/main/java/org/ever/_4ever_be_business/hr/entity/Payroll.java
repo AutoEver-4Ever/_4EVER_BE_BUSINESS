@@ -64,7 +64,7 @@ public class Payroll extends TimeStamp {
      * 급여 지급 완료 처리
      */
     public void markAsPaid() {
-        this.status = PayrollStatus.PAID;
+        this.status = PayrollStatus.PAYROLL_PAID;
         this.payDate = LocalDateTime.now();
     }
 }
