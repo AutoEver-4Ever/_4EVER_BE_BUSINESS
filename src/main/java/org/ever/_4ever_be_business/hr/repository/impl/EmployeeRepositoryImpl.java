@@ -95,8 +95,8 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                 .join(internelUser.position, position)
                 .join(position.department, department)
                 .where(
-                        departmentNameEq(condition.getDepartment()),
-                        positionNameEq(condition.getPosition()),
+                        departmentIdEq(condition.getDepartmentId()),
+                        positionIdEq(condition.getPositionId()),
                         employeeNameContains(condition.getName())
                 )
                 .fetchOne();
@@ -136,8 +136,8 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                 .join(internelUser.position, position)
                 .join(position.department, department)
                 .where(
-                        departmentNameEq(condition.getDepartment()),
-                        positionNameEq(condition.getPosition()),
+                        departmentIdEq(condition.getDepartmentId()),
+                        positionIdEq(condition.getPositionId()),
                         employeeNameContains(condition.getName())
                 )
                 .offset(pageable.getOffset())

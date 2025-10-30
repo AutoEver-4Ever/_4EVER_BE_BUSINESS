@@ -114,8 +114,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional(readOnly = true)
     public Page<EmployeeListItemDto> getEmployeeList(EmployeeListSearchConditionVo condition, Pageable pageable) {
-        log.info("직원 목록 조회 요청 - department: {}, position: {}, name: {}",
-                condition.getDepartment(), condition.getPosition(), condition.getName());
+        log.info("직원 목록 조회 요청 - departmentId: {}, positionId: {}, name: {}",
+                condition.getDepartmentId(), condition.getPositionId(), condition.getName());
 
         Page<EmployeeListItemDto> result = employeeDAO.findEmployeeList(condition, pageable);
 

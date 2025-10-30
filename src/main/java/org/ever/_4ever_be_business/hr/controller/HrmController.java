@@ -207,15 +207,15 @@ public class HrmController {
      */
     @GetMapping("/employee")
     public ApiResponse<Page<EmployeeListItemDto>> getEmployeeList(
-            @RequestParam(required = false) String department,
-            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String departmentId,
+            @RequestParam(required = false) String positionId,
             @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        log.info("직원 목록 조회 API 호출 - department: {}, position: {}, name: {}, page: {}, size: {}",
-                department, position, name, page, size);
+        log.info("직원 목록 조회 API 호출 - departmentId: {}, positionId: {}, name: {}, page: {}, size: {}",
+                departmentId, positionId, name, page, size);
 
-        EmployeeListSearchConditionVo condition = new EmployeeListSearchConditionVo(department, position, name);
+        EmployeeListSearchConditionVo condition = new EmployeeListSearchConditionVo(departmentId, positionId, name);
         Pageable pageable = PageRequest.of(page, size);
         Page<EmployeeListItemDto> result = employeeService.getEmployeeList(condition, pageable);
 

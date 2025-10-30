@@ -102,8 +102,8 @@ public class EmployeeDAOImpl implements EmployeeDAO {
 
     @Override
     public Page<EmployeeListItemDto> findEmployeeList(EmployeeListSearchConditionVo condition, Pageable pageable) {
-        log.debug("직원 목록 조회 시작 - department: {}, position: {}, name: {}",
-                condition.getDepartment(), condition.getPosition(), condition.getName());
+        log.debug("직원 목록 조회 시작 - departmentId: {}, positionId: {}, name: {}",
+                condition.getDepartmentId(), condition.getPositionId(), condition.getName());
 
         Page<EmployeeListItemDto> result = employeeRepository.findEmployeeList(condition, pageable);
 
