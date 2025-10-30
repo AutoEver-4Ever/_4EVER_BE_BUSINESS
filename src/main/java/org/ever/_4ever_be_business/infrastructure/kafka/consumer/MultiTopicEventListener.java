@@ -113,7 +113,7 @@ public class MultiTopicEventListener {
     private void handleAlarmEvent(String message) {
         try {
             AlarmEvent event = objectMapper.readValue(message, AlarmEvent.class);
-            log.info("알림 이벤트 처리 중 - UserId: {}, Type: {}", event.getUserId(), event.getAlarmType());
+            log.info("알림 이벤트 처리 중 - AlarmId: {}, Type: {}", event.getAlarmId(), event.getAlarmType());
 
             // Alarm 이벤트 처리 로직
             multiTopicEventHandler.handleAlarmEvent(event);
