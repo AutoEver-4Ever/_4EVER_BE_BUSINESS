@@ -243,10 +243,10 @@ public class QuotationServiceImpl implements QuotationService {
         log.info("견적서 생성 성공 - quotationId: {}, quotationCode: {}, totalAmount: {}",
                 savedQuotation.getId(), quotationCode, totalAmount);
 
-        // 영업부(SD) 부서 코드로 부서 조회 후, 구성원 전원의 직원 ID로 알림 전송
-        departmentService.getDepartmentMembers("영업").forEach(member -> {
-            log.info("영업 부서 구성원 - employeeId: {}, name: {}", member.getMemberId(), member.getMemberName());
-
+        // 영업 부서 이름으로 InternelUser userId 목록 조회 후 알림 발송
+        List<String> salesUserIds = departmentService.getInternalUserIdsByDepartmentName("영업");
+        log.info("영업 부서 InternelUser 수 - count: {}", salesUserIds.size());
+        for (String userId : salesUserIds) {
             AlarmEvent alarmEventForCreate = AlarmEvent.builder()
                 .eventId(UuidV7Generator.generate())
                 .eventType(AlarmEvent.class.getName())
@@ -254,7 +254,7 @@ public class QuotationServiceImpl implements QuotationService {
                 .source(SourceType.BUSINESS.name())
                 .alarmId(UuidV7Generator.generate())
                 .alarmType(AlarmType.SD)
-                .targetId(member.getMemberId())
+                .targetId(userId)
                 .targetType(TargetType.EMPLOYEE)
                 .title("견적서 생성")
                 .message("새 견적서가 생성되었습니다. 견적ID=" + savedQuotation.getId())
@@ -264,12 +264,12 @@ public class QuotationServiceImpl implements QuotationService {
                 .build();
 
             log.info("알림 요청 전송 준비 - alarmId: {}, targetId: {}, targetType: {}, linkType: {}",
-                alarmEventForCreate.getAlarmId(), member.getMemberId(), alarmEventForCreate.getTargetType(), alarmEventForCreate.getLinkType());
+                alarmEventForCreate.getAlarmId(), userId, alarmEventForCreate.getTargetType(), alarmEventForCreate.getLinkType());
             kafkaProducerService.sendAlarmEvent(alarmEventForCreate)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
                         log.error("알림 요청 전송 실패 - alarmId: {}, targetId: {}, error: {}",
-                            alarmEventForCreate.getAlarmId(), member.getMemberId(), ex.getMessage(), ex);
+                            alarmEventForCreate.getAlarmId(), userId, ex.getMessage(), ex);
                     } else if (result != null) {
                         log.info("알림 요청 전송 성공 - topic: {}, partition: {}, offset: {}",
                             result.getRecordMetadata().topic(),
@@ -277,19 +277,10 @@ public class QuotationServiceImpl implements QuotationService {
                             result.getRecordMetadata().offset());
                     } else {
                         log.warn("알림 요청 전송 결과가 null 입니다 - alarmId: {}, targetId: {}",
-                            alarmEventForCreate.getAlarmId(), member.getMemberId());
+                            alarmEventForCreate.getAlarmId(), userId);
                     }
                 });
-        });
-        departmentService.getDepartmentByCode("SD").ifPresentOrElse(dept -> {
-            log.info("영업 부서 정보 - id: {}, name: {}", dept.getDepartmentId(), dept.getDepartmentName());
-            java.util.List<String> memberIds = departmentService.getDepartmentMemberIds(dept.getDepartmentId());
-            log.info("영업 부서 직원 수 - count: {}", memberIds.size());
-
-            for (String employeeId : memberIds) {
-
-            }
-        }, () -> log.warn("영업 부서(SD)를 찾을 수 없습니다. 알림 전송을 건너뜁니다."));
+        }
 
         return savedQuotation.getId();
     }
