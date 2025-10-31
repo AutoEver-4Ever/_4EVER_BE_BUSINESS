@@ -42,29 +42,46 @@ public class GenericAsyncResultManager<T> implements AsyncResultManager<T> {
     }
     
     @Override
-    public void setSuccessResult(String transactionId, T data, String message, HttpStatus status) {
+    public void setSuccessResult(
+            String transactionId,
+            T data,
+            String message,
+            HttpStatus status
+    ) {
         DeferredResult<ResponseEntity<ApiResponse<T>>> result = pendingResults.get(transactionId);
         if (result != null && !result.isSetOrExpired()) {
-            log.info("트랜잭션 {} 성공 결과 설정", transactionId);
-            ResponseEntity<ApiResponse<T>> responseEntity = 
-                    ResponseEntity.ok(ApiResponse.success(data, message, status));
-            result.setResult(responseEntity);
+            log.info("[INFO] 트랜잭션 {} 성공 결과 설정", transactionId);
+            HttpStatus httpStatus = status != null ? status : HttpStatus.OK;
+
+            result.setResult(
+                    ResponseEntity.status(httpStatus)
+                            .body(ApiResponse.success(data, message, httpStatus))
+            );
         } else {
-            log.warn("트랜잭션 {}에 대한 DeferredResult를 찾을 수 없거나 이미 완료됨", transactionId);
+            log.warn("[WARN] 트랜잭션 {}에 대한 DeferredResult를 찾을 수 없거나 이미 완료됨", transactionId);
         }
     }
     
     @Override
-    public void setErrorResult(String transactionId, String errorMessage, HttpStatus status) {
-        DeferredResult<ResponseEntity<ApiResponse<T>>> result = pendingResults.get(transactionId);
+    public void setErrorResult(
+            String transactionId,
+            String errorMessage,
+            HttpStatus status
+    ) {
+        DeferredResult<ResponseEntity<ApiResponse<T>>> result =
+                pendingResults.get(transactionId);
+
         if (result != null && !result.isSetOrExpired()) {
-            log.info("트랜잭션 {} 오류 결과 설정: {}", transactionId, errorMessage);
-            ResponseEntity<ApiResponse<T>> responseEntity = 
-                    ResponseEntity.status(status)
-                            .body(ApiResponse.fail(errorMessage, status));
-            result.setResult(responseEntity);
+            log.info("[INFO] 트랜잭션 {} 오류 결과 설정: {}", transactionId, errorMessage);
+
+            HttpStatus httpStatus = status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
+
+            result.setResult(
+                    ResponseEntity.status(httpStatus)
+                            .body(ApiResponse.fail(errorMessage, httpStatus))
+            );
         } else {
-            log.warn("트랜잭션 {}에 대한 DeferredResult를 찾을 수 없거나 이미 완료됨", transactionId);
+            log.warn("[WARN] 트랜잭션 {}에 대한 DeferredResult를 찾을 수 없거나 이미 완료됨", transactionId);
         }
     }
 
