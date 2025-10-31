@@ -26,54 +26,52 @@ public class LoggingFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        long srt = System.currentTimeMillis();
-        ContentCachingRequestWrapper wrappedReq = new ContentCachingRequestWrapper(req);
-        ContentCachingResponseWrapper wrappedRes = new ContentCachingResponseWrapper(res);
+        long start = System.currentTimeMillis();
 
-        String response = "";
+        ContentCachingRequestWrapper wrappedReq = new ContentCachingRequestWrapper(request);
+        ContentCachingResponseWrapper wrappedRes = new ContentCachingResponseWrapper(response);
 
         try {
             filterChain.doFilter(wrappedReq, wrappedRes);
         } catch (Exception e) {
-            log.warn("로깅 처리 중 에러 발생", e);
+            log.warn("[WARN] 로깅 처리 중 에러 발생", e);
         } finally {
-            String requestBody = new String(wrappedReq.getContentAsByteArray(), StandardCharsets.UTF_8).trim();
-
-            if(!requestBody.isEmpty()) {
-                requestBody = maskSensitiveData(requestBody);
-                log.info(">>> 요청 본문: {}", requestBody);
-            }
-
-            byte[] contentAsByteArray = wrappedRes.getContentAsByteArray();
-            if(contentAsByteArray.length > 0) {
-                String responseBody = new String(contentAsByteArray, StandardCharsets.UTF_8).trim();
-
-                // response body가 너무 크면 skip
-                if(responseBody.length() > MAX_LOG_LENGTH){
-                    response = "응답 본문: 너무 커서 생략됨";
-                }else{
-                    response = "응답 본문: " + responseBody;
+            try {
+                String requestBody = new String(wrappedReq.getContentAsByteArray(), StandardCharsets.UTF_8).trim();
+                if (!requestBody.isEmpty()) {
+                    log.info("[INFO] 요청 본문: {}", maskSensitiveData(requestBody));
                 }
-                wrappedRes.copyBodyToResponse(); // 캐시된 응답 본문을 실제 응답에 복사
+
+                String responseString = "";
+                byte[] content = wrappedRes.getContentAsByteArray();
+                if (content.length > 0) {
+                    String responseBody = new String(content, StandardCharsets.UTF_8).trim();
+
+                    responseString = responseBody.length() > MAX_LOG_LENGTH
+                            ? "[RES] 응답 본문이 너무 커서 생략되었습니다."
+                            : "[RES] 응답 본문: " + responseBody;
+                }
+                log.info("\n" + "HTTP 메서드: [ {} ] 엔드포인트: [ {} ] Content-Type: [ {} ] Authorization: [ {} ] User-agent: [ {} ] Host: [ {} ] Content-length: [ {} ] 응답 본문: [ {} ]",
+                    request.getMethod(), request.getRequestURI(),
+                    request.getHeader("content-type"),
+                    request.getHeader("authorization"),
+                    request.getHeader("member-agent"),
+                    request.getHeader("host"),
+                    request.getHeader("content-length"),
+                    responseString
+            );
+
+            long end = System.currentTimeMillis();
+            log.info(">>> 소요 시간: {} sec", (end-start) / 1000.0);
+            } finally {
+                wrappedRes.copyBodyToResponse();
             }
         }
-
-        log.info("\n" + "HTTP 메서드: [ {} ] 엔드포인트: [ {} ] Content-Type: [ {} ] Authorization: [ {} ] User-agent: [ {} ] Host: [ {} ] Content-length: [ {} ] 응답 본문: [ {} ]"
-                , req.getMethod(), req.getRequestURI(),
-                req.getHeader("content-type"),
-                req.getHeader("authorization"),
-                req.getHeader("member-agent"),
-                req.getHeader("host"),
-                req.getHeader("content-length"),
-                response
-        );
-
-        long end = System.currentTimeMillis();
-        log.info(">>> 소요 시간: {} sec", (end-srt) / 1000.0);
     }
-
-
-
 }
