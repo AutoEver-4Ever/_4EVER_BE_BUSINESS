@@ -23,6 +23,11 @@ public enum ErrorCode {
     CLIENT_DELETE_FAILED(2002, HttpStatus.BAD_REQUEST, "고객사 삭제에 실패했습니다."),
     CLIENT_UPDATE_FAILED(2003, HttpStatus.BAD_REQUEST, "고객사 정보 수정에 실패했습니다."),
     INVALID_CLIENT_STATUS(2004, HttpStatus.BAD_REQUEST, "유효하지 않은 고객사 상태입니다."),
+    CUSTOMER_NOT_FOUND(2005, HttpStatus.NOT_FOUND, "고객사를 찾을 수 없습니다."),
+    QUOTATION_NOT_FOUND(2006, HttpStatus.NOT_FOUND, "견적을 찾을 수 없습니다."),
+    ORDER_NOT_FOUND(2007, HttpStatus.NOT_FOUND, "주문서를 찾을 수 없습니다."),
+    QUOTATION_APPROVAL_NOT_FOUND(2008, HttpStatus.NOT_FOUND, "견적 승인 정보를 찾을 수 없습니다."),
+    CUSTOMER_COMPANY_NOT_FOUND(2009, HttpStatus.NOT_FOUND, "고객사 회사 정보를 찾을 수 없습니다."),
 
     // Contract Errors (3000~3999) - 계약 관리
     CONTRACT_NOT_FOUND(3000, HttpStatus.NOT_FOUND, "계약 정보를 찾을 수 없습니다."),
@@ -43,12 +48,15 @@ public enum ErrorCode {
     REDIS_CONNECTION_ERROR(5002, HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결에 실패했습니다."),
     DATABASE_ERROR(5003, HttpStatus.INTERNAL_SERVER_ERROR, "데이터베이스 오류가 발생했습니다."),
 
+    KAFKA_PRODUCER_ERROR(1234,HttpStatus.INTERNAL_SERVER_ERROR,"카프카 에러"),
+
     // Business Logic Errors (6000~6999)
     BUSINESS_LOGIC_ERROR(6000, HttpStatus.BAD_REQUEST, "비즈니스 로직 처리 중 오류가 발생했습니다."),
     DUPLICATE_REQUEST(6001, HttpStatus.CONFLICT, "중복된 요청입니다."),
     INVALID_STATE_TRANSITION(6002, HttpStatus.BAD_REQUEST, "유효하지 않은 상태 전환입니다."),
     INVALID_BUSINESS_NUMBER(6003, HttpStatus.BAD_REQUEST, "유효하지 않은 사업자 번호입니다."),
     DOCUMENT_GENERATION_FAILED(6004, HttpStatus.INTERNAL_SERVER_ERROR, "문서 생성에 실패했습니다.");
+
 
     private final int code;
     private final HttpStatus httpStatus;

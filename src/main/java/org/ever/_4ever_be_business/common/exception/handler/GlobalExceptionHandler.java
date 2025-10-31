@@ -3,7 +3,7 @@ package org.ever._4ever_be_business.common.exception.handler;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
-import org.ever._4ever_be_business.common.response.ApiResponse;
+import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;

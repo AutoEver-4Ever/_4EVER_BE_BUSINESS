@@ -3,8 +3,11 @@ package org.ever._4ever_be_business.infrastructure.kafka.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever.event.AlarmEvent;
+import org.ever.event.BusinessEvent;
+import org.ever.event.ScmEvent;
+import org.ever.event.UserEvent;
 import org.ever._4ever_be_business.infrastructure.kafka.consumer.handler.MultiTopicEventHandler;
-import org.ever._4ever_be_business.infrastructure.kafka.event.*;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -110,7 +113,7 @@ public class MultiTopicEventListener {
     private void handleAlarmEvent(String message) {
         try {
             AlarmEvent event = objectMapper.readValue(message, AlarmEvent.class);
-            log.info("알림 이벤트 처리 중 - UserId: {}, Type: {}", event.getUserId(), event.getAlarmType());
+            log.info("알림 이벤트 처리 중 - AlarmId: {}, Type: {}", event.getAlarmId(), event.getAlarmType());
 
             // Alarm 이벤트 처리 로직
             multiTopicEventHandler.handleAlarmEvent(event);

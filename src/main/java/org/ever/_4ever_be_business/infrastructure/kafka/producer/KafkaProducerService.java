@@ -1,6 +1,6 @@
 package org.ever._4ever_be_business.infrastructure.kafka.producer;
 
-import org.ever._4ever_be_business.infrastructure.kafka.event.*;
+import org.ever.event.*;
 import org.springframework.kafka.support.SendResult;
 
 import java.util.concurrent.CompletableFuture;
@@ -39,4 +39,6 @@ public interface KafkaProducerService {
      * 동기 방식 이벤트 발행
      */
     void sendEventSync(String topic, String key, Object event);
+
+    void sendCreateUserEvent(CreateUserEvent event);
 }

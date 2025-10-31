@@ -28,6 +28,23 @@ public class KafkaTopicConfig {
     public static final String SCM_EVENT_TOPIC = "scm-event";
     public static final String ALARM_EVENT_TOPIC = "alarm-event";
 
+    // 고객사 등록 토픽
+    public static final String CREATE_USER_TOPIC = "create-user";
+    public static final String USER_CREATED_TOPIC = "user-created";
+    public static final String USER_CREATION_FAILED_TOPIC = "user-creation-failed";
+    public static final String USER_ROLLBACK_TOPIC = "user-rollback";
+    public static final String PROCESS_COMPLETED_TOPIC = "process-completed";
+    public static final String AUTH_USER_RESULT_TOPIC = "auth-user-result";
+    public static final String CREATE_CUSTOMER_USER_TOPIC = "create-customer-user";
+    public static final String CUSTOMER_USER_RESULT_TOPIC = "customer-user-result";
+
+    // ALARM 서비스 토픽
+    public static final String ALARM_REQUEST_TOPIC = "alarm-request"; // 알림 요청
+    public static final String ALARM_SENT_STATUS_TOPIC = "alarm-sent-status"; // 알림 발송 상태
+    public static final String ALARM_SENT_TOPIC = "alarm-sent"; // 알림 발송
+    public static final String ALARM_REQUEST_STATUS_TOPIC = "alarm-request-status"; // 알림 요청 상태
+
+
     // 고객사 생성 토픽
     @Bean
     public NewTopic clientCreatedTopic() {
@@ -131,6 +148,58 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic alarmEventTopic() {
         return TopicBuilder.name(ALARM_EVENT_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    @Bean
+    public NewTopic createCustomerUserTopic() {
+        return TopicBuilder.name(CREATE_CUSTOMER_USER_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    @Bean
+    public NewTopic customerUserResultTopic() {
+        return TopicBuilder.name(CUSTOMER_USER_RESULT_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    // 알림 요청 토픽
+    @Bean
+    public NewTopic alarmRequestTopic() {
+        return TopicBuilder.name(ALARM_REQUEST_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    // 알림 발송 상태 토픽
+    @Bean
+    public NewTopic alarmSentStatusTopic() {
+        return TopicBuilder.name(ALARM_SENT_STATUS_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    // 알림 발송 결과 토픽
+    @Bean
+    public NewTopic alarmSentTopic() {
+        return TopicBuilder.name(ALARM_SENT_TOPIC)
+            .partitions(3)
+            .replicas(1)
+            .build();
+    }
+
+    // 알림 요청 상태 토픽
+    @Bean
+    public NewTopic alarmRequestStatusTopic() {
+        return TopicBuilder.name(ALARM_REQUEST_STATUS_TOPIC)
             .partitions(3)
             .replicas(1)
             .build();

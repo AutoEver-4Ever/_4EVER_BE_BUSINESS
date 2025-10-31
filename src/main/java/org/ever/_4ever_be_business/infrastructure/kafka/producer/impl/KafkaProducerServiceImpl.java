@@ -2,8 +2,10 @@ package org.ever._4ever_be_business.infrastructure.kafka.producer.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.infrastructure.kafka.event.*;
+import org.ever._4ever_be_business.common.exception.BusinessException;
+import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
+import org.ever.event.*;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -41,7 +43,28 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
 
     @Override
     public CompletableFuture<SendResult<String, Object>> sendAlarmEvent(AlarmEvent event) {
-        return sendEvent(ALARM_EVENT_TOPIC, event.getUserId(), event);
+        return sendEvent(ALARM_REQUEST_TOPIC, event.getAlarmId(), event);
+    }
+
+    @Override
+    public void sendCreateUserEvent(CreateUserEvent event) {
+        try {
+            CompletableFuture<SendResult<String, Object>> future =
+                    kafkaTemplate.send(CREATE_USER_TOPIC, event.getEventId(), event);
+
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    log.info("사용자 생성 이벤트 전송 성공: {}, offset: {}",
+                        event.getEventId(), result.getRecordMetadata().offset());
+                } else {
+                    log.error("사용자 생성 이벤트 전송 실패: {}", ex.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            log.error("Kafka 메시지 전송 중 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.KAFKA_PRODUCER_ERROR,
+                    "사용자 생성 이벤트 전송 중 오류가 발생했습니다");
+        }
     }
 
     @Override

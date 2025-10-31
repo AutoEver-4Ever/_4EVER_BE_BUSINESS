@@ -21,14 +21,14 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(apiInfo())
                 .servers(List.of(
-                        new Server().url("http://localhost:" + serverPort).description("Local Server")
+                        new Server().url("http://localhost:" + serverPort + "/business").description("Local Server")
                 ));
     }
 
     private Info apiInfo() {
         return new Info()
-                .title("4Ever Payment Service API")
-                .description("4Ever 프로젝트 결제 서비스 REST API 문서입니다.")
+                .title("4Ever Business Service API")
+                .description("4Ever 프로젝트 비즈니스 서비스 REST API 문서입니다.")
                 .version("1.0.0");
     }
 }
