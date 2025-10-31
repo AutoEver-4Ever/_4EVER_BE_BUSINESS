@@ -386,10 +386,10 @@ public class HrmController {
      */
     @PostMapping("/leave/request")
     public ApiResponse<Void> createLeaveRequest(@RequestBody CreateLeaveRequestDto requestDto) {
-        log.info("휴가 신청 API 호출 - employeeId: {}, leaveType: {}, startDate: {}, endDate: {}",
-                requestDto.getEmployeeId(), requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
+        log.info("휴가 신청 API 호출 - internelUserId: {}, leaveType: {}, startDate: {}, endDate: {}",
+                requestDto.getInternelUserId(), requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
         leaveRequestService.createLeaveRequest(requestDto);
-        log.info("휴가 신청 성공 - employeeId: {}", requestDto.getEmployeeId());
+        log.info("휴가 신청 성공 - internelUserId: {}", requestDto.getInternelUserId());
         return ApiResponse.success(null, "휴가 신청이 완료되었습니다.", HttpStatus.OK);
     }
 
@@ -474,14 +474,15 @@ public class HrmController {
     }
 
     /**
-     * 모든 직원 당월 급여 생성
+     * 모든 직원 당월 급여 생성 (idempotent)
+     * 이미 존재하는 급여는 건너뛰고 없는 직원의 급여만 생성
      */
-    @PostMapping("/payroll/generate")
+    @GetMapping("/payroll/generate")
     public ApiResponse<Void> generateMonthlyPayroll() {
         log.info("모든 직원 당월 급여 생성 API 호출");
         payrollService.generateMonthlyPayrollForAllEmployees();
         log.info("모든 직원 당월 급여 생성 완료");
-        return ApiResponse.success(null, "급여가 생성되었습니다.", HttpStatus.CREATED);
+        return ApiResponse.success(null, "급여가 생성되었습니다.", HttpStatus.OK);
     }
 
     /**

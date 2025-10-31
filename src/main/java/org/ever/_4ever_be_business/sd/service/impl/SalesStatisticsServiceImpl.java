@@ -74,17 +74,17 @@ public class SalesStatisticsServiceImpl implements SalesStatisticsService {
     }
 
     /**
-     * 증감률 계산: (현재 - 이전) / 이전
+     * 증감량 계산: 현재 - 이전 (절대값 차이)
+     * 예: 현재 2500000, 이전 2300000 -> delta_rate = 200000
+     * 예: 현재 2000000, 이전 2300000 -> delta_rate = -300000
      */
     private Double calculateDeltaRate(BigDecimal current, BigDecimal previous) {
-        if (previous == null || previous.compareTo(BigDecimal.ZERO) == 0) {
-            return 0.0;
+        if (previous == null) {
+            return current != null ? current.doubleValue() : 0.0;
         }
 
         BigDecimal delta = current.subtract(previous);
-        BigDecimal rate = delta.divide(previous, 4, RoundingMode.HALF_UP);
-
-        return rate.doubleValue();
+        return delta.doubleValue();
     }
 
     @Override

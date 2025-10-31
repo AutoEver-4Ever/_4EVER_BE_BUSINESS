@@ -12,6 +12,11 @@ public class StatisticValueDto {
     @JsonProperty("value")
     private Integer value;
 
+    /**
+     * Absolute difference from previous period (not percentage)
+     * Example: if current = 15, previous = 12, delta_rate = 3
+     * Example: if current = 10, previous = 12, delta_rate = -2
+     */
     @JsonProperty("delta_rate")
-    private Double deltaRate;
+    private Integer deltaRate;
 }

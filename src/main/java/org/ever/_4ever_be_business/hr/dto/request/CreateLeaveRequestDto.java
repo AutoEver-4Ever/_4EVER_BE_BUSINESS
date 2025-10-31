@@ -10,8 +10,8 @@ import org.ever._4ever_be_business.hr.enums.LeaveType;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateLeaveRequestDto {
-    @JsonProperty("employeeId")
-    private String employeeId;
+    @JsonProperty("internelUserId")
+    private String internelUserId;
 
     @JsonProperty("leaveType")
     private LeaveType leaveType;

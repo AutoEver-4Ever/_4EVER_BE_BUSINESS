@@ -96,20 +96,37 @@ public class PayrollServiceImpl implements PayrollService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime baseDate = LocalDateTime.of(now.getYear(), now.getMonthValue(), 1, 0, 0);
 
+        // 당월 시작일과 종료일 계산 (idempotency 체크용)
+        LocalDateTime monthStart = baseDate;
+        LocalDateTime monthEnd = baseDate.plusMonths(1);
+
         int successCount = 0;
+        int skipCount = 0;
         for (Employee employee : employees) {
             try {
-                // 3. 각 직원의 기본급 조회 (Position의 salary 사용)
+                // 3. 이미 당월 급여가 존재하는지 확인 (idempotency)
+                boolean exists = payrollRepository.existsByEmployeeAndBaseDateBetween(
+                        employee, monthStart, monthEnd);
+
+                if (exists) {
+                    log.debug("급여 이미 존재하므로 건너뜀 - employeeId: {}, employeeName: {}",
+                            employee.getId(),
+                            employee.getInternelUser().getName());
+                    skipCount++;
+                    continue;
+                }
+
+                // 4. 각 직원의 기본급 조회 (Position의 salary 사용)
                 BigDecimal baseSalary = employee.getInternelUser().getPosition() != null
                         ? employee.getInternelUser().getPosition().getSalary()
                         : BigDecimal.ZERO;
 
-                // 4. 급여 계산 (기본급 + 초과근무수당 - 공제액)
+                // 5. 급여 계산 (기본급 + 초과근무수당 - 공제액)
                 // 여기서는 단순히 기본급만 사용하고 초과근무수당은 0으로 설정
                 BigDecimal overtimeSalary = BigDecimal.ZERO;
                 BigDecimal netSalary = baseSalary.add(overtimeSalary);
 
-                // 5. Payroll 엔티티 생성
+                // 6. Payroll 엔티티 생성
                 Payroll payroll = new Payroll(
                         employee,
                         baseSalary,
@@ -137,6 +154,7 @@ public class PayrollServiceImpl implements PayrollService {
             }
         }
 
-        log.info("모든 직원 당월 급여 생성 완료 - 성공: {}/{}", successCount, employees.size());
+        log.info("모든 직원 당월 급여 생성 완료 - 성공: {}, 건너뜀: {}, 전체: {}",
+                successCount, skipCount, employees.size());
     }
 }

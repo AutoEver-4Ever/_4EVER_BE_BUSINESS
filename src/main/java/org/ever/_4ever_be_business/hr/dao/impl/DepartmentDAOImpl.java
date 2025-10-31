@@ -58,7 +58,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
             return Optional.empty();
         }
 
-        // 2. 해당 부서에 속한 직원 목록 조회
+        // 2. 해당 부서에 속한 직원 목록 조회 (INACTIVE 제외)
         List<DepartmentEmployeeDto> employees = queryFactory
                 .select(Projections.constructor(
                         DepartmentEmployeeDto.class,
@@ -70,7 +70,8 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                 .from(employee)
                 .innerJoin(employee.internelUser, internelUser)
                 .innerJoin(internelUser.position, position)
-                .where(position.department.id.eq(departmentId))
+                .where(position.department.id.eq(departmentId)
+                        .and(internelUser.status.ne(org.ever._4ever_be_business.hr.enums.UserStatus.INACTIVE)))
                 .orderBy(internelUser.hireDate.asc())
                 .fetch();
 
@@ -158,7 +159,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         // 2. 각 부서별로 직원 수와 manager 조회
         List<DepartmentListItemDto> content = departments.stream()
                 .map(dept -> {
-                    // 해당 부서의 직원 목록 조회
+                    // 해당 부서의 직원 목록 조회 (INACTIVE 제외)
                     List<EmployeeInfoProjection> employees = queryFactory
                             .select(Projections.constructor(
                                     EmployeeInfoProjection.class,
@@ -169,7 +170,8 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                             .from(employee)
                             .innerJoin(employee.internelUser, internelUser)
                             .innerJoin(internelUser.position, position)
-                            .where(position.department.id.eq(dept.getDepartmentId()))
+                            .where(position.department.id.eq(dept.getDepartmentId())
+                                    .and(internelUser.status.ne(org.ever._4ever_be_business.hr.enums.UserStatus.INACTIVE)))
                             .orderBy(internelUser.hireDate.asc())
                             .fetch();
 
@@ -223,6 +225,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
     public List<DepartmentMemberDto> findDepartmentMembers(String departmentId) {
         log.debug("부서 구성원 목록 조회 시작 - departmentId: {}", departmentId);
 
+        // INACTIVE 직원 제외
         List<DepartmentMemberDto> members = queryFactory
                 .select(Projections.constructor(
                         DepartmentMemberDto.class,
@@ -232,7 +235,8 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                 .from(employee)
                 .innerJoin(employee.internelUser, internelUser)
                 .innerJoin(internelUser.position, position)
-                .where(position.department.id.eq(departmentId))
+                .where(position.department.id.eq(departmentId)
+                        .and(internelUser.status.ne(org.ever._4ever_be_business.hr.enums.UserStatus.INACTIVE)))
                 .orderBy(internelUser.hireDate.asc())
                 .fetch();
 

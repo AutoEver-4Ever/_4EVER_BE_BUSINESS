@@ -89,12 +89,15 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     @Override
     @Transactional
     public void createLeaveRequest(CreateLeaveRequestDto requestDto) {
-        log.info("휴가 신청 요청 - employeeId: {}, leaveType: {}, startDate: {}, endDate: {}",
-                requestDto.getEmployeeId(), requestDto.getLeaveType(),
+        log.info("휴가 신청 요청 - internelUserId: {}, leaveType: {}, startDate: {}, endDate: {}",
+                requestDto.getInternelUserId(), requestDto.getLeaveType(),
                 requestDto.getStartDate(), requestDto.getEndDate());
 
-        // 1. Employee 조회
-        Employee employee = employeeRepository.findById(requestDto.getEmployeeId())
+        // 1. InternelUser로 Employee 조회
+        InternelUser internelUser = internelUserRepository.findById(requestDto.getInternelUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "내부 직원 정보를 찾을 수 없습니다."));
+
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
 
         // 2. 날짜 파싱 (YYYY-MM-DD 형식)
@@ -121,8 +124,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         // 5. 저장
         leaveRequestRepository.save(leaveRequest);
 
-        log.info("휴가 신청 성공 - employeeId: {}, leaveRequestId: {}, numberOfLeaveDays: {}",
-                requestDto.getEmployeeId(), leaveRequest.getId(), numberOfLeaveDays);
+        log.info("휴가 신청 성공 - internelUserId: {}, leaveRequestId: {}, numberOfLeaveDays: {}",
+                requestDto.getInternelUserId(), leaveRequest.getId(), numberOfLeaveDays);
     }
 
     @Override

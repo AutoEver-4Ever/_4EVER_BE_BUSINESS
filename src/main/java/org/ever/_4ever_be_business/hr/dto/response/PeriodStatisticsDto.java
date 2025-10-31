@@ -12,12 +12,6 @@ public class PeriodStatisticsDto {
     @JsonProperty("totalEmployeeCount")
     private StatisticValueDto totalEmployeeCount;
 
-    @JsonProperty("ongoingProgramCount")
-    private StatisticValueDto ongoingProgramCount;
-
-    @JsonProperty("completedProgramCount")
-    private StatisticValueDto completedProgramCount;
-
     @JsonProperty("newEmployeeCount")
     private StatisticValueDto newEmployeeCount;
 }

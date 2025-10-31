@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.hr.dto.response.HRStatisticsResponseDto;
 import org.ever._4ever_be_business.hr.dto.response.PeriodStatisticsDto;
 import org.ever._4ever_be_business.hr.dto.response.StatisticValueDto;
-import org.ever._4ever_be_business.hr.enums.TrainingStatus;
 import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
-import org.ever._4ever_be_business.hr.repository.TrainingRepository;
 import org.ever._4ever_be_business.hr.service.StatisticsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +18,6 @@ import java.time.LocalDateTime;
 public class StatisticsServiceImpl implements StatisticsService {
 
     private final EmployeeRepository employeeRepository;
-    private final TrainingRepository trainingRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,34 +51,28 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         // Current period counts
         long currentTotalEmployees = employeeRepository.count();
-        long currentOngoingPrograms = trainingRepository.countByTrainingStatus(TrainingStatus.IN_PROGRESS);
-        long currentCompletedPrograms = trainingRepository.countByTrainingStatus(TrainingStatus.COMPLETED);
         long currentNewEmployees = employeeRepository.countByCreatedAtBetween(currentStart, currentEnd);
 
         // Previous period counts (for delta calculation)
         long previousTotalEmployees = employeeRepository.countByCreatedAtBefore(currentStart);
-        long previousOngoingPrograms = currentOngoingPrograms > 0 ? (long)(currentOngoingPrograms * 0.95) : 0;
-        long previousCompletedPrograms = currentCompletedPrograms > 0 ? (long)(currentCompletedPrograms * 0.95) : 0;
         long previousNewEmployees = employeeRepository.countByCreatedAtBetween(previousStart, previousEnd);
 
-        // Calculate delta rates
-        double totalEmployeeDelta = calculateDeltaRate(previousTotalEmployees, currentTotalEmployees);
-        double ongoingProgramDelta = calculateDeltaRate(previousOngoingPrograms, currentOngoingPrograms);
-        double completedProgramDelta = calculateDeltaRate(previousCompletedPrograms, currentCompletedPrograms);
-        double newEmployeeDelta = calculateDeltaRate(previousNewEmployees, currentNewEmployees);
+        // Calculate absolute deltas (not percentages)
+        int totalEmployeeDelta = calculateAbsoluteDelta(previousTotalEmployees, currentTotalEmployees);
+        int newEmployeeDelta = calculateAbsoluteDelta(previousNewEmployees, currentNewEmployees);
 
         return new PeriodStatisticsDto(
                 new StatisticValueDto((int) currentTotalEmployees, totalEmployeeDelta),
-                new StatisticValueDto((int) currentOngoingPrograms, ongoingProgramDelta),
-                new StatisticValueDto((int) currentCompletedPrograms, completedProgramDelta),
                 new StatisticValueDto((int) currentNewEmployees, newEmployeeDelta)
         );
     }
 
-    private double calculateDeltaRate(long previous, long current) {
-        if (previous == 0) {
-            return current > 0 ? 1.0 : 0.0;
-        }
-        return (double) (current - previous) / previous;
+    /**
+     * Calculate absolute difference (not percentage)
+     * Example: if current = 15, previous = 12, returns 3
+     * Example: if current = 10, previous = 12, returns -2
+     */
+    private int calculateAbsoluteDelta(long previous, long current) {
+        return (int) (current - previous);
     }
 }
