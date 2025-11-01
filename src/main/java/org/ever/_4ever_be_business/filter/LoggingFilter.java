@@ -27,50 +27,64 @@ public class LoggingFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
+        HttpServletRequest req,
+        HttpServletResponse res,
+        FilterChain chain
     ) throws ServletException, IOException {
 
-        long start = System.currentTimeMillis();
+        if (isAsyncDispatch(req)) {
+            chain.doFilter(req, res);
+            return;
+        }
 
-        ContentCachingRequestWrapper wrappedReq = new ContentCachingRequestWrapper(request);
-        ContentCachingResponseWrapper wrappedRes = new ContentCachingResponseWrapper(response);
+        long start = System.currentTimeMillis();
+        ContentCachingRequestWrapper wrappedReq = new ContentCachingRequestWrapper(req);
+        ContentCachingResponseWrapper wrappedRes = new ContentCachingResponseWrapper(res);
 
         try {
-            filterChain.doFilter(wrappedReq, wrappedRes);
-        } catch (Exception e) {
-            log.warn("[WARN] 로깅 처리 중 에러 발생", e);
+            chain.doFilter(wrappedReq, wrappedRes);
         } finally {
-            try {
-                String requestBody = new String(wrappedReq.getContentAsByteArray(), StandardCharsets.UTF_8).trim();
+            if (wrappedReq.isAsyncStarted()) {
+                wrappedReq.getAsyncContext().addListener(
+                    new AsyncRequestLoggingListener(this, wrappedReq, wrappedRes, start),
+                        wrappedReq, wrappedRes
+                );
+            } else {
+                String requestBody = new String(
+                        wrappedReq.getContentAsByteArray(),
+                        StandardCharsets.UTF_8
+                ).trim();
+
                 if (!requestBody.isEmpty()) {
                     log.info("[INFO] 요청 본문: {}", maskSensitiveData(requestBody));
                 }
 
-                String responseString = "";
-                byte[] content = wrappedRes.getContentAsByteArray();
-                if (content.length > 0) {
-                    String responseBody = new String(content, StandardCharsets.UTF_8).trim();
+                byte[] responseByte = wrappedRes.getContentAsByteArray();
+                String responseSummary = "";
 
-                    responseString = responseBody.length() > MAX_LOG_LENGTH
-                            ? "[RES] 응답 본문이 너무 커서 생략되었습니다."
-                            : "[RES] 응답 본문: " + responseBody;
+                if (responseByte.length > 0) {
+                    String responseBody = new String(responseByte, StandardCharsets.UTF_8).trim();
+                    responseSummary = responseBody.length() > MAX_LOG_LENGTH
+                            ? "응답 본문: 너무 커서 생략됨"
+                            : "응답 본문: " + responseBody;
                 }
-                log.info("\n" + "HTTP 메서드: [ {} ] 엔드포인트: [ {} ] Content-Type: [ {} ] Authorization: [ {} ] User-agent: [ {} ] Host: [ {} ] Content-length: [ {} ] 응답 본문: [ {} ]",
-                    request.getMethod(), request.getRequestURI(),
-                    request.getHeader("content-type"),
-                    request.getHeader("authorization"),
-                    request.getHeader("member-agent"),
-                    request.getHeader("host"),
-                    request.getHeader("content-length"),
-                    responseString
-            );
 
-            long end = System.currentTimeMillis();
-            log.info(">>> 소요 시간: {} sec", (end-start) / 1000.0);
-            } finally {
-                wrappedRes.copyBodyToResponse();
+                log.info("HTTP 메서드: [ {} ] 엔드포인트: [ {} ] Content-Type: [ {} ] " +
+                    "Authorization: [ {} ] User-agent: [ {} ] Host: [ {} ] " +
+                    "Content-length: [ {} ] 응답 본문: [ {} ]",
+                    req.getMethod(), req.getRequestURI(),
+                    req.getHeader("content-type"),
+                    req.getHeader("authorization"),
+                    req.getHeader("member-agent"),
+                    req.getHeader("host"),
+                    req.getHeader("content-length"),
+                    responseSummary);
+
+
+                long end = System.currentTimeMillis();
+                log.info(">>> 소요 시간: {} sec", (end - start) / 1000.0);
+
+                wrappedRes.copyBodyToResponse();   // 반드시 finally에서 호출
             }
         }
     }
