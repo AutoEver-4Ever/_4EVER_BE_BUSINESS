@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PositionSimpleDto {
-    @JsonProperty("positionId")
-    private String positionId;
+    @JsonProperty("key")
+    private String key;
 
-    @JsonProperty("positionName")
-    private String positionName;
+    @JsonProperty("value")
+    private String value;
 }

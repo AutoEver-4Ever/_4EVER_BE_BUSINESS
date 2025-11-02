@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TrainingProgramSimpleDto {
-    @JsonProperty("programId")
-    private String programId;
+    @JsonProperty("key")
+    private String key;
 
-    @JsonProperty("programName")
-    private String programName;
+    @JsonProperty("value")
+    private String value;
 }

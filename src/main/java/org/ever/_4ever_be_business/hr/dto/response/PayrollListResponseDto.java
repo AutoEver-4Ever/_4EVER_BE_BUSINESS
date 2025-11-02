@@ -11,13 +11,13 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DepartmentListResponseDto {
+public class PayrollListResponseDto {
     @JsonProperty("total")
-    private Integer total;
+    private int total;
 
     @JsonProperty("content")
-    private List<DepartmentListItemDto> content;
+    private List<PayrollListItemDto> content;
 
-    @JsonProperty("page")
-    private PageInfo page;
+    @JsonProperty("pageInfo")
+    private PageInfo pageInfo;
 }

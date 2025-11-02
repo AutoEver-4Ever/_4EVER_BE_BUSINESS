@@ -17,6 +17,7 @@ import org.ever._4ever_be_business.hr.enums.LeaveType;
 import org.ever._4ever_be_business.hr.enums.PayrollStatus;
 import org.ever._4ever_be_business.hr.enums.TrainingCategory;
 import org.ever._4ever_be_business.hr.enums.TrainingStatus;
+import org.ever._4ever_be_business.sd.dto.response.PageInfo;
 import org.ever._4ever_be_business.tam.enums.AttendanceStatus;
 import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
 import org.ever._4ever_be_business.hr.repository.DepartmentRepository;
@@ -25,16 +26,17 @@ import org.ever._4ever_be_business.hr.repository.PositionRepository;
 import org.ever._4ever_be_business.hr.repository.TrainingRepository;
 import org.ever._4ever_be_business.hr.service.*;
 import org.ever._4ever_be_business.hr.vo.*;
-import org.ever._4ever_be_business.sd.dto.response.PageInfo;
 import org.ever.event.CreateAuthUserResultEvent;
 import org.ever._4ever_be_business.tam.dto.request.CheckInRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.CheckOutRequestDto;
 import org.ever._4ever_be_business.tam.dto.request.UpdateTimeRecordDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
+import org.ever._4ever_be_business.tam.dto.response.AttendanceListResponseDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceRecordDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceStatusDto;
 import org.ever._4ever_be_business.tam.dto.response.TimeRecordDetailDto;
 import org.ever._4ever_be_business.tam.dto.response.TimeRecordListItemDto;
+import org.ever._4ever_be_business.tam.dto.response.TimeRecordListResponseDto;
 import org.ever._4ever_be_business.tam.service.AttendanceService;
 import org.ever._4ever_be_business.tam.service.TimeRecordService;
 import org.ever._4ever_be_business.tam.vo.AttendanceListSearchConditionVo;
@@ -268,7 +270,6 @@ public class HrmController {
         );
 
         EmployeeListResponseDto responseDto = new EmployeeListResponseDto(
-                (int) result.getTotalElements(),
                 result.getContent(),
                 pageInfo
         );
@@ -401,7 +402,7 @@ public class HrmController {
      * 휴가 신청 목록 조회
      */
     @GetMapping("/leave/request")
-    public ApiResponse<Page<LeaveRequestListItemDto>> getLeaveRequestList(
+    public ApiResponse<LeaveRequestListResponseDto> getLeaveRequestList(
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String position,
             @RequestParam(required = false) String name,
@@ -416,8 +417,22 @@ public class HrmController {
         Pageable pageable = PageRequest.of(page, size);
         Page<LeaveRequestListItemDto> result = leaveRequestService.getLeaveRequestList(condition, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        LeaveRequestListResponseDto responseDto = new LeaveRequestListResponseDto(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("휴가 신청 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
-        return ApiResponse.success(result, "휴가 신청 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "휴가 신청 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -482,7 +497,7 @@ public class HrmController {
      * 급여 명세서 목록 조회
      */
     @GetMapping("/payroll")
-    public ApiResponse<Page<PayrollListItemDto>> getPayrollList(
+    public ApiResponse<PayrollListResponseDto> getPayrollList(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) String name,
@@ -498,8 +513,22 @@ public class HrmController {
         Pageable pageable = PageRequest.of(page, size);
         Page<PayrollListItemDto> result = payrollService.getPayrollList(condition, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PayrollListResponseDto responseDto = new PayrollListResponseDto(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("급여 명세서 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
-        return ApiResponse.success(result, "급여 명세서 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "급여 명세서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -586,7 +615,7 @@ public class HrmController {
      * 교육 프로그램 목록 조회
      */
     @GetMapping("/trainings/program")
-    public ApiResponse<Page<TrainingListItemDto>> getTrainingList(
+    public ApiResponse<TrainingListResponseDto> getTrainingList(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) TrainingStatus status,
             @RequestParam(required = false) TrainingCategory category,
@@ -599,8 +628,22 @@ public class HrmController {
         Pageable pageable = PageRequest.of(page, size);
         Page<TrainingListItemDto> result = trainingService.getTrainingList(condition, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        TrainingListResponseDto responseDto = new TrainingListResponseDto(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("교육 프로그램 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
-        return ApiResponse.success(result, "교육 프로그램 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "교육 프로그램 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -791,7 +834,7 @@ public class HrmController {
      * 근태 기록 목록 조회
      */
     @GetMapping("/time-records/time-record")
-    public ApiResponse<Page<TimeRecordListItemDto>> getAttendanceList(
+    public ApiResponse<TimeRecordListResponseDto> getAttendanceList(
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String position,
             @RequestParam(required = false) String name,
@@ -806,8 +849,22 @@ public class HrmController {
         Pageable pageable = PageRequest.of(page, size);
         Page<TimeRecordListItemDto> result = timeRecordService.getAttendanceList(condition, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        TimeRecordListResponseDto responseDto = new TimeRecordListResponseDto(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("근태 기록 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
-        return ApiResponse.success(result, "근태 기록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "근태 기록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     // ==================== Attendance ====================
@@ -816,7 +873,7 @@ public class HrmController {
      * 출퇴근 기록 조회
      */
     @GetMapping("/attendance")
-    public ApiResponse<Page<AttendanceListItemDto>> getAttendanceHistoryList(
+    public ApiResponse<AttendanceListResponseDto> getAttendanceHistoryList(
             @RequestParam(required = false) String employeeId,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
@@ -830,8 +887,22 @@ public class HrmController {
         Pageable pageable = PageRequest.of(page, size);
         Page<AttendanceListItemDto> result = attendanceService.getAttendanceList(condition, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        AttendanceListResponseDto responseDto = new AttendanceListResponseDto(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("출퇴근 기록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
-        return ApiResponse.success(result, "출퇴근 기록을 조회했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "출퇴근 기록을 조회했습니다.", HttpStatus.OK);
     }
 
     /**
