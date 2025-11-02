@@ -148,6 +148,31 @@ public class HrmController {
     }
 
     /**
+     * 부서 정보 수정 (부서장과 설명만 수정 가능)
+     */
+    @PatchMapping("/departments/{departmentId}")
+    public ApiResponse<Void> updateDepartment(
+            @PathVariable String departmentId,
+            @RequestBody UpdateDepartmentRequestDto requestDto) {
+        log.info("부서 정보 수정 API 호출 - departmentId: {}, employeeId: {}, description: {}",
+                departmentId, requestDto.getManagerId(), requestDto.getDescription());
+        departmentService.updateDepartment(departmentId, requestDto.getManagerId(), requestDto.getDescription());
+        log.info("부서 정보 수정 성공 - departmentId: {}", departmentId);
+        return ApiResponse.success(null, "부서 정보를 수정했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 재고 부서 직원 목록 조회
+     */
+    @GetMapping("/departments/inventory/employees")
+    public ApiResponse<List<InventoryDepartmentEmployeeDto>> getInventoryDepartmentEmployees() {
+        log.info("재고 부서 직원 목록 조회 API 호출");
+        List<InventoryDepartmentEmployeeDto> result = departmentService.getInventoryDepartmentEmployees();
+        log.info("재고 부서 직원 목록 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "재고 부서 직원 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
      * 부서 구성원 목록 조회 (ID, Name만)
      */
     @GetMapping("/departments/{departmentId}/members")
@@ -221,7 +246,7 @@ public class HrmController {
      * 직원 목록 조회
      */
     @GetMapping("/employee")
-    public ApiResponse<Page<EmployeeListItemDto>> getEmployeeList(
+    public ApiResponse<EmployeeListResponseDto> getEmployeeList(
             @RequestParam(required = false) String departmentId,
             @RequestParam(required = false) String positionId,
             @RequestParam(required = false) String name,
@@ -234,8 +259,22 @@ public class HrmController {
         Pageable pageable = PageRequest.of(page, size);
         Page<EmployeeListItemDto> result = employeeService.getEmployeeList(condition, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        EmployeeListResponseDto responseDto = new EmployeeListResponseDto(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("직원 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
-        return ApiResponse.success(result, "직원 목록을 조회했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "직원 목록을 조회했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -449,12 +488,13 @@ public class HrmController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String position,
+            @RequestParam(required = false) String statusCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        log.info("급여 명세서 목록 조회 API 호출 - year: {}, month: {}, name: {}, department: {}, position: {}, page: {}, size: {}",
-                year, month, name, department, position, page, size);
+        log.info("급여 명세서 목록 조회 API 호출 - year: {}, month: {}, name: {}, department: {}, position: {}, statusCode: {}, page: {}, size: {}",
+                year, month, name, department, position, statusCode, page, size);
 
-        PayrollSearchConditionVo condition = new PayrollSearchConditionVo(year, month, name, department, position);
+        PayrollSearchConditionVo condition = new PayrollSearchConditionVo(year, month, name, department, position, statusCode);
         Pageable pageable = PageRequest.of(page, size);
         Page<PayrollListItemDto> result = payrollService.getPayrollList(condition, pageable);
 
@@ -756,12 +796,13 @@ public class HrmController {
             @RequestParam(required = false) String position,
             @RequestParam(required = false) String name,
             @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) String statusCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        log.info("근태 기록 목록 조회 요청 - department: {}, position: {}, name: {}, date: {}, page: {}, size: {}",
-                department, position, name, date, page, size);
+        log.info("근태 기록 목록 조회 요청 - department: {}, position: {}, name: {}, date: {}, statusCode: {}, page: {}, size: {}",
+                department, position, name, date, statusCode, page, size);
 
-        AttendanceSearchConditionVo condition = new AttendanceSearchConditionVo(department, position, name, date);
+        AttendanceSearchConditionVo condition = new AttendanceSearchConditionVo(department, position, name, date, statusCode);
         Pageable pageable = PageRequest.of(page, size);
         Page<TimeRecordListItemDto> result = timeRecordService.getAttendanceList(condition, pageable);
 
