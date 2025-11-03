@@ -41,7 +41,7 @@ public class IvOrderServiceImpl implements IvOrderService {
         return switch (status) {
             case "PENDING" -> "대기";
             case "CONFIRMED" -> "확정";
-            case "IN_PROGRESS" -> "진행중";
+            case "IN_PRODUCTION" -> "생산중";
             case "READY_FOR_SHIPMENT" -> "출고 준비";
             case "SHIPPED" -> "출고 완료";
             case "DELIVERED" -> "배송 완료";

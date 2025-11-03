@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
+import org.ever._4ever_be_business.fcm.dto.response.SalesStatementListItemDto;
+import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
 import org.ever._4ever_be_business.sd.dto.request.*;
 import org.ever._4ever_be_business.sd.dto.response.*;
 import org.ever._4ever_be_business.sd.service.*;
@@ -193,7 +195,7 @@ public class SdController {
      * 견적 목록 조회 (검색 + 페이징)
      */
     @GetMapping("/quotations")
-    public ApiResponse<Page<QuotationListItemDto>> getQuotationList(
+    public ApiResponse<PageResponseDto<QuotationListItemDto>> getQuotationList(
             @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
@@ -210,8 +212,22 @@ public class SdController {
         Pageable pageable = PageRequest.of(page, size);
         Page<QuotationListItemDto> result = quotationService.getQuotationList(condition, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<QuotationListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("견적 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
-        return ApiResponse.success(result, "견적 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "견적 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**

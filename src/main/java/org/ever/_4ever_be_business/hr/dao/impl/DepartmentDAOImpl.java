@@ -62,7 +62,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         List<DepartmentEmployeeDto> employees = queryFactory
                 .select(Projections.constructor(
                         DepartmentEmployeeDto.class,
-                        employee.id,
+                        internelUser.userId,
                         internelUser.name,
                         position.positionName,
                         internelUser.hireDate.stringValue()
@@ -160,12 +160,13 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         List<DepartmentListItemDto> content = departments.stream()
                 .map(dept -> {
                     // 해당 부서의 직원 목록 조회 (INACTIVE 제외)
-                    List<EmployeeInfoProjection> employees = queryFactory
+                    List<DepartmentEmployeeDto> employees = queryFactory
                             .select(Projections.constructor(
-                                    EmployeeInfoProjection.class,
+                                    DepartmentEmployeeDto.class,
                                     employee.id,
                                     internelUser.name,
-                                    position.positionName
+                                    position.positionName,
+                                    internelUser.hireDate.stringValue()
                             ))
                             .from(employee)
                             .innerJoin(employee.internelUser, internelUser)
@@ -175,9 +176,57 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                             .orderBy(internelUser.hireDate.asc())
                             .fetch();
 
-                    Integer employeeCount = employees.size();
-                    String managerName = employees.isEmpty() ? null : employees.get(0).getEmployeeName();
-                    String managerId = employees.isEmpty() ? null : employees.get(0).getEmployeeId();
+                    // hireDate 포맷팅
+                    List<DepartmentEmployeeDto> formattedEmployees = employees.stream()
+                            .map(emp -> {
+                                try {
+                                    String formattedDate = emp.getHireDate();
+                                    if (formattedDate != null && formattedDate.length() >= 10) {
+                                        formattedDate = formattedDate.substring(0, 10);
+                                    }
+                                    return new DepartmentEmployeeDto(
+                                            emp.getEmployeeId(),
+                                            emp.getEmployeeName(),
+                                            emp.getPosition(),
+                                            formattedDate
+                                    );
+                                } catch (Exception e) {
+                                    log.warn("날짜 포맷팅 실패 - employeeId: {}", emp.getEmployeeId(), e);
+                                    return emp;
+                                }
+                            })
+                            .toList();
+
+                    Integer employeeCount = formattedEmployees.size();
+
+                    // Department의 managerId를 사용하여 실제 manager 정보 조회
+                    String managerName = null;
+                    String managerEmployeeId = null;
+
+                    // 실제 Department 엔티티를 조회하여 managerId 확인
+                    var actualDept = queryFactory
+                            .selectFrom(department)
+                            .where(department.id.eq(dept.getDepartmentId()))
+                            .fetchOne();
+
+                    if (actualDept != null && actualDept.getManagerId() != null) {
+                        // managerId(employee.id)로 Employee 조회
+                        var managerInfo = queryFactory
+                                .select(Projections.constructor(
+                                        ManagerInfoProjection.class,
+                                        employee.id,
+                                        internelUser.name
+                                ))
+                                .from(employee)
+                                .innerJoin(employee.internelUser, internelUser)
+                                .where(employee.id.eq(actualDept.getManagerId()))
+                                .fetchOne();
+
+                        if (managerInfo != null) {
+                            managerEmployeeId = managerInfo.getManagerId();
+                            managerName = managerInfo.getManagerName();
+                        }
+                    }
 
                     // 날짜 포맷팅
                     String establishedDate = dept.getEstablishedDate() != null
@@ -202,7 +251,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                             dept.getDepartmentName(),
                             dept.getDescription(),
                             managerName,
-                            managerId,
+                            managerEmployeeId,
                             null, // location - 엔티티에 없음
                             statusCode,
                             employeeCount,
@@ -211,7 +260,8 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                             establishedDate,
                             createdAt,
                             updatedAt,
-                            responsibilities
+                            responsibilities,
+                            formattedEmployees
                     );
                 })
                 .toList();
@@ -261,6 +311,26 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         return userIds;
     }
 
+    @Override
+    public List<org.ever._4ever_be_business.hr.dto.response.InventoryDepartmentEmployeeDto> findInventoryDepartmentEmployees() {
+        log.debug("재고 부서 직원 목록 조회 시작");
+
+        List<org.ever._4ever_be_business.hr.dto.response.InventoryDepartmentEmployeeDto> employees = queryFactory
+            .select(Projections.constructor(
+                org.ever._4ever_be_business.hr.dto.response.InventoryDepartmentEmployeeDto.class,
+                internelUser.userId,
+                internelUser.name
+            ))
+            .from(internelUser)
+            .innerJoin(internelUser.position, position)
+            .innerJoin(position.department, department)
+            .where(department.departmentName.eq("재고"))
+            .fetch();
+
+        log.debug("재고 부서 직원 목록 조회 완료 - count: {}", employees.size());
+        return employees;
+    }
+
     /**
      * QueryDSL Projection용 내부 클래스
      */
@@ -292,5 +362,12 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         private String employeeId;
         private String employeeName;
         private String positionName;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ManagerInfoProjection {
+        private String managerId;
+        private String managerName;
     }
 }

@@ -11,4 +11,5 @@ public class PayrollSearchConditionVo {
     private final String name;
     private final String department;
     private final String position;
+    private final String statusCode;
 }

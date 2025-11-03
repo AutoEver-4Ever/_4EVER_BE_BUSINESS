@@ -30,11 +30,29 @@ public class Department extends TimeStamp {
     @Column(name="establishment_date")
     private LocalDateTime establishmentDate;
 
+    @Column(name="manager_id")
+    private String managerId;
+
     public Department(String departmentCode, String departmentName, String description, LocalDateTime establishmentDate) {
         this.departmentCode = departmentCode;
         this.departmentName = departmentName;
         this.description = description;
         this.establishmentDate = establishmentDate;
+    }
+
+    /**
+     * 부서 정보 수정 (부서장과 설명만 수정 가능)
+     *
+     * @param managerId   부서장 ID (Employee ID)
+     * @param description 설명
+     */
+    public void updateDepartmentInfo(String managerId, String description) {
+        if (managerId != null) {
+            this.managerId = managerId;
+        }
+        if (description != null) {
+            this.description = description;
+        }
     }
 
     @PrePersist

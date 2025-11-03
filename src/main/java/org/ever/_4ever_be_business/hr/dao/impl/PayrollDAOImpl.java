@@ -138,9 +138,9 @@ public class PayrollDAOImpl implements PayrollDAO {
 
     @Override
     public Page<PayrollListItemDto> findPayrollList(PayrollSearchConditionVo condition, Pageable pageable) {
-        log.debug("급여 명세서 목록 조회 시작 - year: {}, month: {}, name: {}, department: {}, position: {}",
+        log.debug("급여 명세서 목록 조회 시작 - year: {}, month: {}, name: {}, department: {}, position: {}, statusCode: {}",
                 condition.getYear(), condition.getMonth(), condition.getName(),
-                condition.getDepartment(), condition.getPosition());
+                condition.getDepartment(), condition.getPosition(), condition.getStatusCode());
 
         // 1. 동적 쿼리 조건 생성
         var query = queryFactory
@@ -168,7 +168,8 @@ public class PayrollDAOImpl implements PayrollDAO {
                         monthEq(condition.getMonth()),
                         nameContains(condition.getName()),
                         departmentEq(condition.getDepartment()),
-                        positionEq(condition.getPosition())
+                        positionEq(condition.getPosition()),
+                        statusCodeEq(condition.getStatusCode())
                 );
 
         // 2. 전체 카운트 조회
@@ -246,6 +247,18 @@ public class PayrollDAOImpl implements PayrollDAO {
 
     private com.querydsl.core.types.dsl.BooleanExpression positionEq(String positionId) {
         return positionId != null ? position.id.eq(positionId) : null;
+    }
+
+    private com.querydsl.core.types.dsl.BooleanExpression statusCodeEq(String statusCode) {
+        if (statusCode == null) return null;
+        try {
+            org.ever._4ever_be_business.hr.enums.PayrollStatus status =
+                    org.ever._4ever_be_business.hr.enums.PayrollStatus.valueOf(statusCode);
+            return payroll.status.eq(status);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid payroll status code: {}", statusCode);
+            return null;
+        }
     }
 
     /**

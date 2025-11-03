@@ -3,6 +3,7 @@ package org.ever._4ever_be_business.hr.service;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentMemberDto;
+import org.ever._4ever_be_business.hr.dto.response.InventoryDepartmentEmployeeDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -42,5 +43,20 @@ public interface DepartmentService {
      */
     List<String> getInternalUserIdsByDepartmentName(String departmentName);
 
+    /**
+     * 부서 정보 수정 (부서장과 설명만 수정 가능)
+     *
+     * @param departmentId 부서 ID
+     * @param employeeId   부서장으로 지정할 직원 ID (Employee ID)
+     * @param description  설명
+     */
+    void updateDepartment(String departmentId, String employeeId, String description);
+
+    /**
+     * 재고 부서 직원 목록 조회
+     *
+     * @return 재고 부서 직원 목록 (userId, name)
+     */
+    List<InventoryDepartmentEmployeeDto> getInventoryDepartmentEmployees();
 
 }

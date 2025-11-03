@@ -56,4 +56,7 @@ public class DepartmentListItemDto {
 
     @JsonProperty("responsibilities")
     private List<String> responsibilities;
+
+    @JsonProperty("employees")
+    private List<DepartmentEmployeeDto> employees;
 }

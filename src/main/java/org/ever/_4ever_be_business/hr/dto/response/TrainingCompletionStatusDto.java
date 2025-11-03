@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TrainingCompletionStatusDto {
-    @JsonProperty("status")
-    private String status;
+    @JsonProperty("key")
+    private String key;
 
-    @JsonProperty("description")
-    private String description;
+    @JsonProperty("value")
+    private String value;
 }
