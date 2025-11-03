@@ -63,7 +63,8 @@ public class AttendanceRepositoryImpl implements AttendanceRepositoryCustom {
                         departmentIdEq(condition.getDepartment()),
                         positionIdEq(condition.getPosition()),
                         employeeNameContains(condition.getName()),
-                        workDateEq(condition.getDate())
+                        workDateEq(condition.getDate()),
+                        statusCodeEq(condition.getStatusCode())
                 )
                 .fetchOne();
 
@@ -78,7 +79,8 @@ public class AttendanceRepositoryImpl implements AttendanceRepositoryCustom {
                         departmentIdEq(condition.getDepartment()),
                         positionIdEq(condition.getPosition()),
                         employeeNameContains(condition.getName()),
-                        workDateEq(condition.getDate())
+                        workDateEq(condition.getDate()),
+                        statusCodeEq(condition.getStatusCode())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -111,6 +113,19 @@ public class AttendanceRepositoryImpl implements AttendanceRepositoryCustom {
         LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
 
         return attendance.workDate.between(startOfDay, endOfDay);
+    }
+
+    private BooleanExpression statusCodeEq(String statusCode) {
+        if (!StringUtils.hasText(statusCode)) {
+            return null;
+        }
+        try {
+            AttendanceStatus status = AttendanceStatus.valueOf(statusCode);
+            return attendance.status.eq(status);
+        } catch (IllegalArgumentException e) {
+            // Invalid status code, ignore
+            return null;
+        }
     }
 
     @Override

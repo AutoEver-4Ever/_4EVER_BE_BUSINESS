@@ -8,6 +8,9 @@ import org.ever._4ever_be_business.fcm.dto.request.UpdateARInvoiceDto;
 import org.ever._4ever_be_business.fcm.dto.request.UpdateVoucherStatusDto;
 import org.ever._4ever_be_business.fcm.dto.response.*;
 import org.ever._4ever_be_business.fcm.service.*;
+import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
+import org.ever._4ever_be_business.sd.dto.response.PageInfo;
+import org.ever._4ever_be_business.sd.dto.response.QuotationListItemDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,7 +54,7 @@ public class FcmController {
      * 매출전표 목록 조회
      */
     @GetMapping("/statement/as")
-    public ApiResponse<Page<SalesStatementListItemDto>> getSalesStatementList(
+    public ApiResponse<PageResponseDto<SalesStatementListItemDto>> getSalesStatementList(
             @RequestParam(required = false) String company,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -63,8 +66,22 @@ public class FcmController {
         Pageable pageable = PageRequest.of(page, size);
         Page<SalesStatementListItemDto> result = salesStatementService.getSalesStatementList(company, startDate, endDate, pageable);
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<SalesStatementListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("매출전표 목록 조회 성공 - total: {}, size: {}", result.getTotalElements(), result.getContent().size());
-        return ApiResponse.success(result, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -84,7 +101,7 @@ public class FcmController {
      * 매입전표 목록 조회
      */
     @GetMapping("/statement/ap")
-    public ApiResponse<Page<PurchaseStatementListItemDto>> getPurchaseStatementList(
+    public ApiResponse<PageResponseDto<PurchaseStatementListItemDto>> getPurchaseStatementList(
             @RequestParam(required = false) String company,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -99,8 +116,22 @@ public class FcmController {
                 company, status, startDate, endDate, pageable
         );
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<PurchaseStatementListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("매입전표 목록 조회 성공 - total: {}, size: {}", result.getTotalElements(), result.getContent().size());
-        return ApiResponse.success(result, "매입 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "매입 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**
@@ -120,7 +151,7 @@ public class FcmController {
      * 해당 공급업체의 매입전표를 반환
      */
     @PostMapping("/statement/ap/by-supplier")
-    public ApiResponse<Page<PurchaseStatementListItemDto>> getPurchaseStatementListBySupplierUserId(
+    public ApiResponse<PageResponseDto<PurchaseStatementListItemDto>> getPurchaseStatementListBySupplierUserId(
             @RequestBody SupplierPurchaseStatementSearchDto requestDto) {
         String supplierUserId = requestDto.getSupplierUserId();
         String startDateStr = requestDto.getStartDate();
@@ -139,9 +170,23 @@ public class FcmController {
                 supplierUserId, startDate, endDate, pageable
         );
 
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<PurchaseStatementListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("Supplier User ID로 매입전표 목록 조회 성공 - supplierUserId: {}, total: {}, size: {}",
                 supplierUserId, result.getTotalElements(), result.getContent().size());
-        return ApiResponse.success(result, "공급사 매입 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "공급사 매입 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     // ==================== AP Invoices (매입 전표) ====================
@@ -174,7 +219,7 @@ public class FcmController {
      * AR 전표 목록 조회
      */
     @GetMapping("/invoice/ar")
-    public ApiResponse<Page<ARInvoiceListItemDto>> getARInvoiceList(
+    public ApiResponse<PageResponseDto<ARInvoiceListItemDto>> getARInvoiceList(
             @RequestParam(required = false) String company,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -184,8 +229,23 @@ public class FcmController {
                 company, startDate, endDate, page, size);
 
         Page<ARInvoiceListItemDto> result = arInvoiceService.getARInvoiceList(company, startDate, endDate, page, size);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<ARInvoiceListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
         log.info("AR 전표 목록 조회 성공 - totalElements: {}", result.getTotalElements());
-        return ApiResponse.success(result, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
+        return ApiResponse.success(responseDto, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**

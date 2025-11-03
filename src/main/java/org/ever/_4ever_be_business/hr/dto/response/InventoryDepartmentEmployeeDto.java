@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PositionSimpleDto {
-    @JsonProperty("key")
-    private String key;
+public class InventoryDepartmentEmployeeDto {
+    @JsonProperty("userId")
+    private String userId;
 
-    @JsonProperty("value")
-    private String value;
+    @JsonProperty("name")
+    private String name;
 }

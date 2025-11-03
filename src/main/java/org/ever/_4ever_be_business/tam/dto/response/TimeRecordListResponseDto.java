@@ -1,4 +1,4 @@
-package org.ever._4ever_be_business.hr.dto.response;
+package org.ever._4ever_be_business.tam.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -11,13 +11,13 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DepartmentListResponseDto {
+public class TimeRecordListResponseDto {
     @JsonProperty("total")
-    private Integer total;
+    private int total;
 
     @JsonProperty("content")
-    private List<DepartmentListItemDto> content;
+    private List<TimeRecordListItemDto> content;
 
-    @JsonProperty("page")
-    private PageInfo page;
+    @JsonProperty("pageInfo")
+    private PageInfo pageInfo;
 }

@@ -3,6 +3,7 @@ package org.ever._4ever_be_business.hr.dao;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.DepartmentMemberDto;
+import org.ever._4ever_be_business.hr.dto.response.InventoryDepartmentEmployeeDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -42,4 +43,11 @@ public interface DepartmentDAO {
      * @return userId 리스트
      */
     List<String> findInternalUserIdsByDepartmentName(String departmentName);
+
+    /**
+     * 재고 부서 직원 목록 조회 (userId, name)
+     *
+     * @return 재고 부서 직원 목록
+     */
+    List<InventoryDepartmentEmployeeDto> findInventoryDepartmentEmployees();
 }

@@ -14,11 +14,20 @@ public class AttendanceSearchConditionVo {
     private String position;
     private String name;
     private LocalDate date;
+    private String statusCode;
 
     public AttendanceSearchConditionVo(String department, String position, String name, LocalDate date) {
         this.department = department;
         this.position = position;
         this.name = name;
         this.date = date;
+    }
+
+    public AttendanceSearchConditionVo(String department, String position, String name, LocalDate date, String statusCode) {
+        this.department = department;
+        this.position = position;
+        this.name = name;
+        this.date = date;
+        this.statusCode = statusCode;
     }
 }
