@@ -8,6 +8,8 @@ import org.ever._4ever_be_business.fcm.dto.request.UpdateARInvoiceDto;
 import org.ever._4ever_be_business.fcm.dto.request.UpdateVoucherStatusDto;
 import org.ever._4ever_be_business.fcm.dto.response.*;
 import org.ever._4ever_be_business.fcm.service.*;
+import org.ever._4ever_be_business.fcm.dto.request.SupplierPurchaseInvoiceRequestDto;
+import org.ever._4ever_be_business.fcm.dto.response.SupplierPurchaseInvoiceListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
 import org.ever._4ever_be_business.sd.dto.response.PageInfo;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,7 @@ public class FcmController {
     private final APInvoiceService apInvoiceService;
     private final ARInvoiceService arInvoiceService;
     private final VoucherStatusService voucherStatusService;
+    private final SupplierPurchaseInvoiceService supplierPurchaseInvoiceService;
 
     // ==================== Statistics ====================
 
@@ -145,29 +148,18 @@ public class FcmController {
     }
 
     /**
-     * Supplier User ID로 매입전표 목록 조회
-     * Gateway로부터 supplierUserId를 받아 SCM 서비스를 통해 supplierCompanyId를 조회한 후
-     * 해당 공급업체의 매입전표를 반환
+     * 대시보드용(공급사) 매입 전표 목록 조회
+     * GW 대시보드 스키마에 맞춘 아이템 DTO로 반환
+     * - GET /fcm/invoice/ap/supplier?userId={userId}&size={size}
      */
     @GetMapping("/invoice/ap/supplier")
-    public ApiResponse<PageResponseDto<PurchaseInvoiceListDto>> getSupplierPurchaseList(
-            @RequestBody SupplierPurchaseInvoiceRequestDto requestDto) {
-        String supplierUserId = requestDto.getSupplierUserId();
-        String startDateStr = requestDto.getStartDate();
-        String endDateStr = requestDto.getEndDate();
-        Integer page = requestDto.getPage() != null ? requestDto.getPage() : 0;
-        Integer size = requestDto.getSize() != null ? requestDto.getSize() : 10;
+    public ApiResponse<org.ever._4ever_be_business.hr.dto.response.PageResponseDto<SupplierPurchaseInvoiceListItemDto>> getSupplierPurchaseList(
+            @ModelAttribute SupplierPurchaseInvoiceRequestDto request
+    ) {
+        int size = (request.getSize() != null && request.getSize() > 0) ? request.getSize() : 5;
+        Pageable pageable = PageRequest.of(0, size);
 
-        log.info("[INFO] Supplier User ID로 매입전표 목록 조회 API 호출 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                supplierUserId, startDateStr, endDateStr, page, size);
-
-        LocalDate startDate = startDateStr != null ? LocalDate.parse(startDateStr) : null;
-        LocalDate endDate = endDateStr != null ? LocalDate.parse(endDateStr) : null;
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<PurchaseInvoiceListDto> result = purchaseStatementService.getPurchaseStatementListBySupplierUserId(
-                supplierUserId, startDate, endDate, pageable
-        );
+        Page<SupplierPurchaseInvoiceListItemDto> result = supplierPurchaseInvoiceService.getSupplierPurchaseList(request, pageable);
 
         PageInfo pageInfo = new PageInfo(
                 result.getNumber(),
@@ -177,17 +169,19 @@ public class FcmController {
                 result.hasNext()
         );
 
-        PageResponseDto<PurchaseInvoiceListDto> responseDto = new PageResponseDto<>(
-                (int) result.getTotalElements(),
-                result.getContent(),
-                pageInfo
+        org.ever._4ever_be_business.hr.dto.response.PageResponseDto<SupplierPurchaseInvoiceListItemDto> responseDto =
+                new org.ever._4ever_be_business.hr.dto.response.PageResponseDto<>(
+                        (int) result.getTotalElements(),
+                        result.getContent(),
+                        pageInfo
+                );
+
+        return org.ever._4ever_be_business.common.dto.response.ApiResponse.success(
+                responseDto,
+                "공급사 매입 전표 목록 조회에 성공했습니다.",
+                HttpStatus.OK
         );
-
-        log.info("Supplier User ID로 매입전표 목록 조회 성공 - supplierUserId: {}, total: {}, size: {}",
-                supplierUserId, result.getTotalElements(), result.getContent().size());
-        return ApiResponse.success(responseDto, "공급사 매입 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
-
     // ==================== AP Invoices (매입 전표) ====================
 
     /**
