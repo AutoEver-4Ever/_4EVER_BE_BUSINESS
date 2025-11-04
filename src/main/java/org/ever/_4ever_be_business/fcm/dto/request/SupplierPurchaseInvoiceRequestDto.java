@@ -11,18 +11,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SupplierPurchaseStatementSearchDto {
-    @JsonProperty("supplierUserId")
-    private String supplierUserId;
-
-    @JsonProperty("startDate")
-    private String startDate;
-
-    @JsonProperty("endDate")
-    private String endDate;
-
-    @JsonProperty("page")
-    private Integer page;
+public class SupplierPurchaseInvoiceRequestDto {
+    @JsonProperty("userId")
+    private String userId;
 
     @JsonProperty("size")
     private Integer size;

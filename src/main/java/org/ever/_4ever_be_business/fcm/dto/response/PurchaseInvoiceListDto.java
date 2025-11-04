@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PurchaseStatementListItemDto {
+public class PurchaseInvoiceListDto {
     @JsonProperty("invoiceId")
     private String invoiceId;
 
