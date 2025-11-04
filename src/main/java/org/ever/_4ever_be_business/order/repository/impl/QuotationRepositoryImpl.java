@@ -8,12 +8,16 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.ever._4ever_be_business.order.entity.Quotation;
+import org.ever._4ever_be_business.order.entity.QuotationItem;
 import org.ever._4ever_be_business.order.enums.ApprovalStatus;
 import org.ever._4ever_be_business.order.repository.QuotationRepositoryCustom;
 import org.ever._4ever_be_business.sd.dto.response.QuotationDetailDto;
 import org.ever._4ever_be_business.sd.dto.response.QuotationItemDto;
 import org.ever._4ever_be_business.sd.dto.response.QuotationListItemDto;
+import org.ever._4ever_be_business.sd.dto.response.ScmQuotationListItemDto;
 import org.ever._4ever_be_business.sd.vo.QuotationSearchConditionVo;
+import org.ever._4ever_be_business.sd.vo.ScmQuotationSearchConditionVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -185,5 +189,135 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
             case "REVIEW" -> "검토중";
             default -> "대기";
         };
+    }
+
+    @Override
+    public Page<ScmQuotationListItemDto> findScmQuotationList(ScmQuotationSearchConditionVo condition, Pageable pageable) {
+        // 1. 동적 쿼리 조건 생성
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 날짜 범위 필터 (createdAt 기준)
+        if (condition.getStartDate() != null && !condition.getStartDate().isEmpty()) {
+            java.time.LocalDate startDate = java.time.LocalDate.parse(condition.getStartDate(), DATE_FORMATTER);
+            builder.and(quotation.createdAt.goe(startDate.atStartOfDay()));
+        }
+        if (condition.getEndDate() != null && !condition.getEndDate().isEmpty()) {
+            java.time.LocalDate endDate = java.time.LocalDate.parse(condition.getEndDate(), DATE_FORMATTER);
+            builder.and(quotation.createdAt.loe(endDate.atTime(23, 59, 59)));
+        }
+
+        // 상태 필터 (statusCode)
+        if (condition.getStatusCode() != null && !condition.getStatusCode().isEmpty()) {
+            String statusCode = condition.getStatusCode().toUpperCase();
+
+            if (statusCode.equals("ALL")) {
+                // ALL: REVIEW OR (APPROVAL && CHECKED) OR (REJECTED && CHECKED)
+                BooleanBuilder statusBuilder = new BooleanBuilder();
+                statusBuilder.or(quotationApproval.approvalStatus.eq(ApprovalStatus.REVIEW));
+                statusBuilder.or(
+                    quotationApproval.approvalStatus.eq(ApprovalStatus.APPROVAL)
+                    .and(quotation.availableStatus.eq("CHECKED"))
+                );
+                statusBuilder.or(
+                    quotationApproval.approvalStatus.eq(ApprovalStatus.REJECTED)
+                    .and(quotation.availableStatus.eq("CHECKED"))
+                );
+                builder.and(statusBuilder);
+            } else if (statusCode.equals("REVIEW")) {
+                // REVIEW만 조회
+                builder.and(quotationApproval.approvalStatus.eq(ApprovalStatus.REVIEW));
+            } else if (statusCode.equals("APPROVAL")) {
+                // APPROVAL && CHECKED
+                builder.and(quotationApproval.approvalStatus.eq(ApprovalStatus.APPROVAL));
+                builder.and(quotation.availableStatus.eq("CHECKED"));
+            } else if (statusCode.equals("REJECTED")) {
+                // REJECTED && CHECKED
+                builder.and(quotationApproval.approvalStatus.eq(ApprovalStatus.REJECTED));
+                builder.and(quotation.availableStatus.eq("CHECKED"));
+            }
+        }
+
+        // availableStatus 필터
+        if (condition.getAvailableStatus() != null && !condition.getAvailableStatus().isEmpty()) {
+            String availStatus = condition.getAvailableStatus().toUpperCase();
+            if (availStatus.equals("CHECKED")) {
+                builder.and(quotation.availableStatus.eq("CHECKED"));
+            } else if (availStatus.equals("UNCHECKED")) {
+                // UNCHECKED인 것만 조회
+                builder.and(quotation.availableStatus.eq("UNCHECKED"));
+            }
+        }
+
+        // 2. Quotation 기본 정보 조회 (페이징 적용)
+        List<Quotation> quotations = queryFactory
+                .selectFrom(quotation)
+                .innerJoin(quotation.quotationApproval, quotationApproval).fetchJoin()
+                .where(builder)
+                .orderBy(quotation.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        // 3. QuotationItem들을 조회하고 DTO로 변환
+        List<ScmQuotationListItemDto> content = quotations.stream().map(q -> {
+            // 해당 Quotation의 모든 QuotationItem 조회
+            List<QuotationItem> items = queryFactory
+                    .selectFrom(quotationItem)
+                    .where(quotationItem.quotation.id.eq(q.getId()))
+                    .fetch();
+
+            // QuotationItem을 ScmQuotationItemDto로 변환
+            List<org.ever._4ever_be_business.sd.dto.response.ScmQuotationItemDto> itemDtos = items.stream()
+                    .map(item -> new org.ever._4ever_be_business.sd.dto.response.ScmQuotationItemDto(
+                            item.getProductId(),  // quotation_item의 product_id
+                            item.getCount()
+                    ))
+                    .toList();
+
+            // CustomerCompany 이름 조회
+            String customerName = queryFactory
+                    .select(customerCompany.companyName)
+                    .from(customerUser)
+                    .innerJoin(customerUser.customerCompany, customerCompany)
+                    .where(customerUser.id.eq(q.getCustomerUserId()))
+                    .fetchOne();
+
+            // requestDate (createdAt)
+            String requestDate = q.getCreatedAt().format(DATE_FORMATTER);
+
+            // dueDate (UNCHECKED면 "-", CHECKED면 dueDate)
+            String dueDate;
+            if (q.getAvailableStatus() != null && q.getAvailableStatus().equals("CHECKED")) {
+                dueDate = q.getDueDate().format(DATE_FORMATTER);
+            } else {
+                dueDate = "-";
+            }
+
+            // availableStatus (null이면 UNCHECKED)
+            String availableStatus = (q.getAvailableStatus() == null || q.getAvailableStatus().isEmpty())
+                    ? "UNCHECKED"
+                    : q.getAvailableStatus();
+
+            return new ScmQuotationListItemDto(
+                    q.getId(),
+                    q.getQuotationCode(),
+                    customerName != null ? customerName : "",
+                    requestDate,
+                    dueDate,
+                    itemDtos,
+                    q.getQuotationApproval().getApprovalStatus().name(),
+                    availableStatus
+            );
+        }).toList();
+
+        // 4. 전체 개수 조회
+        Long total = queryFactory
+                .select(quotation.count())
+                .from(quotation)
+                .innerJoin(quotation.quotationApproval, quotationApproval)
+                .where(builder)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 }

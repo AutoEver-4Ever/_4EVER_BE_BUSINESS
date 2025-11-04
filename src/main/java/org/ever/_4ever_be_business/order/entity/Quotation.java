@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
+import org.ever._4ever_be_business.order.enums.ApprovalStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +36,9 @@ public class Quotation extends TimeStamp {
     @Column(nullable = false, name="due_date")
     private LocalDateTime dueDate;
 
+    @Column(name = "available_status")
+    private String availableStatus;
+
     @Column(name="note", columnDefinition = "TEXT")
     private String note;
 
@@ -46,6 +50,10 @@ public class Quotation extends TimeStamp {
         this.quotationApproval = quotationApproval;
         this.dueDate = dueDate;
         this.note = note;
+    }
+
+    public void uncheck() {
+        this.availableStatus = "UNCHECKED";
     }
 
     @PrePersist

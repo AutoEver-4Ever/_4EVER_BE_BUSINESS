@@ -55,7 +55,8 @@ public enum ErrorCode {
     DUPLICATE_REQUEST(6001, HttpStatus.CONFLICT, "중복된 요청입니다."),
     INVALID_STATE_TRANSITION(6002, HttpStatus.BAD_REQUEST, "유효하지 않은 상태 전환입니다."),
     INVALID_BUSINESS_NUMBER(6003, HttpStatus.BAD_REQUEST, "유효하지 않은 사업자 번호입니다."),
-    DOCUMENT_GENERATION_FAILED(6004, HttpStatus.INTERNAL_SERVER_ERROR, "문서 생성에 실패했습니다.");
+    DOCUMENT_GENERATION_FAILED(6004, HttpStatus.INTERNAL_SERVER_ERROR, "문서 생성에 실패했습니다."),
+    USER_NOT_FOUND(6010, HttpStatus.NOT_FOUND,"유저가 없습니다");
 
 
     private final int code;

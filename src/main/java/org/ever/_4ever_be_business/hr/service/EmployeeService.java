@@ -9,6 +9,10 @@ import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeWithTrainingDto;
 import org.ever._4ever_be_business.hr.dto.response.TrainingProgramSimpleDto;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeProfileDto;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeAttendanceRecordDto;
+import org.ever._4ever_be_business.hr.dto.response.TodayAttendanceDto;
+import org.ever._4ever_be_business.hr.dto.response.TrainingItemDto;
 import org.ever._4ever_be_business.hr.vo.EmployeeListSearchConditionVo;
 import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.data.domain.Page;
@@ -52,6 +56,12 @@ public interface EmployeeService {
     void requestTraining(TrainingRequestDto requestDto);
 
     /**
+     * internelUserId로 교육 프로그램 신청
+     */
+    void InternelUserrequestTraining(String internelUserId, String programId);
+
+
+    /**
      * InternelUser ID로 직원 정보 및 교육 이력 조회
      *
      * @param internelUserId InternelUser ID
@@ -79,4 +89,52 @@ public interface EmployeeService {
             EmployeeCreateRequestDto requestDto,
             DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
     );
+
+    /**
+     * InternelUserId로 프로필 조회
+     *
+     * @param internelUserId InternelUser ID
+     * @return 프로필 정보
+     */
+    EmployeeProfileDto getProfileByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUserId로 근태 기록 조회 (오늘 제외)
+     *
+     * @param internelUserId InternelUser ID
+     * @return 근태 기록 목록
+     */
+    List<EmployeeAttendanceRecordDto> getAttendanceRecordsByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUserId로 오늘 근태 기록 조회
+     *
+     * @param internelUserId InternelUser ID
+     * @return 오늘 근태 정보
+     */
+    TodayAttendanceDto getTodayAttendanceByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUserId로 수강중인 교육 목록 조회
+     *
+     * @param internelUserId InternelUser ID
+     * @return 수강중인 교육 목록
+     */
+    List<TrainingItemDto> getInProgressTrainingsByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUserId로 신청가능한 교육 목록 조회
+     *
+     * @param internelUserId InternelUser ID
+     * @return 신청가능한 교육 목록
+     */
+    List<TrainingItemDto> getAvailableTrainingsForApplyByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUserId로 수료한 교육 목록 조회
+     *
+     * @param internelUserId InternelUser ID
+     * @return 수료한 교육 목록
+     */
+    List<TrainingItemDto> getCompletedTrainingsByInternelUserId(String internelUserId);
 }

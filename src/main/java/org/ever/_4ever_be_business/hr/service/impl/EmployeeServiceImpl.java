@@ -20,6 +20,14 @@ import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeTrainingItemDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeWithTrainingDto;
 import org.ever._4ever_be_business.hr.dto.response.TrainingProgramSimpleDto;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeProfileDto;
+import org.ever._4ever_be_business.hr.dto.response.EmployeeAttendanceRecordDto;
+import org.ever._4ever_be_business.hr.dto.response.TodayAttendanceDto;
+import org.ever._4ever_be_business.hr.dto.response.TrainingItemDto;
+import org.ever._4ever_be_business.hr.enums.TrainingStatus;
+import org.ever._4ever_be_business.tam.entity.Attendance;
+import org.ever._4ever_be_business.tam.repository.AttendanceRepository;
+import org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus;
 import org.ever._4ever_be_business.hr.entity.Employee;
 import org.ever._4ever_be_business.hr.entity.EmployeeTraining;
 import org.ever._4ever_be_business.hr.entity.InternelUser;
@@ -62,6 +70,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeTrainingRepository employeeTrainingRepository;
     private final DepartmentRepository departmentRepository;
     private final InternelUserRepository internalUserRepository;
+    private final AttendanceRepository attendanceRepository;
     private final AsyncResultManager asyncResultManager;
     private final SagaTransactionManager sagaManager;
     private final UserServicePort userServicePort;
@@ -210,6 +219,37 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         log.info("교육 프로그램 신청 성공 - employeeId: {}, trainingId: {}, trainingName: {}",
                 requestDto.getEmployeeId(), training.getId(), training.getTrainingName());
+    }
+
+    @Override
+    @Transactional
+    public void InternelUserrequestTraining(String internelUserId, String programId) {
+        log.info("교육 프로그램 신청 요청 - internelUserId: {}, programId: {}",
+                internelUserId, programId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 1. Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "직원 정보를 찾을 수 없습니다."));
+
+        // 2. Training (Program) 조회
+        Training training = trainingRepository.findById(programId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "교육 프로그램 정보를 찾을 수 없습니다."));
+
+        // 3. EmployeeTraining 생성 및 저장
+        EmployeeTraining employeeTraining = new EmployeeTraining(
+                employee,
+                training,
+                org.ever._4ever_be_business.hr.enums.TrainingCompletionStatus.IN_PROGRESS  // completionStatus: 신청 시점에는 진행중
+        );
+
+        employeeTrainingRepository.save(employeeTraining);
+
+        log.info("교육 프로그램 신청 성공 - internelUserId: {}, trainingId: {}, trainingName: {}",
+                internelUserId, training.getId(), training.getTrainingName());
     }
 
     @Override
@@ -384,5 +424,280 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new IllegalArgumentException("패딩된 uuid가 7자리 이하 이므로 Number를 생성할 수 없습니다. uuidId를 점검해주세요");
         }
         return compactUuid.substring(compactUuid.length() - 7);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeProfileDto getProfileByInternelUserId(String internelUserId) {
+        log.info("프로필 조회 요청 - internelUserId: {}", internelUserId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Position 정보
+        Position position = internelUser.getPosition();
+        String departmentName = position != null && position.getDepartment() != null
+                ? position.getDepartment().getDepartmentName() : "";
+        String positionName = position != null ? position.getPositionName() : "";
+
+        // 근속 기간 계산
+        LocalDateTime hireDate = internelUser.getHireDate();
+        String hireDateStr = hireDate != null ? hireDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "";
+        String serviceYears = calculateServiceYears(hireDate);
+
+        return new EmployeeProfileDto(
+                internelUser.getName(),
+                departmentName,
+                positionName,
+                hireDateStr,
+                serviceYears,
+                internelUser.getEmail(),
+                internelUser.getPhoneNumber(),
+                internelUser.getAddress()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EmployeeAttendanceRecordDto> getAttendanceRecordsByInternelUserId(String internelUserId) {
+        log.info("근태 기록 조회 요청 (오늘 제외) - internelUserId: {}", internelUserId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 오늘 날짜
+        LocalDateTime today = LocalDateTime.now().toLocalDate().atStartOfDay();
+
+        // Attendance 조회 (오늘 제외, 최신순)
+        List<Attendance> attendances = attendanceRepository.findAll().stream()
+                .filter(a -> a.getEmployee().getId().equals(employee.getId()))
+                .filter(a -> a.getWorkDate() != null && a.getWorkDate().toLocalDate().isBefore(today.toLocalDate()))
+                .sorted((a, b) -> b.getWorkDate().compareTo(a.getWorkDate()))
+                .collect(Collectors.toList());
+
+        return attendances.stream()
+                .map(attendance -> {
+                    String date = attendance.getWorkDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    String status = attendance.getStatus() != null ? attendance.getStatus().name() : "";
+                    String startTime = attendance.getCheckIn() != null
+                            ? attendance.getCheckIn().format(DateTimeFormatter.ofPattern("HH:mm")) : "";
+                    String endTime = attendance.getCheckOut() != null
+                            ? attendance.getCheckOut().format(DateTimeFormatter.ofPattern("HH:mm")) : "";
+                    String workHours = formatWorkHours(attendance.getWorkMinutes());
+
+                    return new EmployeeAttendanceRecordDto(date, status, startTime, endTime, workHours);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TodayAttendanceDto getTodayAttendanceByInternelUserId(String internelUserId) {
+        log.info("오늘 근태 기록 조회 요청 - internelUserId: {}", internelUserId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 오늘 날짜
+        LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime todayEnd = todayStart.plusDays(1);
+
+        // 오늘 Attendance 조회
+        Attendance todayAttendance = attendanceRepository.findAll().stream()
+                .filter(a -> a.getEmployee().getId().equals(employee.getId()))
+                .filter(a -> a.getWorkDate() != null
+                        && !a.getWorkDate().isBefore(todayStart)
+                        && a.getWorkDate().isBefore(todayEnd))
+                .findFirst()
+                .orElse(null);
+
+        if (todayAttendance == null) {
+            // 오늘 출근 기록이 없음
+            return new TodayAttendanceDto(null, null, null, "출근전");
+        }
+
+        String checkInTime = todayAttendance.getCheckIn() != null
+                ? todayAttendance.getCheckIn().format(DateTimeFormatter.ofPattern("HH:mm")) : null;
+        String checkOutTime = todayAttendance.getCheckOut() != null
+                ? todayAttendance.getCheckOut().format(DateTimeFormatter.ofPattern("HH:mm")) : null;
+        String workHours = formatWorkHours(todayAttendance.getWorkMinutes());
+
+        // 상태 결정
+        String status;
+        if (checkInTime != null && checkOutTime == null) {
+            status = "근무중";
+        } else if (checkInTime != null && checkOutTime != null) {
+            status = "퇴근완료";
+        } else {
+            status = "출근전";
+        }
+
+        return new TodayAttendanceDto(checkInTime, checkOutTime, workHours, status);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TrainingItemDto> getInProgressTrainingsByInternelUserId(String internelUserId) {
+        log.info("수강중인 교육 목록 조회 요청 - internelUserId: {}", internelUserId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // EmployeeTraining에서 IN_PROGRESS인 것들 조회
+        List<EmployeeTraining> inProgressTrainings = employeeTrainingRepository.findAll().stream()
+                .filter(et -> et.getEmployee().getId().equals(employee.getId()))
+                .filter(et -> et.getCompletionStatus() == TrainingCompletionStatus.IN_PROGRESS)
+                .collect(Collectors.toList());
+
+        return inProgressTrainings.stream()
+                .map(et -> {
+                    Training training = et.getTraining();
+                    return new TrainingItemDto(
+                            training.getId(),
+                            training.getTrainingName(),
+                            training.getTrainingStatus() != null ? training.getTrainingStatus().name() : "",
+                            training.getDurationHours(),
+                            training.getDeliveryMethod() != null ? training.getDeliveryMethod() : "",
+                            et.getCompletionStatus().name()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TrainingItemDto> getAvailableTrainingsForApplyByInternelUserId(String internelUserId) {
+        log.info("신청가능한 교육 목록 조회 요청 - internelUserId: {}", internelUserId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 이미 신청한 교육 ID 목록
+        List<String> appliedTrainingIds = employeeTrainingRepository.findAll().stream()
+                .filter(et -> et.getEmployee().getId().equals(employee.getId()))
+                .map(et -> et.getTraining().getId())
+                .collect(Collectors.toList());
+
+        // Training 중 신청하지 않은 것들 (IN_PROGRESS 상태만)
+        List<Training> availableTrainings = trainingRepository.findAll().stream()
+                .filter(training -> !appliedTrainingIds.contains(training.getId()))
+                .filter(training -> training.getTrainingStatus() == TrainingStatus.IN_PROGRESS)
+                .collect(Collectors.toList());
+
+        return availableTrainings.stream()
+                .map(training -> new TrainingItemDto(
+                        training.getId(),
+                        training.getTrainingName(),
+                        training.getTrainingStatus() != null ? training.getTrainingStatus().name() : "",
+                        training.getDurationHours(),
+                        training.getDeliveryMethod() != null ? training.getDeliveryMethod() : "",
+                        null  // 신청가능한 교육이므로 completionStatus는 null
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TrainingItemDto> getCompletedTrainingsByInternelUserId(String internelUserId) {
+        log.info("수료한 교육 목록 조회 요청 - internelUserId: {}", internelUserId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Employee 조회
+        Employee employee = employeeRepository.findByInternelUser(internelUser)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // EmployeeTraining에서 COMPLETED인 것들 조회
+        List<EmployeeTraining> completedTrainings = employeeTrainingRepository.findAll().stream()
+                .filter(et -> et.getEmployee().getId().equals(employee.getId()))
+                .filter(et -> et.getCompletionStatus() == TrainingCompletionStatus.COMPLETED)
+                .collect(Collectors.toList());
+
+        return completedTrainings.stream()
+                .map(et -> {
+                    Training training = et.getTraining();
+                    return new TrainingItemDto(
+                            training.getId(),
+                            training.getTrainingName(),
+                            training.getTrainingStatus() != null ? training.getTrainingStatus().name() : "",
+                            training.getDurationHours(),
+                            training.getDeliveryMethod() != null ? training.getDeliveryMethod(): "",
+                            et.getCompletionStatus().name()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 근속 기간 계산 (1년 2개월 10일 형식)
+     */
+    private String calculateServiceYears(LocalDateTime hireDate) {
+        if (hireDate == null) {
+            return "0일";
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        long totalDays = java.time.Duration.between(hireDate, now).toDays();
+
+        long years = totalDays / 365;
+        long months = (totalDays % 365) / 30;
+        long days = (totalDays % 365) % 30;
+
+        StringBuilder result = new StringBuilder();
+        if (years > 0) {
+            result.append(years).append("년 ");
+        }
+        if (months > 0) {
+            result.append(months).append("개월");
+            if (days > 0) {
+                result.append(" ");
+            }
+        }
+        if (days > 0 || result.length() == 0) {
+            result.append(days).append("일");
+        }
+
+        return result.toString().trim();
+    }
+
+    /**
+     * 근무 시간 포맷팅 (8시간 30분 형식)
+     */
+    private String formatWorkHours(Long workMinutes) {
+        if (workMinutes == null || workMinutes == 0) {
+            return "0시간 0분";
+        }
+
+        long hours = workMinutes / 60;
+        long minutes = workMinutes % 60;
+
+        return hours + "시간 " + minutes + "분";
     }
 }
