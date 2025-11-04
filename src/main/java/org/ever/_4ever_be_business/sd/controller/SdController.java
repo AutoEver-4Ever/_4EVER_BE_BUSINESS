@@ -231,6 +231,42 @@ public class SdController {
     }
 
     /**
+     * scm을 위한 견적 목록 조회 (페이징, 날짜 필터링)
+     */
+    @GetMapping("/scm/quotations")
+    public ApiResponse<PageResponseDto<ScmQuotationListItemDto>> getQuotationForScmList(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String statusCode,
+            @RequestParam(required = false) String availableStatus,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("SCM 견적 목록 조회 API 호출 - startDate: {}, endDate: {}, statusCode: {}, availableStatus: {}, page: {}, size: {}",
+                startDate, endDate, statusCode, availableStatus, page, size);
+
+        ScmQuotationSearchConditionVo condition = new ScmQuotationSearchConditionVo(startDate, endDate, statusCode, availableStatus);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ScmQuotationListItemDto> result = quotationService.getScmQuotationList(condition, pageable);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<ScmQuotationListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
+        log.info("SCM 견적 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
+        return ApiResponse.success(responseDto, "SCM 견적 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
      * 견적 상세 조회
      */
     @GetMapping("/quotations/{quotationId}")
