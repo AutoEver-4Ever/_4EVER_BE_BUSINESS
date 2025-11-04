@@ -319,7 +319,9 @@ public class DepartmentDAOImpl implements DepartmentDAO {
             .select(Projections.constructor(
                 org.ever._4ever_be_business.hr.dto.response.InventoryDepartmentEmployeeDto.class,
                 internelUser.userId,
-                internelUser.name
+                internelUser.name,
+                    internelUser.email,
+                    internelUser.phoneNumber
             ))
             .from(internelUser)
             .innerJoin(internelUser.position, position)

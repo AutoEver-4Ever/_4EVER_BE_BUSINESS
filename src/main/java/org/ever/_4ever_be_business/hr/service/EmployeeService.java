@@ -5,6 +5,7 @@ import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.hr.dto.request.EmployeeCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
+import org.ever._4ever_be_business.hr.dto.request.UpdateProfileRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeDetailDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.EmployeeWithTrainingDto;
@@ -137,4 +138,12 @@ public interface EmployeeService {
      * @return 수료한 교육 목록
      */
     List<TrainingItemDto> getCompletedTrainingsByInternelUserId(String internelUserId);
+
+    /**
+     * InternelUserId로 프로필 수정 (전화번호, 주소만)
+     *
+     * @param internelUserId InternelUser ID
+     * @param requestDto 수정 요청 정보
+     */
+    void updateProfileByInternelUserId(String internelUserId, UpdateProfileRequestDto requestDto);
 }

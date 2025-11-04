@@ -199,6 +199,21 @@ public class InternelUser extends TimeStamp implements Auditable {
         }
     }
 
+    /**
+     * 프로필 수정 (전화번호, 주소)
+     *
+     * @param phoneNumber 전화번호
+     * @param address 주소
+     */
+    public void updateProfile(String phoneNumber, String address) {
+        if (phoneNumber != null) {
+            this.phoneNumber = phoneNumber;
+        }
+        if (address != null) {
+            this.address = address;
+        }
+    }
+
     // Auditable 인터페이스 구현
     @Override
     public String getAuditableId() {

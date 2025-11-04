@@ -1130,6 +1130,19 @@ public class HrmController {
     }
 
     /**
+     * InternelUserId로 프로필 수정 (전화번호, 주소)
+     */
+    @PatchMapping("/employees/profile/{internelUserId}")
+    public ApiResponse<Void> updateProfile(
+            @PathVariable String internelUserId,
+            @RequestBody UpdateProfileRequestDto requestDto) {
+        log.info("프로필 수정 API 호출 - internelUserId: {}", internelUserId);
+        employeeService.updateProfileByInternelUserId(internelUserId, requestDto);
+        log.info("프로필 수정 성공 - internelUserId: {}", internelUserId);
+        return ApiResponse.success(null, "프로필 수정에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
      * 직원 교육 프로그램 등록
      */
     @PostMapping("internelUser/program")
