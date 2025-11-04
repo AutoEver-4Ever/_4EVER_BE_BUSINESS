@@ -37,6 +37,7 @@ public class SdController {
     private final SdCustomerService customerService;
     private final SdOrderService sdOrderService;
     private final QuotationService quotationService;
+    private final SdSupplierOrderService sdSupplierOrderService;
 
     // ==================== Statistics ====================
 
@@ -187,6 +188,38 @@ public class SdController {
         SalesOrderDetailResponseDto result = sdOrderService.getOrderDetail(salesOrderId);
         log.info("주문서 상세 조회 성공 - salesOrderId: {}", salesOrderId);
         return ApiResponse.success(result, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 공급사 사용자 기준 주문서 목록 조회 (대시보드용)
+     */
+    @GetMapping("/orders/supplier")
+    public ApiResponse<PageResponseDto<SalesOrderListItemDto>> getSupplierOrderList(
+            @RequestParam("userId") String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        log.info("[INFO] 공급사 주문서 목록 조회 API 호출 - userId: {}, page: {}, size: {}", userId, page, size);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SalesOrderListItemDto> result = sdSupplierOrderService.getSupplierOrderList(userId, pageable);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<SalesOrderListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
+        log.info("[INFO]공급사 주문서 목록 조회 성공 - total: {}, size: {}", result.getTotalElements(), result.getContent().size());
+        return ApiResponse.success(responseDto, "공급사 주문서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     // ==================== Quotations ====================
