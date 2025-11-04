@@ -176,7 +176,7 @@ public class FcmController {
                         pageInfo
                 );
 
-        return org.ever._4ever_be_business.common.dto.response.ApiResponse.success(
+        return ApiResponse.success(
                 responseDto,
                 "공급사 매입 전표 목록 조회에 성공했습니다.",
                 HttpStatus.OK
