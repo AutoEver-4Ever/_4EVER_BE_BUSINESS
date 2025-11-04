@@ -452,6 +452,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return new EmployeeProfileDto(
                 internelUser.getName(),
+                internelUser.getEmployeeCode(),
                 departmentName,
                 positionName,
                 hireDateStr,
@@ -578,7 +579,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                             training.getTrainingStatus() != null ? training.getTrainingStatus().name() : "",
                             training.getDurationHours(),
                             training.getDeliveryMethod() != null ? training.getDeliveryMethod() : "",
-                            et.getCompletionStatus().name()
+                            et.getCompletionStatus().name(),
+                            training.getCategory() != null ? training.getCategory().name() : "",
+                            training.getDescription() != null ? training.getDescription() : "",
+                            null  // 수강중인 교육은 수료일 없음
                     );
                 })
                 .collect(Collectors.toList());
@@ -616,7 +620,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                         training.getTrainingStatus() != null ? training.getTrainingStatus().name() : "",
                         training.getDurationHours(),
                         training.getDeliveryMethod() != null ? training.getDeliveryMethod() : "",
-                        null  // 신청가능한 교육이므로 completionStatus는 null
+                        null,  // 신청가능한 교육이므로 completionStatus는 null
+                        training.getCategory() != null ? training.getCategory().name() : "",
+                        training.getDescription() != null ? training.getDescription() : "",
+                        null  // 신청가능한 교육은 수료일 없음
                 ))
                 .collect(Collectors.toList());
     }
@@ -643,16 +650,40 @@ public class EmployeeServiceImpl implements EmployeeService {
         return completedTrainings.stream()
                 .map(et -> {
                     Training training = et.getTraining();
+                    // 수료일: employeeTraining의 updatedAt을 yyyy-MM-dd 형식으로 변환
+                    String complementationDate = et.getUpdatedAt() != null
+                            ? et.getUpdatedAt().toLocalDate().toString()
+                            : null;
+
                     return new TrainingItemDto(
                             training.getId(),
                             training.getTrainingName(),
                             training.getTrainingStatus() != null ? training.getTrainingStatus().name() : "",
                             training.getDurationHours(),
                             training.getDeliveryMethod() != null ? training.getDeliveryMethod(): "",
-                            et.getCompletionStatus().name()
+                            et.getCompletionStatus().name(),
+                            training.getCategory() != null ? training.getCategory().name() : "",
+                            training.getDescription() != null ? training.getDescription() : "",
+                            complementationDate
                     );
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void updateProfileByInternelUserId(String internelUserId, org.ever._4ever_be_business.hr.dto.request.UpdateProfileRequestDto requestDto) {
+        log.info("프로필 수정 요청 - internelUserId: {}", internelUserId);
+
+        // InternelUser 조회
+        InternelUser internelUser = internalUserRepository.findByUserId(internelUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 프로필 수정 (전화번호, 주소)
+        internelUser.updateProfile(requestDto.getPhoneNumber(), requestDto.getAddress());
+
+        // 저장 (변경 감지로 자동 저장)
+        log.info("프로필 수정 완료 - internelUserId: {}", internelUserId);
     }
 
     /**
