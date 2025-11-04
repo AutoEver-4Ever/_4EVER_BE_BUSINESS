@@ -3,14 +3,13 @@ package org.ever._4ever_be_business.fcm.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
-import org.ever._4ever_be_business.fcm.dto.request.SupplierPurchaseStatementSearchDto;
+import org.ever._4ever_be_business.fcm.dto.request.SupplierPurchaseInvoiceRequestDto;
 import org.ever._4ever_be_business.fcm.dto.request.UpdateARInvoiceDto;
 import org.ever._4ever_be_business.fcm.dto.request.UpdateVoucherStatusDto;
 import org.ever._4ever_be_business.fcm.dto.response.*;
 import org.ever._4ever_be_business.fcm.service.*;
 import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
 import org.ever._4ever_be_business.sd.dto.response.PageInfo;
-import org.ever._4ever_be_business.sd.dto.response.QuotationListItemDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -101,7 +100,7 @@ public class FcmController {
      * 매입전표 목록 조회
      */
     @GetMapping("/statement/ap")
-    public ApiResponse<PageResponseDto<PurchaseStatementListItemDto>> getPurchaseStatementList(
+    public ApiResponse<PageResponseDto<PurchaseInvoiceListDto>> getPurchaseStatementList(
             @RequestParam(required = false) String company,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -112,7 +111,7 @@ public class FcmController {
                 company, status, startDate, endDate, page, size);
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<PurchaseStatementListItemDto> result = purchaseStatementService.getPurchaseStatementList(
+        Page<PurchaseInvoiceListDto> result = purchaseStatementService.getPurchaseStatementList(
                 company, status, startDate, endDate, pageable
         );
 
@@ -124,7 +123,7 @@ public class FcmController {
                 result.hasNext()
         );
 
-        PageResponseDto<PurchaseStatementListItemDto> responseDto = new PageResponseDto<>(
+        PageResponseDto<PurchaseInvoiceListDto> responseDto = new PageResponseDto<>(
                 (int) result.getTotalElements(),
                 result.getContent(),
                 pageInfo
@@ -150,23 +149,23 @@ public class FcmController {
      * Gateway로부터 supplierUserId를 받아 SCM 서비스를 통해 supplierCompanyId를 조회한 후
      * 해당 공급업체의 매입전표를 반환
      */
-    @PostMapping("/statement/ap/by-supplier")
-    public ApiResponse<PageResponseDto<PurchaseStatementListItemDto>> getPurchaseStatementListBySupplierUserId(
-            @RequestBody SupplierPurchaseStatementSearchDto requestDto) {
+    @GetMapping("/invoice/ap/supplier")
+    public ApiResponse<PageResponseDto<PurchaseInvoiceListDto>> getSupplierPurchaseList(
+            @RequestBody SupplierPurchaseInvoiceRequestDto requestDto) {
         String supplierUserId = requestDto.getSupplierUserId();
         String startDateStr = requestDto.getStartDate();
         String endDateStr = requestDto.getEndDate();
         Integer page = requestDto.getPage() != null ? requestDto.getPage() : 0;
         Integer size = requestDto.getSize() != null ? requestDto.getSize() : 10;
 
-        log.info("Supplier User ID로 매입전표 목록 조회 API 호출 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+        log.info("[INFO] Supplier User ID로 매입전표 목록 조회 API 호출 - supplierUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 supplierUserId, startDateStr, endDateStr, page, size);
 
         LocalDate startDate = startDateStr != null ? LocalDate.parse(startDateStr) : null;
         LocalDate endDate = endDateStr != null ? LocalDate.parse(endDateStr) : null;
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<PurchaseStatementListItemDto> result = purchaseStatementService.getPurchaseStatementListBySupplierUserId(
+        Page<PurchaseInvoiceListDto> result = purchaseStatementService.getPurchaseStatementListBySupplierUserId(
                 supplierUserId, startDate, endDate, pageable
         );
 
@@ -178,7 +177,7 @@ public class FcmController {
                 result.hasNext()
         );
 
-        PageResponseDto<PurchaseStatementListItemDto> responseDto = new PageResponseDto<>(
+        PageResponseDto<PurchaseInvoiceListDto> responseDto = new PageResponseDto<>(
                 (int) result.getTotalElements(),
                 result.getContent(),
                 pageInfo
