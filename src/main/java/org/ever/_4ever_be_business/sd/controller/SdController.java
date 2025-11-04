@@ -12,6 +12,8 @@ import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
 import org.ever._4ever_be_business.sd.dto.request.*;
 import org.ever._4ever_be_business.sd.dto.response.*;
 import org.ever._4ever_be_business.sd.service.*;
+import org.ever._4ever_be_business.sd.dto.request.SupplierQuotationRequestDto;
+import org.ever._4ever_be_business.sd.dto.response.SupplierQuotationWorkflowItemDto;
 import org.ever._4ever_be_business.sd.vo.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +41,7 @@ public class SdController {
     private final SdOrderService sdOrderService;
     private final QuotationService quotationService;
     private final SdSupplierOrderService sdSupplierOrderService;
+    private final DashboardSupplierQuotationService dashboardSupplierQuotationService;
 
     // ==================== Statistics ====================
 
@@ -299,6 +302,36 @@ public class SdController {
 
         log.info("SCM 견적 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
         return ApiResponse.success(responseDto, "SCM 견적 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 대시보드용(공급사) 발주서 목록 조회
+     * GET /sd/quotation/supplier?userId={userId}&size={size}
+     */
+    @GetMapping("/quotation/supplier")
+    public ApiResponse<PageResponseDto<SupplierQuotationWorkflowItemDto>> getSupplierQuotationList(
+            @ModelAttribute SupplierQuotationRequestDto request
+    ) {
+        int size = (request.getSize() != null && request.getSize() > 0) ? request.getSize() : 5;
+        Pageable pageable = PageRequest.of(0, size);
+
+        Page<SupplierQuotationWorkflowItemDto> result = dashboardSupplierQuotationService.getSupplierQuotationList(request, pageable);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<SupplierQuotationWorkflowItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
+        return ApiResponse.success(responseDto, "공급사 발주서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**
