@@ -12,6 +12,9 @@ public class EmployeeProfileDto {
     @JsonProperty("name")
     private String name;
 
+    @JsonProperty("employeeNumber")
+    private String employeeNumber;
+
     @JsonProperty("department")
     private String department;
 

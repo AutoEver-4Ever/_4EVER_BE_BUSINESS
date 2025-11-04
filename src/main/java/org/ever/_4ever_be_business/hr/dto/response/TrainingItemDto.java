@@ -26,4 +26,13 @@ public class TrainingItemDto {
 
     @JsonProperty("completionStatus")
     private String completionStatus;  // EmployeeTraining의 completionStatus, 신청가능한 교육이면 null
+
+    @JsonProperty("category")
+    private String category;  // Training의 category
+
+    @JsonProperty("description")
+    private String description;  // Training의 description
+
+    @JsonProperty("complementationDate")
+    private String complementationDate;  // 수료일 (yyyy-MM-dd), 수료한 교육만 해당
 }
