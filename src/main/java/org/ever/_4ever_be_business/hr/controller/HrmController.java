@@ -439,11 +439,14 @@ public class HrmController {
      * 휴가 신청
      */
     @PostMapping("/leave/request")
-    public ApiResponse<Void> createLeaveRequest(@RequestBody CreateLeaveRequestDto requestDto) {
+    public ApiResponse<Void> createLeaveRequest(
+            @RequestBody CreateLeaveRequestDto requestDto,
+            @RequestParam String InternelUserId
+    ) {
         log.info("휴가 신청 API 호출 - internelUserId: {}, leaveType: {}, startDate: {}, endDate: {}",
-                requestDto.getInternelUserId(), requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
-        leaveRequestService.createLeaveRequest(requestDto);
-        log.info("휴가 신청 성공 - internelUserId: {}", requestDto.getInternelUserId());
+                InternelUserId, requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
+        leaveRequestService.createLeaveRequest(requestDto, InternelUserId);
+        log.info("휴가 신청 성공 - internelUserId: {}", InternelUserId);
         return ApiResponse.success(null, "휴가 신청이 완료되었습니다.", HttpStatus.OK);
     }
 

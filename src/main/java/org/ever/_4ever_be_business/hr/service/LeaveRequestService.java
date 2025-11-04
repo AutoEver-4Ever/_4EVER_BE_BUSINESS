@@ -22,7 +22,7 @@ public interface LeaveRequestService {
      *
      * @param requestDto 휴가 신청 정보
      */
-    void createLeaveRequest(CreateLeaveRequestDto requestDto);
+    void createLeaveRequest(CreateLeaveRequestDto requestDto, String InternelUserId);
 
     /**
      * 휴가 신청 승인

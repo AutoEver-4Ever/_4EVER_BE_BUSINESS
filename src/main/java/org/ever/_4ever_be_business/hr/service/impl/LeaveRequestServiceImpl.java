@@ -88,13 +88,13 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     @Override
     @Transactional
-    public void createLeaveRequest(CreateLeaveRequestDto requestDto) {
+    public void createLeaveRequest(CreateLeaveRequestDto requestDto, String InternelUserId) {
         log.info("휴가 신청 요청 - internelUserId: {}, leaveType: {}, startDate: {}, endDate: {}",
-                requestDto.getInternelUserId(), requestDto.getLeaveType(),
+                InternelUserId, requestDto.getLeaveType(),
                 requestDto.getStartDate(), requestDto.getEndDate());
 
         // 1. InternelUser로 Employee 조회
-        InternelUser internelUser = internelUserRepository.findById(requestDto.getInternelUserId())
+        InternelUser internelUser = internelUserRepository.findById(InternelUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLIENT_NOT_FOUND, "내부 직원 정보를 찾을 수 없습니다."));
 
         Employee employee = employeeRepository.findByInternelUser(internelUser)
@@ -125,7 +125,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequestRepository.save(leaveRequest);
 
         log.info("휴가 신청 성공 - internelUserId: {}, leaveRequestId: {}, numberOfLeaveDays: {}",
-                requestDto.getInternelUserId(), leaveRequest.getId(), numberOfLeaveDays);
+                InternelUserId, leaveRequest.getId(), numberOfLeaveDays);
     }
 
     @Override
