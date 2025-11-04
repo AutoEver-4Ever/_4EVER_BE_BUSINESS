@@ -25,6 +25,6 @@ public class DashboardValueDto {
      * Example: if current is 1000 and previous was 900, delta is 100
      * Example: if current is 800 and previous was 900, delta is -100
      */
-    @JsonProperty("delta")
+    @JsonProperty("delta_rate")
     private BigDecimal delta;
 }

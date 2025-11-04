@@ -1062,4 +1062,84 @@ public class HrmController {
         employeeService.createEmployee(requestDto, deferredResult);
         return deferredResult;
     }
+
+    /**
+     * InternelUserId로 프로필 조회
+     */
+    @GetMapping("/employees/profile/{internelUserId}")
+    public ApiResponse<EmployeeProfileDto> getEmployeeProfile(@PathVariable String internelUserId) {
+        log.info("프로필 조회 API 호출 - internelUserId: {}", internelUserId);
+        EmployeeProfileDto result = employeeService.getProfileByInternelUserId(internelUserId);
+        log.info("프로필 조회 성공 - internelUserId: {}", internelUserId);
+        return ApiResponse.success(result, "프로필 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUserId로 근태 기록 조회 (오늘 제외)
+     */
+    @GetMapping("/employees/attendance-records/{internelUserId}")
+    public ApiResponse<List<EmployeeAttendanceRecordDto>> getEmployeeAttendanceRecords(@PathVariable String internelUserId) {
+        log.info("근태 기록 조회 API 호출 (오늘 제외) - internelUserId: {}", internelUserId);
+        List<EmployeeAttendanceRecordDto> result = employeeService.getAttendanceRecordsByInternelUserId(internelUserId);
+        log.info("근태 기록 조회 성공 - internelUserId: {}, count: {}", internelUserId, result.size());
+        return ApiResponse.success(result, "근태 기록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUserId로 오늘 근태 기록 조회
+     */
+    @GetMapping("/employees/today-attendance/{internelUserId}")
+    public ApiResponse<TodayAttendanceDto> getTodayAttendance(@PathVariable String internelUserId) {
+        log.info("오늘 근태 기록 조회 API 호출 - internelUserId: {}", internelUserId);
+        TodayAttendanceDto result = employeeService.getTodayAttendanceByInternelUserId(internelUserId);
+        log.info("오늘 근태 기록 조회 성공 - internelUserId: {}, status: {}", internelUserId, result.getStatus());
+        return ApiResponse.success(result, "오늘 근태 기록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUserId로 수강중인 교육 목록 조회
+     */
+    @GetMapping("/employees/trainings/in-progress/{internelUserId}")
+    public ApiResponse<List<TrainingItemDto>> getInProgressTrainings(@PathVariable String internelUserId) {
+        log.info("수강중인 교육 목록 조회 API 호출 - internelUserId: {}", internelUserId);
+        List<TrainingItemDto> result = employeeService.getInProgressTrainingsByInternelUserId(internelUserId);
+        log.info("수강중인 교육 목록 조회 성공 - internelUserId: {}, count: {}", internelUserId, result.size());
+        return ApiResponse.success(result, "수강중인 교육 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUserId로 신청가능한 교육 목록 조회
+     */
+    @GetMapping("/employees/trainings/available/{internelUserId}")
+    public ApiResponse<List<TrainingItemDto>> getAvailableTrainings(@PathVariable String internelUserId) {
+        log.info("신청가능한 교육 목록 조회 API 호출 - internelUserId: {}", internelUserId);
+        List<TrainingItemDto> result = employeeService.getAvailableTrainingsForApplyByInternelUserId(internelUserId);
+        log.info("신청가능한 교육 목록 조회 성공 - internelUserId: {}, count: {}", internelUserId, result.size());
+        return ApiResponse.success(result, "신청가능한 교육 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * InternelUserId로 수료한 교육 목록 조회
+     */
+    @GetMapping("/employees/trainings/completed/{internelUserId}")
+    public ApiResponse<List<TrainingItemDto>> getCompletedTrainings(@PathVariable String internelUserId) {
+        log.info("수료한 교육 목록 조회 API 호출 - internelUserId: {}", internelUserId);
+        List<TrainingItemDto> result = employeeService.getCompletedTrainingsByInternelUserId(internelUserId);
+        log.info("수료한 교육 목록 조회 성공 - internelUserId: {}, count: {}", internelUserId, result.size());
+        return ApiResponse.success(result, "수료한 교육 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 직원 교육 프로그램 등록
+     */
+    @PostMapping("internelUser/program")
+    public ApiResponse<Void> postTrainingProgram(
+            @RequestParam String internelUserId,
+            @RequestParam String programId) {
+        log.info("교육 프로그램 등록 API 호출 - employeeId: {}, programId: {}", internelUserId, programId);
+
+        employeeService.InternelUserrequestTraining(internelUserId, programId);
+        log.info("교육 프로그램 등록 성공 - employeeId: {}, programId: {}", internelUserId, programId);
+        return ApiResponse.success(null, "교육 프로그램 등록이 완료되었습니다.", HttpStatus.CREATED);
+    }
 }

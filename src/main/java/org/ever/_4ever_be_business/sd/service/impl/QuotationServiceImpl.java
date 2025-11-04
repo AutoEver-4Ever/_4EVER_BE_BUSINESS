@@ -26,12 +26,14 @@ import org.ever._4ever_be_business.sd.dto.response.InventoryCheckResponseDto;
 import org.ever._4ever_be_business.sd.dto.response.QuotationDetailDto;
 import org.ever._4ever_be_business.sd.dto.response.QuotationItemDto;
 import org.ever._4ever_be_business.sd.dto.response.QuotationListItemDto;
+import org.ever._4ever_be_business.sd.dto.response.ScmQuotationListItemDto;
 import org.ever._4ever_be_business.sd.integration.dto.ProductInfoResponseDto;
 import org.ever._4ever_be_business.sd.integration.port.InventoryServicePort;
 import org.ever._4ever_be_business.sd.integration.port.ProductServicePort;
 import org.ever._4ever_be_business.sd.service.QuotationService;
 import org.ever._4ever_be_business.sd.vo.QuotationDetailVo;
 import org.ever._4ever_be_business.sd.vo.QuotationSearchConditionVo;
+import org.ever._4ever_be_business.sd.vo.ScmQuotationSearchConditionVo;
 import org.ever.event.AlarmEvent;
 import org.ever.event.alarm.AlarmType;
 import org.ever.event.alarm.LinkType;
@@ -115,7 +117,7 @@ public class QuotationServiceImpl implements QuotationService {
         List<QuotationItemDto> items = quotationItems.stream()
                 .map(item -> {
                     ProductInfoResponseDto.ProductDto product = finalProductMap.get(item.getProductId());
-                    String itemId = product != null ? product.getProductCode() : item.getProductId();
+                    String itemId = item.getProductId();  // productId (UUID)
                     String itemName = product != null ? product.getProductName() : "Unknown";
 
                     // Unit enum 값 그대로 사용 (예: "EA", "KG")
@@ -124,7 +126,7 @@ public class QuotationServiceImpl implements QuotationService {
                     BigDecimal amount = item.getPrice().multiply(BigDecimal.valueOf(item.getCount()));
 
                     return new QuotationItemDto(
-                            itemId,               // itemId (productCode)
+                            itemId,               // itemId (productId)
                             itemName,             // itemName
                             item.getCount(),      // quantity
                             uomName,              // uomName (Unit enum 값)
@@ -164,6 +166,20 @@ public class QuotationServiceImpl implements QuotationService {
         Page<QuotationListItemDto> result = quotationDAO.findQuotationList(condition, pageable);
 
         log.info("견적 목록 조회 성공 - totalElements: {}, totalPages: {}",
+                result.getTotalElements(), result.getTotalPages());
+
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ScmQuotationListItemDto> getScmQuotationList(ScmQuotationSearchConditionVo condition, Pageable pageable) {
+        log.info("SCM 견적 목록 조회 요청 - startDate: {}, endDate: {}, statusCode: {}",
+                condition.getStartDate(), condition.getEndDate(), condition.getStatusCode());
+
+        Page<ScmQuotationListItemDto> result = quotationDAO.findScmQuotationList(condition, pageable);
+
+        log.info("SCM 견적 목록 조회 성공 - totalElements: {}, totalPages: {}",
                 result.getTotalElements(), result.getTotalPages());
 
         return result;
@@ -415,6 +431,7 @@ public class QuotationServiceImpl implements QuotationService {
         }
 
         // 3. 검토 확정 처리
+        quotation.uncheck();
         approval.review();
         quotationApprovalRepository.save(approval);
 
