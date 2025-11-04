@@ -194,7 +194,7 @@ public class SdController {
      * 공급사 사용자 기준 주문서 목록 조회 (대시보드용)
      */
     @GetMapping("/orders/supplier")
-    public ApiResponse<PageResponseDto<SalesOrderListItemDto>> getSupplierOrderList(
+    public ApiResponse<PageResponseDto<org.ever._4ever_be_business.sd.dto.response.SupplierOrderWorkflowItemDto>> getSupplierOrderList(
             @RequestParam("userId") String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
@@ -202,7 +202,8 @@ public class SdController {
         log.info("[INFO] 공급사 주문서 목록 조회 API 호출 - userId: {}, page: {}, size: {}", userId, page, size);
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<SalesOrderListItemDto> result = sdSupplierOrderService.getSupplierOrderList(userId, pageable);
+        org.springframework.data.domain.Page<org.ever._4ever_be_business.sd.dto.response.SupplierOrderWorkflowItemDto> result =
+                sdSupplierOrderService.getSupplierOrderList(userId, pageable);
 
         PageInfo pageInfo = new PageInfo(
                 result.getNumber(),
@@ -212,7 +213,7 @@ public class SdController {
                 result.hasNext()
         );
 
-        PageResponseDto<SalesOrderListItemDto> responseDto = new PageResponseDto<>(
+        PageResponseDto<org.ever._4ever_be_business.sd.dto.response.SupplierOrderWorkflowItemDto> responseDto = new PageResponseDto<>(
                 (int) result.getTotalElements(),
                 result.getContent(),
                 pageInfo
