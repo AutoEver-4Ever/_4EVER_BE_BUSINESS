@@ -284,4 +284,28 @@ public class FcmController {
         log.info("AR 전표 미수 처리 완료 성공 - invoiceId: {}", invoiceId);
         return ApiResponse.success(null, "미수 처리가 완료되었습니다.", HttpStatus.OK);
     }
+
+    /**
+     * AR 전표 상태 일괄 변경 (RESPONSE_PENDING)
+     */
+    @PostMapping("/invoice/ar/customer/response-pending")
+    public ApiResponse<Void> updateArInvoicesResponsePending(
+            @RequestBody org.ever._4ever_be_business.fcm.dto.request.UpdateInvoiceIdsDto requestDto) {
+        log.info("AR 전표 상태 일괄 변경 API 호출 - invoiceIds: {}", requestDto.getInvoiceIds());
+        voucherStatusService.updateSalesVouchersToResponsePending(requestDto.getInvoiceIds());
+        log.info("AR 전표 상태 일괄 변경 성공 - count: {}", requestDto.getInvoiceIds().size());
+        return ApiResponse.success(null, "매출 전표 상태가 RESPONSE_PENDING으로 일괄 변경되었습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * AP 전표 상태 일괄 변경 (RESPONSE_PENDING)
+     */
+    @PostMapping("/invoice/ap/supplier/response-pending")
+    public ApiResponse<Void> updateApInvoicesResponsePending(
+            @RequestBody org.ever._4ever_be_business.fcm.dto.request.UpdateInvoiceIdsDto requestDto) {
+        log.info("AP 전표 상태 일괄 변경 API 호출 - invoiceIds: {}", requestDto.getInvoiceIds());
+        voucherStatusService.updatePurchaseVouchersToResponsePending(requestDto.getInvoiceIds());
+        log.info("AP 전표 상태 일괄 변경 성공 - count: {}", requestDto.getInvoiceIds().size());
+        return ApiResponse.success(null, "매입 전표 상태가 RESPONSE_PENDING으로 일괄 변경되었습니다.", HttpStatus.OK);
+    }
 }
