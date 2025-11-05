@@ -60,6 +60,11 @@ public class CustomerCompanyDAOImpl implements CustomerCompanyDAO {
                 dto.getNote()
         );
 
+        // 등록 DTO에 포함된 배송 리드타임(Duration)을 저장 (선택값)
+        if (dto.getDeliveryLeadTime() != null) {
+            customerCompany.updateDeliveryLeadTime(dto.getDeliveryLeadTime());
+        }
+
         CustomerCompany savedCompany = customerCompanyRepository.save(customerCompany);
 
         CustomerUser savedManager = null;
@@ -103,6 +108,11 @@ public class CustomerCompanyDAOImpl implements CustomerCompanyDAO {
         // 3. 상태 변경
         if (dto.getStatusCode() != null) {
             customerCompany.updateStatus(dto.getStatusCode());
+        }
+
+        // 3-1. 배송 리드타임(Duration) 업데이트 (선택값)
+        if (dto.getDeliveryLeadTime() != null) {
+            customerCompany.updateDeliveryLeadTime(dto.getDeliveryLeadTime());
         }
 
         // 4. 담당자 정보 수정 (존재하는 경우)
