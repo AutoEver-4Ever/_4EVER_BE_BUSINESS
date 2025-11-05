@@ -62,4 +62,13 @@ public class Quotation extends TimeStamp {
             this.id = UuidV7Generator.generate();
         }
     }
+
+    // Setter methods for saga pattern
+    public void setDueDate(LocalDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public void setAvailableStatus(String availableStatus) {
+        this.availableStatus = availableStatus;
+    }
 }
