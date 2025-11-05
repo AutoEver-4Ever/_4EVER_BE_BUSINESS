@@ -1146,6 +1146,19 @@ public class HrmController {
     }
 
     /**
+     * CustomerUserId로 고객 정보 조회 (고객사 + 고객 담당자)
+     */
+    @GetMapping("/customers/profile/{customerUserId}")
+    public ApiResponse<org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto> getCustomerInfo(
+            @PathVariable String customerUserId) {
+        log.info("고객 정보 조회 API 호출 - customerUserId: {}", customerUserId);
+        org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto result =
+                employeeService.getCustomerInfoByUserId(customerUserId);
+        log.info("고객 정보 조회 성공 - customerUserId: {}", customerUserId);
+        return ApiResponse.success(result, "고객 정보 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
      * 직원 교육 프로그램 등록
      */
     @PostMapping("internelUser/program")
