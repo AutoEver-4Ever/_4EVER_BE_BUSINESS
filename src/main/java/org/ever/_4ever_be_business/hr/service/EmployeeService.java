@@ -146,4 +146,12 @@ public interface EmployeeService {
      * @param requestDto 수정 요청 정보
      */
     void updateProfileByInternelUserId(String internelUserId, UpdateProfileRequestDto requestDto);
+
+    /**
+     * CustomerUserId로 고객 정보 조회 (고객사 정보 + 고객 담당자 정보)
+     *
+     * @param customerUserId CustomerUser의 userId
+     * @return 고객 정보
+     */
+    org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto getCustomerInfoByUserId(String customerUserId);
 }

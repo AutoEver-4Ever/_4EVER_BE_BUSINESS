@@ -1,0 +1,180 @@
+package org.ever._4ever_be_business.infrastructure.kafka.consumer;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.exception.BusinessException;
+import org.ever._4ever_be_business.common.exception.ErrorCode;
+import org.ever._4ever_be_business.common.saga.SagaTransactionManager;
+import org.ever._4ever_be_business.common.util.CodeGenerator;
+import org.ever._4ever_be_business.company.entity.CustomerCompany;
+import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
+import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
+import org.ever._4ever_be_business.order.entity.Order;
+import org.ever._4ever_be_business.order.entity.OrderStatus;
+import org.ever._4ever_be_business.order.entity.Quotation;
+import org.ever._4ever_be_business.order.entity.QuotationApproval;
+import org.ever._4ever_be_business.order.entity.QuotationItem;
+import org.ever._4ever_be_business.order.enums.ApprovalStatus;
+import org.ever._4ever_be_business.order.repository.OrderRepository;
+import org.ever._4ever_be_business.order.repository.QuotationApprovalRepository;
+import org.ever._4ever_be_business.order.repository.QuotationItemRepository;
+import org.ever._4ever_be_business.order.repository.QuotationRepository;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
+import org.ever._4ever_be_business.voucher.entity.SalesVoucher;
+import org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus;
+import org.ever.event.QuotationUpdateEvent;
+import org.ever.event.QuotationUpdateCompletionEvent;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.ever._4ever_be_business.infrastructure.kafka.config.KafkaTopicConfig.QUOTATION_UPDATE_COMPLETION_TOPIC;
+import static org.ever._4ever_be_business.infrastructure.kafka.config.KafkaTopicConfig.QUOTATION_UPDATE_TOPIC;
+
+/**
+ * 견적 업데이트 이벤트 리스너
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class QuotationUpdateListener {
+
+    private final SagaTransactionManager sagaTransactionManager;
+    private final QuotationRepository quotationRepository;
+    private final QuotationApprovalRepository quotationApprovalRepository;
+    private final QuotationItemRepository quotationItemRepository;
+    private final OrderRepository orderRepository;
+    private final KafkaProducerService kafkaProducerService;
+    private final CustomerUserRepository customerUserRepository;
+
+    @KafkaListener(topics = QUOTATION_UPDATE_TOPIC, groupId = "${spring.kafka.consumer.group-id}")
+    public void handleQuotationUpdate(QuotationUpdateEvent event, Acknowledgment acknowledgment) {
+        log.info("견적 업데이트 이벤트 수신: transactionId={}, quotationId={}, dueDate={}, status={}",
+                event.getTransactionId(), event.getQuotationId(), event.getDueDate(), event.getQuotationStatus());
+
+        try {
+            // Saga 트랜잭션으로 실행
+            sagaTransactionManager.executeSagaWithId(event.getTransactionId(), () -> {
+                // 1. Quotation 조회
+                Quotation quotation = quotationRepository.findById(event.getQuotationId())
+                        .orElseThrow(() -> new RuntimeException("Quotation not found: " + event.getQuotationId()));
+
+                quotation.setAvailableStatus("CHECKED");
+                quotationRepository.save(quotation);
+
+                // 2. CustomerCompany 조회
+                org.ever._4ever_be_business.hr.entity.CustomerUser customerUser =
+                        customerUserRepository.findById(quotation.getCustomerUserId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND));
+                CustomerCompany customerCompany = customerUser.getCustomerCompany();
+                if (customerCompany == null) {
+                    throw new BusinessException(ErrorCode.CUSTOMER_COMPANY_NOT_FOUND);
+                }
+
+                // 3. QuotationApproval 상태를 APPROVAL로 변경
+                if (quotation.getQuotationApproval() != null) {
+                    QuotationApproval approval = quotation.getQuotationApproval();
+                    approval.setApprovalStatus(ApprovalStatus.valueOf(event.getQuotationStatus()));
+                    quotationApprovalRepository.save(approval);
+                    log.info("견적 승인 상태 업데이트 완료: approvalId={}, status={}",
+                            approval.getId(), event.getQuotationStatus());
+                }
+
+                // 4. DueDate 업데이트
+                LocalDateTime newDueDate = event.getDueDate().atStartOfDay();
+                quotation.setDueDate(newDueDate);
+                quotationRepository.save(quotation);
+                log.info("견적 납기일 업데이트 완료: quotationId={}, newDueDate={}",
+                        quotation.getId(), newDueDate);
+
+                // 5. Order 생성 (PENDING 상태로)
+                String orderId = createOrderFromQuotation(quotation, customerCompany);
+                log.info("주문 생성 완료: orderId={}, status=PENDING", orderId);
+
+                return null;
+            });
+
+            // 5. 완료 이벤트 발송
+            QuotationUpdateCompletionEvent completionEvent = QuotationUpdateCompletionEvent.builder()
+                    .transactionId(event.getTransactionId())
+                    .quotationId(event.getQuotationId())
+                    .success(true)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            kafkaProducerService.sendToTopic(QUOTATION_UPDATE_COMPLETION_TOPIC,
+                    event.getQuotationId(), completionEvent);
+
+            log.info("견적 업데이트 완료 이벤트 발송: transactionId={}", event.getTransactionId());
+
+            acknowledgment.acknowledge();
+
+        } catch (Exception e) {
+            log.error("견적 업데이트 처리 실패: transactionId={}, quotationId={}",
+                    event.getTransactionId(), event.getQuotationId(), e);
+
+            // 실패 이벤트 발송
+            QuotationUpdateCompletionEvent completionEvent = QuotationUpdateCompletionEvent.builder()
+                    .transactionId(event.getTransactionId())
+                    .quotationId(event.getQuotationId())
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            kafkaProducerService.sendToTopic(QUOTATION_UPDATE_COMPLETION_TOPIC,
+                    event.getQuotationId(), completionEvent);
+
+            acknowledgment.acknowledge();
+        }
+    }
+
+    /**
+     * Quotation으로부터 Order 생성 (PENDING 상태)
+     */
+    private String createOrderFromQuotation(Quotation quotation,  CustomerCompany customerCompany) {
+        // QuotationItem 조회
+        List<QuotationItem> quotationItems = quotationItemRepository.findAll().stream()
+                .filter(item -> item.getQuotation().getId().equals(quotation.getId()))
+                .toList();
+
+        // 총 금액 계산
+        BigDecimal totalPrice = quotationItems.stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Order 생성
+        String orderId = UuidV7Generator.generate();
+        String orderCode = "ORD-" + System.currentTimeMillis();
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setOrderCode(orderCode);
+        order.setQuotation(quotation);
+        order.setCustomerUserId(quotation.getCustomerUserId());
+        order.setTotalPrice(totalPrice);
+        order.setOrderDate(LocalDateTime.now());
+        order.setDueDate(quotation.getDueDate());
+        order.setStatus(OrderStatus.PENDING); // PENDING 상태로 생성
+
+        Order savedOrder = orderRepository.save(order);
+
+        // SalesVoucher 생성
+        String voucherCode = CodeGenerator.generateCode("SV");
+        SalesVoucher salesVoucher = new SalesVoucher(
+                customerCompany,
+                order,
+                voucherCode,
+                LocalDateTime.now(),  // issueDate
+                quotation.getDueDate(),  // dueDate
+                quotation.getTotalPrice(),
+                SalesVoucherStatus.PENDING,
+                "견적서 승인을 통한 자동 생성"
+        );
+        return savedOrder.getId();
+    }
+}

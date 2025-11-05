@@ -89,4 +89,12 @@ public class QuotationApproval extends TimeStamp {
             this.id = UuidV7Generator.generate();
         }
     }
+
+    // Setter methods for saga pattern
+    public void setApprovalStatus(ApprovalStatus approvalStatus) {
+        this.approvalStatus = approvalStatus;
+        if (approvalStatus == ApprovalStatus.APPROVAL) {
+            this.approvedAt = LocalDateTime.now();
+        }
+    }
 }
