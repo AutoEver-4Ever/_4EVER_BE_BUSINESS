@@ -5,8 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
+import org.ever._4ever_be_business.common.jpa.converter.DurationToSecondsConverter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import java.time.Duration;
 
 @Entity
 @Table(name="customer_company")
@@ -54,6 +56,10 @@ public class CustomerCompany extends TimeStamp {
     @Column(name="is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "delivery_lead_time")
+    @Convert(converter = DurationToSecondsConverter.class)
+    private Duration deliveryLeadTime;
+
     public CustomerCompany(String customerUserId, String companyCode, String companyName, String businessNumber, String ceoName, String zipCode, String baseAddress, String detailAddress, String officePhone, String officeEmail, String etc) {
         this.customerUserId = customerUserId;
         this.companyCode = companyCode;
@@ -83,6 +89,10 @@ public class CustomerCompany extends TimeStamp {
         this.officePhone = officePhone;
         this.officeEmail = officeEmail;
         this.etc = etc;
+    }
+
+    public void updateDeliveryLeadTime(Duration deliveryLeadTime) {
+        this.deliveryLeadTime = deliveryLeadTime;
     }
 
     /**
