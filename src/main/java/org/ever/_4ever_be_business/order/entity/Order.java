@@ -62,4 +62,37 @@ public class Order extends TimeStamp {
             this.id = UuidV7Generator.generate();
         }
     }
+
+    // Setter methods for saga pattern
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setOrderCode(String orderCode) {
+        this.orderCode = orderCode;
+    }
+
+    public void setQuotation(Quotation quotation) {
+        this.quotation = quotation;
+    }
+
+    public void setCustomerUserId(String customerUserId) {
+        this.customerUserId = customerUserId;
+    }
+
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public void setOrderDate(LocalDateTime orderDate) {
+        this.orderDate = orderDate;
+    }
+
+    public void setDueDate(LocalDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
 }
