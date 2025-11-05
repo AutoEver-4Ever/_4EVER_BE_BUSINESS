@@ -79,8 +79,8 @@ public class FcmStatisticsDAOImpl implements FcmStatisticsDAO {
                         salesVoucher.issueDate.between(startDateTime, endDateTime)
                                 .and(salesVoucher.status.in(
                                         SalesVoucherStatus.UNPAID,
-                                        SalesVoucherStatus.PARTIALLY_PAID,
-                                        SalesVoucherStatus.PARTIALLY_UNPAID
+                                        SalesVoucherStatus.PENDING,
+                                        SalesVoucherStatus.RESPONSE_PENDING
                                 ))
                 )
                 .fetchOne();
