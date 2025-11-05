@@ -2,10 +2,7 @@ package org.ever._4ever_be_business.sd.service;
 
 import org.ever._4ever_be_business.sd.dto.request.CreateQuotationRequestDto;
 import org.ever._4ever_be_business.sd.dto.request.InventoryCheckRequestDto;
-import org.ever._4ever_be_business.sd.dto.response.InventoryCheckResponseDto;
-import org.ever._4ever_be_business.sd.dto.response.QuotationDetailDto;
-import org.ever._4ever_be_business.sd.dto.response.QuotationListItemDto;
-import org.ever._4ever_be_business.sd.dto.response.ScmQuotationListItemDto;
+import org.ever._4ever_be_business.sd.dto.response.*;
 import org.ever._4ever_be_business.sd.vo.QuotationDetailVo;
 import org.ever._4ever_be_business.sd.vo.QuotationSearchConditionVo;
 import org.ever._4ever_be_business.sd.vo.ScmQuotationSearchConditionVo;
@@ -77,4 +74,11 @@ public interface QuotationService {
      * @return 재고 확인 결과
      */
     InventoryCheckResponseDto checkInventory(InventoryCheckRequestDto requestDto);
+
+    /**
+     * availableStatus가 null이 아닌 견적서의 ID와 코드 맵 조회
+     *
+     * @return List<QuotationCodeMapDto>
+     */
+    java.util.List<QuotationCodeMapDto> getAvailableQuotationCodeMap();
 }

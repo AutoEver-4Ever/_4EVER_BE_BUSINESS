@@ -24,6 +24,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.ever.event.CreateAuthUserResultEvent;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -339,5 +340,16 @@ public class SdController {
         InventoryCheckResponseDto result = quotationService.checkInventory(requestDto);
         log.info("재고 확인 성공 - items count: {}", result.getItems().size());
         return ApiResponse.success(result, "재고 확인을 완료했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * availableStatus가 null이 아닌 견적서 ID/코드 맵 조회
+     */
+    @GetMapping("/quotations/available/map")
+    public ApiResponse<List<QuotationCodeMapDto>> getAvailableQuotationCodeMap() {
+        log.info("availableStatus가 null이 아닌 견적서 ID/코드 맵 조회 API 호출");
+        List<QuotationCodeMapDto> result = quotationService.getAvailableQuotationCodeMap();
+        log.info("availableStatus가 null이 아닌 견적서 ID/코드 맵 조회 성공 - count: {}", result.size());
+        return ApiResponse.success(result, "견적서 ID/코드 맵을 조회했습니다", HttpStatus.OK);
     }
 }
