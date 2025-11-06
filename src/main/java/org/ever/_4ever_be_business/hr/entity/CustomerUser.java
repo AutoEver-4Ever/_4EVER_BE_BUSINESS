@@ -67,6 +67,10 @@ public class CustomerUser extends TimeStamp {
         this.phoneNumber = phoneNumber;
     }
 
+    public void assignCompany(CustomerCompany customerCompany) {
+        this.customerCompany = customerCompany;
+    }
+
     @PrePersist
     public void generateId() {
         if (this.id == null) {

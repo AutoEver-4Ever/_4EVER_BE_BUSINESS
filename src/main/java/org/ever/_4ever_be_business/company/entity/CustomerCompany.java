@@ -60,7 +60,8 @@ public class CustomerCompany extends TimeStamp {
     @Convert(converter = DurationToSecondsConverter.class)
     private Duration deliveryLeadTime;
 
-    public CustomerCompany(String customerUserId, String companyCode, String companyName, String businessNumber, String ceoName, String zipCode, String baseAddress, String detailAddress, String officePhone, String officeEmail, String etc) {
+    public CustomerCompany(String id, String customerUserId, String companyCode, String companyName, String businessNumber, String ceoName, String zipCode, String baseAddress, String detailAddress, String officePhone, String officeEmail, String etc) {
+        this.id = id;
         this.customerUserId = customerUserId;
         this.companyCode = companyCode;
         this.companyName = companyName;
@@ -73,6 +74,10 @@ public class CustomerCompany extends TimeStamp {
         this.officeEmail = officeEmail;
         this.etc = etc;
         this.isActive = true;
+    }
+
+    public CustomerCompany(String customerUserId, String companyCode, String companyName, String businessNumber, String ceoName, String zipCode, String baseAddress, String detailAddress, String officePhone, String officeEmail, String etc) {
+        this(null, customerUserId, companyCode, companyName, businessNumber, ceoName, zipCode, baseAddress, detailAddress, officePhone, officeEmail, etc);
     }
 
     /**
