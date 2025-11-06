@@ -160,19 +160,21 @@ public class InternalUserInitializer implements CommandLineRunner {
                 }
                 positions.sort(Comparator.comparing(Position::getPositionCode));
 
+                String deptCode = dept.getDepartmentCode().toLowerCase();
+
                 // 11명 생성
                 for (int i = 0; i < 11; i++) {
                     int posIndex = (i < positions.size()) ? i : 0; // 0..9 각 1명, 10번째는 사원(0)
                     Position position = positions.get(posIndex);
 
                     String seq = String.format("%03d", i + 1);
-                    String userId = "internal-" + dept.getDepartmentCode() + "-" + seq;
+                    String userId = "internal-" + deptCode + "-" + seq;
                     if (internelUserRepository.findByUserId(userId).isPresent()) {
                         continue; // 멱등 처리
                     }
 
                     String name = KOREAN_NAMES[(d * 11 + i) % KOREAN_NAMES.length];
-                    String email = dept.getDepartmentCode().toLowerCase() + "-user" + seq + "@everp.com";
+                    String email = deptCode + "-user" + seq + "@everp.com";
                     String phone = String.format("010-%04d-%04d", 1000 + ((d * 11 + i) % 9000), i + 1);
 
                     String empCode = "EMP-" + trailing7(userId);
