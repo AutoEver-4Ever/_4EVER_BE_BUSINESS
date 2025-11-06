@@ -123,8 +123,12 @@ public class CustomerUserInitializer implements CommandLineRunner {
                 CustomerCompany company = customerCompanyRepository.findByCompanyCode(companyCode)
                     .orElseGet(() -> createCustomerCompany(user, userId, currentIndex));
 
-                // 담당자 연결 보정
-                if (company.getCustomerUserId() == null) {
+                // 담당자 ↔ 고객사 연결 보정
+                if (user.getCustomerCompany() == null || !user.getCustomerCompany().getId().equals(company.getId())) {
+                    user.assignCompany(company);
+                    customerUserRepository.save(user);
+                }
+                if (company.getCustomerUserId() == null || !company.getCustomerUserId().equals(user.getId())) {
                     company.assignCustomerUser(user.getId());
                     customerCompanyRepository.save(company);
                 }
@@ -167,7 +171,7 @@ public class CustomerUserInitializer implements CommandLineRunner {
         String baseAddress = BASE_ADDRESSES[idx % BASE_ADDRESSES.length];
         String detailAddress = DETAIL_ADDRESSES[idx % DETAIL_ADDRESSES.length];
         String officePhone = OFFICE_PHONES[idx % OFFICE_PHONES.length];
-        String officeEmail = "contact@" + companyName.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "") + ".com";
+        String officeEmail = String.format(Locale.ROOT, "cust%s@ever.co", suffix);
 
         // 리드타임: 5초, 10초, 30초 하나씩, 이후 5~10분 사이 분배
         Duration leadTime;
@@ -177,7 +181,8 @@ public class CustomerUserInitializer implements CommandLineRunner {
         else leadTime = Duration.ofSeconds(300 + ((idx - 3) % 6) * 60L); // 300~600초
 
         CustomerCompany company = new CustomerCompany(
-            null,                // customerUserId (이후 assign)
+            userId,              // id
+            user.getId(),        // customerUserId
             companyCode,
             companyName,
             "BN-" + suffix,
@@ -196,6 +201,8 @@ public class CustomerUserInitializer implements CommandLineRunner {
         // 회사에 담당자 지정
         saved.assignCustomerUser(user.getId());
         customerCompanyRepository.save(saved);
+        user.assignCompany(saved);
+        customerUserRepository.save(user);
 
         log.info("[Initializer] CustomerCompany 생성: {} (code: {}, leadTime: {}s)", companyName, companyCode, leadTime.getSeconds());
         return saved;
