@@ -379,9 +379,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                     requestDto.getPhoneNumber(),
                     UserStatus.ACTIVE
                 );
-                internalUserRepository.save(internalUser);
+                InternelUser savedInternalUser = internalUserRepository.save(internalUser);
 
-                Employee employee = new Employee(internalUser, 15L, null);
+                Employee employee = new Employee(savedInternalUser.getId(), savedInternalUser, 15L, null);
                 employeeRepository.save(employee);
 
                 CreateAuthUserEvent event = CreateAuthUserEvent.builder()
