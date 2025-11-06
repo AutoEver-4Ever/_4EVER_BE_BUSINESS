@@ -296,7 +296,7 @@ public class InternalUserInitializer implements CommandLineRunner {
         );
 
         InternelUser saved = internelUserRepository.save(internelUser);
-        Employee employee = new Employee(saved, 15L, now.minusMonths(6));
+        Employee employee = new Employee(saved.getId(), saved, 15L, now.minusMonths(6));
         employeeRepository.save(employee);
 
         log.info("[Initializer] 모듈 내부 사용자 생성 - module: {}, role: {}, loginEmail: {}, userId: {}",
@@ -345,6 +345,7 @@ public class InternalUserInitializer implements CommandLineRunner {
         InternelUser savedInternelUser = internelUserRepository.save(internelUser);
 
         Employee employee = new Employee(
+            savedInternelUser.getId(),
             savedInternelUser,
             15L,
             LocalDateTime.now().minusMonths(6)

@@ -31,6 +31,13 @@ public class Employee extends TimeStamp {
     @Column(name="last_training_date")
     private LocalDateTime lastTrainingDate;
 
+    public Employee(String id, InternelUser internelUser, Long remainingVacation, LocalDateTime lastTrainingDate) {
+        this.id = id;
+        this.internelUser = internelUser;
+        this.remainingVacation = remainingVacation;
+        this.lastTrainingDate = lastTrainingDate;
+    }
+
     public Employee(InternelUser internelUser, Long remainingVacation, LocalDateTime lastTrainingDate) {
         this.internelUser = internelUser;
         this.remainingVacation = remainingVacation;

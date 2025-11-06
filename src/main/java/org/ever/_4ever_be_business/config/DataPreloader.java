@@ -321,17 +321,18 @@ public class DataPreloader {
         };
 
         for (InternelUser user : internelUsers) {
-            internelUserRepository.save(user);
-            log.info("내부 직원 생성: {} ({})", user.getName(), user.getEmployeeCode());
+            InternelUser savedUser = internelUserRepository.save(user);
+            log.info("내부 직원 생성: {} ({})", savedUser.getName(), savedUser.getEmployeeCode());
 
             // Employee 엔티티 생성
             Employee employee = new Employee(
-                    user,
+                    savedUser.getId(),
+                    savedUser,
                     15L,  // 연차 15일
                     LocalDateTime.now().minusMonths(6)  // 6개월 전 교육 수료
             );
             employeeRepository.save(employee);
-            log.info("Employee 엔티티 생성: {}", user.getName());
+            log.info("Employee 엔티티 생성: {}", savedUser.getName());
         }
 
         log.info("총 {}개의 내부 직원 생성 완료", internelUsers.length);
