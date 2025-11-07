@@ -1,5 +1,6 @@
 package org.ever._4ever_be_business.tam.service;
 
+import org.ever._4ever_be_business.sd.dto.response.DashboardWorkflowItemDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceRecordDto;
 import org.ever._4ever_be_business.tam.vo.AttendanceListSearchConditionVo;
@@ -9,6 +10,15 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface AttendanceService {
+    /**
+     * 대시보드 근태 목록 조회
+     *
+     * @param userId 사용자 ID (null 허용)
+     * @param size   조회 건수
+     * @return 대시보드 항목 리스트
+     */
+    List<DashboardWorkflowItemDto> getDashboardAttendanceList(String userId, int size);
+
     /**
      * 출퇴근 기록 목록 조회
      *

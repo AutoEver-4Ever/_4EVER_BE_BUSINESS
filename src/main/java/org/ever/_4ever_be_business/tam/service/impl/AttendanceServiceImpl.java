@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.entity.Employee;
+import org.ever._4ever_be_business.hr.entity.InternelUser;
 import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
+import org.ever._4ever_be_business.sd.dto.response.DashboardWorkflowItemDto;
 import org.ever._4ever_be_business.tam.dao.AttendanceDAO;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceRecordDto;
@@ -16,6 +18,7 @@ import org.ever._4ever_be_business.tam.service.AttendanceService;
 import org.ever._4ever_be_business.tam.vo.AttendanceListSearchConditionVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,9 +37,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AttendanceServiceImpl implements AttendanceService {
 
+    private static final int DEFAULT_DASHBOARD_SIZE = 5;
+    private static final DateTimeFormatter DASHBOARD_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     private final AttendanceDAO attendanceDAO;
     private final AttendanceRepository attendanceRepository;
     private final EmployeeRepository employeeRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DashboardWorkflowItemDto> getDashboardAttendanceList(String userId, int size) {
+        int limit = size > 0 ? size : DEFAULT_DASHBOARD_SIZE;
+        Pageable pageable = PageRequest.of(0, limit);
+
+        Page<Attendance> attendancePage = (userId != null && !userId.isBlank())
+                ? attendanceRepository.findAllByEmployee_InternelUser_UserIdOrderByWorkDateDesc(userId, pageable)
+                : attendanceRepository.findAllByOrderByWorkDateDesc(pageable);
+
+        return attendancePage.getContent().stream()
+                .map(this::toDashboardWorkflowItem)
+                .collect(Collectors.toList());
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -214,6 +235,37 @@ public class AttendanceServiceImpl implements AttendanceService {
         log.info("InternelUser ID로 출퇴근 기록 목록 조회 성공 - internelUserId: {}, recordCount: {}", internelUserId, result.size());
 
         return result;
+    }
+
+    private DashboardWorkflowItemDto toDashboardWorkflowItem(Attendance attendance) {
+        Employee employee = attendance.getEmployee();
+        InternelUser internalUser = employee != null ? employee.getInternelUser() : null;
+
+        String employeeName = internalUser != null ? internalUser.getName() : "미상";
+        String employeeCode = internalUser != null ? internalUser.getEmployeeCode() : null;
+        String statusLabel = mapStatusLabel(attendance.getStatus());
+        String itemTitle = employeeName + " · " + statusLabel;
+
+        return DashboardWorkflowItemDto.builder()
+                .itemId(attendance.getId())
+                .itemTitle(itemTitle)
+                .itemNumber(employeeCode)
+                .name(employeeName)
+                .statusCode(attendance.getStatus() != null ? attendance.getStatus().name() : "UNKNOWN")
+                .date(formatDashboardDate(attendance.getCheckIn(), attendance.getWorkDate()))
+                .build();
+    }
+
+    private String mapStatusLabel(AttendanceStatus status) {
+        if (status == AttendanceStatus.LATE) {
+            return "지각";
+        }
+        return "정상 출근";
+    }
+
+    private String formatDashboardDate(LocalDateTime checkIn, LocalDateTime workDate) {
+        LocalDateTime target = checkIn != null ? checkIn : workDate;
+        return target != null ? target.format(DASHBOARD_DATE_FORMATTER) : null;
     }
 
     private AttendanceRecordDto convertToAttendanceRecordDto(Attendance attendance) {

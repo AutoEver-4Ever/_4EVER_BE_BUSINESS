@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
+import org.ever._4ever_be_business.sd.dto.response.DashboardWorkflowItemDto;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.dto.request.*;
@@ -1171,4 +1172,18 @@ public class HrmController {
         log.info("교육 프로그램 등록 성공 - employeeId: {}, programId: {}", internelUserId, programId);
         return ApiResponse.success(null, "교육 프로그램 등록이 완료되었습니다.", HttpStatus.CREATED);
     }
+
+    /**
+     * 대시보드용 근태 목록 조회
+     */
+    @GetMapping("/dashboard/attendance")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getDashboardAttendanceList(
+            @RequestParam("userId") String userId,
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        log.info("HRM 대시보드 근태 목록 조회 - userId: {}, size: {}", userId, size);
+        List<DashboardWorkflowItemDto> result = attendanceService.getDashboardAttendanceList(userId, size);
+        return ApiResponse.success(result, "근태 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
 }
