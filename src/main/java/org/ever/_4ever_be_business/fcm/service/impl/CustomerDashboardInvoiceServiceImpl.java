@@ -37,12 +37,13 @@ public class CustomerDashboardInvoiceServiceImpl implements CustomerDashboardInv
     }
 
     private SupplierPurchaseInvoiceListItemDto toDashboardItem(ARInvoiceListItemDto src) {
+        String companyName = src.getSupply() != null ? src.getSupply().getSupplierName() : "고객사 미지정";
         return SupplierPurchaseInvoiceListItemDto.builder()
                 .itemId(src.getInvoiceId())
                 .itemNumber(src.getInvoiceNumber())
-                .itemTitle(src.getCompanyName())
-                .name(src.getCompanyName())
-                .statusCode(src.getStatus())
+                .itemTitle(companyName)
+                .name(companyName)
+                .statusCode(src.getStatusCode())
                 .date(src.getIssueDate())
                 .build();
     }
