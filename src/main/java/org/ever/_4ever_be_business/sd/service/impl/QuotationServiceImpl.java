@@ -222,14 +222,18 @@ public class QuotationServiceImpl implements QuotationService {
 
         // 5. Quotation 생성 (CustomerUser의 id를 customerUserId에 저장)
         String quotationCode = CodeGenerator.generateCode("QO");
-        LocalDate dueDate = LocalDate.parse(dto.getDueDate(), DATE_FORMATTER);
+
+        LocalDate dueDate = null;
+        if (dto.getDueDate() != null && !dto.getDueDate().isBlank()) {
+            dueDate = LocalDate.parse(dto.getDueDate(), DATE_FORMATTER);
+        }
 
         Quotation quotation = new Quotation(
                 quotationCode,
                 customerUser.getId(),  // CustomerUser의 PK(id)를 저장
                 totalAmount,
                 savedApproval,
-                dueDate.atStartOfDay(),
+                dueDate != null ? dueDate.atStartOfDay() : null,
                 dto.getNote()
         );
 

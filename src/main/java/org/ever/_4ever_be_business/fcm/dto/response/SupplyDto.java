@@ -8,12 +8,12 @@ import lombok.Getter;
 @AllArgsConstructor
 public class SupplyDto {
 
-    @JsonProperty("supplierId")
+    @JsonProperty("connectionId")
     private String supplierId;
 
-    @JsonProperty("supplierNumber")
+    @JsonProperty("connectionNumber")
     private String supplierNumber;
 
-    @JsonProperty("supplierName")
+    @JsonProperty("connectionName")
     private String supplierName;
 }

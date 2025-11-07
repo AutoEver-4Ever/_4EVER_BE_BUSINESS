@@ -69,7 +69,7 @@ public class APInvoiceServiceImpl implements APInvoiceService {
                 voucher.getIssueDate().format(DATE_FORMATTER),
                 voucher.getDueDate().format(DATE_FORMATTER),
                 supplierCompany.getCompanyName(),
-                voucher.getProductOrderId(),
+                productOrderInfo.getProductOrderNumber(),
                 voucher.getTotalAmount(),
                 voucher.getMemo(),
                 items

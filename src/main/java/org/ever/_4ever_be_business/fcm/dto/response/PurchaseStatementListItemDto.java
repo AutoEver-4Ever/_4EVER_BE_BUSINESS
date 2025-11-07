@@ -14,7 +14,7 @@ public class PurchaseStatementListItemDto {
     @JsonProperty("invoiceId")
     private String invoiceId;
 
-    @JsonProperty("invoiceCode")
+    @JsonProperty("invoiceNumber")
     private String invoiceCode;
 
     @JsonProperty("connection")
@@ -29,10 +29,10 @@ public class PurchaseStatementListItemDto {
     @JsonProperty("dueDate")
     private String dueDate;
 
-    @JsonProperty("status")
+    @JsonProperty("statusCode")
     private String status;
 
-    @JsonProperty("referenceCode")
+    @JsonProperty("referenceNumber")
     private String referenceCode;
 
     @JsonProperty("reference")

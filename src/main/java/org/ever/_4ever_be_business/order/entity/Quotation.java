@@ -33,7 +33,7 @@ public class Quotation extends TimeStamp {
     @JoinColumn(name="quotation_approval_id")
     private QuotationApproval quotationApproval;
 
-    @Column(nullable = false, name="due_date")
+    @Column(name="due_date")
     private LocalDateTime dueDate;
 
     @Column(name = "available_status")

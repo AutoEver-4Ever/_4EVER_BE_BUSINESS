@@ -21,6 +21,9 @@ public class ProductOrderInfosResponseDto {
         @JsonProperty("productOrderId")
         private String productOrderId;
 
+        @JsonProperty("productOrderNumber")
+        private String productOrderNumber;
+
         @JsonProperty("totalAmount")
         private BigDecimal totalAmount;
     }

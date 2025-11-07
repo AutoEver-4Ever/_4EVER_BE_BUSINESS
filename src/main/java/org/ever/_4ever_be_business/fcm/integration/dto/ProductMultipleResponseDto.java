@@ -11,36 +11,29 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductOrderInfoResponseDto {
-    @JsonProperty("items")
-    private List<ProductOrderItemDto> items;
+public class ProductMultipleResponseDto {
 
-    @JsonProperty("totalPrice")
-    private BigDecimal totalPrice;
-
-    @JsonProperty("ProductOrderNumber")
-    private String productOrderNumber;
+    @JsonProperty("products")
+    private List<ProductDto> products;
 
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProductOrderItemDto {
+    public static class ProductDto {
+
         @JsonProperty("itemId")
         private String itemId;
 
+        @JsonProperty("itemNumber")
+        private String itemNumber;
+
         @JsonProperty("itemName")
         private String itemName;
-
-        @JsonProperty("quantity")
-        private Integer quantity;
 
         @JsonProperty("uomName")
         private String uomName;
 
         @JsonProperty("unitPrice")
         private BigDecimal unitPrice;
-
-        @JsonProperty("totalPrice")
-        private BigDecimal totalPrice;
     }
 }
