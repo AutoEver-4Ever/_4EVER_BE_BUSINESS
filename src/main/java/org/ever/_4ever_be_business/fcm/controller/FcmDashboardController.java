@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.fcm.dto.response.SupplierPurchaseInvoiceListItemDto;
+import org.ever._4ever_be_business.fcm.service.CustomerDashboardInvoiceService;
 import org.ever._4ever_be_business.fcm.service.SupplierDashboardInvoiceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,7 @@ import java.util.List;
 public class FcmDashboardController {
 
     private final SupplierDashboardInvoiceService supplierDashboardInvoiceService;
+    private final CustomerDashboardInvoiceService customerDashboardInvoiceService;
 
     @GetMapping("/invoice/ap/supplier")
     public ApiResponse<List<SupplierPurchaseInvoiceListItemDto>> getSupplierApInvoices(
@@ -34,6 +36,23 @@ public class FcmDashboardController {
         return ApiResponse.success(
                 invoices,
                 "공급사 매입 전표 목록 조회 성공",
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/invoice/ar/customer")
+    public ApiResponse<List<SupplierPurchaseInvoiceListItemDto>> getCustomerApInvoices(
+            @RequestParam("userId") String userId,
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        log.info("[DASHBOARD][FCM] 고객사 매입 전표 목록 조회 요청 - userId: {}, size: {}", userId, size);
+
+        List<SupplierPurchaseInvoiceListItemDto> invoices =
+                customerDashboardInvoiceService.getCustomerInvoices(userId, size);
+
+        return ApiResponse.success(
+                invoices,
+                "고객사 매입 전표 목록 조회 성공",
                 HttpStatus.OK
         );
     }
