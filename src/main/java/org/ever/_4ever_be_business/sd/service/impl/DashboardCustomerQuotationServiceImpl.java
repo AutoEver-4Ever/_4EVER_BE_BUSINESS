@@ -55,7 +55,7 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
                 .map(quotation -> toDashboardItem(
                         quotation,
                         quotation.getCustomerUserId(),
-                        quotation.getCustomer() != null ? quotation.getCustomer().getCompanyName() : "고객사 미지정"
+                        quotation.getCustomerUserId()
                 ))
                 .toList();
     }
@@ -67,7 +67,7 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
                 .itemNumber(quotation.getQuotationCode())
                 .name(requesterName)
                 .statusCode(quotation.getQuotationApproval() != null
-                        ? quotation.getQuotationApproval().getApprovalStatus()
+                        ? quotation.getQuotationApproval().getApprovalStatus().name()
                         : "PENDING")
                 .date(quotation.getCreatedAt() != null
                         ? quotation.getCreatedAt().toLocalDate().format(ISO_FORMATTER)

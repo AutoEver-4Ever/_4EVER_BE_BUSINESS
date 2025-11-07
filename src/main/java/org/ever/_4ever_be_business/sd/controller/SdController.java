@@ -338,7 +338,7 @@ public class SdController {
             @RequestParam(value = "size", defaultValue = "5") int size
     ) {
         List<DashboardWorkflowItemDto> items =
-                dashboardSupplierOrderService.getAllOrders(size);
+                dashboardOrderService.getAllOrders(size);
 
         return ApiResponse.success(items, "내부 주문서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
