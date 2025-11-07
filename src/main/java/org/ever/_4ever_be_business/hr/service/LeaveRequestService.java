@@ -4,10 +4,15 @@ import org.ever._4ever_be_business.hr.dto.request.CreateLeaveRequestDto;
 import org.ever._4ever_be_business.hr.dto.response.LeaveRequestListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.RemainingLeaveDaysDto;
 import org.ever._4ever_be_business.hr.vo.LeaveRequestSearchConditionVo;
+import org.ever._4ever_be_business.sd.dto.response.DashboardWorkflowItemDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface LeaveRequestService {
+    /**
+     * 대시보드 휴가 신청 목록
+     */
+    java.util.List<DashboardWorkflowItemDto> getDashboardLeaveRequestList(String userId, int size);
     /**
      * 휴가 신청 목록 조회
      *
