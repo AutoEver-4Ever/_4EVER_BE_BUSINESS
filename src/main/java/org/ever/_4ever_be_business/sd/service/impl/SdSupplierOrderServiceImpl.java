@@ -19,6 +19,7 @@ public class SdSupplierOrderServiceImpl implements SdSupplierOrderService {
 
     private final SupplierCompanyServicePort supplierCompanyServicePort;
 
+    // TODO: 삭제 필요, 코드 검토 후 삭제 예정
     @Override
     public Page<SupplierOrderWorkflowItemDto> getSupplierOrderList(String supplierUserId, Pageable pageable) {
         log.info("[BUSINESS][SD] 대시보드 공급사 주문서 목록 조회 - userId: {}, page: {}, size: {}",
