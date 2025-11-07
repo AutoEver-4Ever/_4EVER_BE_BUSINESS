@@ -1186,4 +1186,17 @@ public class HrmController {
         return ApiResponse.success(result, "근태 목록을 조회했습니다.", HttpStatus.OK);
     }
 
+    /**
+     * 대시보드용 휴가 신청 목록 조회
+     */
+    @GetMapping("/dashboard/leave-requests")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getDashboardLeaveRequestList(
+            @RequestParam("userId") String userId,
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        log.info("HRM 대시보드 휴가 신청 목록 조회 - userId: {}, size: {}", userId, size);
+        List<DashboardWorkflowItemDto> result = leaveRequestService.getDashboardLeaveRequestList(userId, size);
+        return ApiResponse.success(result, "휴가 신청 목록을 조회했습니다.", HttpStatus.OK);
+    }
+
 }

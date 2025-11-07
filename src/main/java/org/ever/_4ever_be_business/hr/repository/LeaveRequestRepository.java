@@ -2,6 +2,9 @@ package org.ever._4ever_be_business.hr.repository;
 
 import org.ever._4ever_be_business.hr.entity.LeaveRequest;
 import org.ever._4ever_be_business.hr.enums.LeaveRequestStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -44,4 +47,16 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
     Integer sumApprovedLeaveDaysInLastYear(@Param("employeeId") String employeeId,
                                             @Param("status") LeaveRequestStatus status,
                                             @Param("startDate") LocalDateTime startDate);
+
+    /**
+     * 최신 휴가 신청 목록 조회 (전사)
+     */
+    @EntityGraph(attributePaths = {"employee", "employee.internelUser"})
+    Page<LeaveRequest> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    /**
+     * 특정 사용자 휴가 신청 최신 목록 조회
+     */
+    @EntityGraph(attributePaths = {"employee", "employee.internelUser"})
+    Page<LeaveRequest> findAllByEmployee_InternelUser_UserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
 }
