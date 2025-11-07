@@ -55,9 +55,11 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         int limit = size > 0 ? size : DEFAULT_DASHBOARD_SIZE;
         Pageable pageable = PageRequest.of(0, limit);
 
-        Page<LeaveRequest> leaveRequests = (userId != null && !userId.isBlank())
-                ? leaveRequestRepository.findAllByEmployee_InternelUser_UserIdOrderByCreatedAtDesc(userId, pageable)
-                : leaveRequestRepository.findAllByOrderByCreatedAtDesc(pageable);
+        if (userId != null && !userId.isBlank()) {
+            log.info("[HRM][Dashboard][LV] userId={} supplied but 전체 데이터를 반환합니다.", userId);
+        }
+
+        Page<LeaveRequest> leaveRequests = leaveRequestRepository.findAllByOrderByCreatedAtDesc(pageable);
 
         return leaveRequests.getContent().stream()
                 .map(this::toDashboardItem)
