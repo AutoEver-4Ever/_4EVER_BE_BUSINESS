@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface SupplierDashboardInvoiceService {
     List<SupplierPurchaseInvoiceListItemDto> getSupplierInvoices(String supplierUserId, int size);
+    List<SupplierPurchaseInvoiceListItemDto> getCompanyArInvoices(int size);
+    List<SupplierPurchaseInvoiceListItemDto> getCompanyApInvoices(int size);
 }
