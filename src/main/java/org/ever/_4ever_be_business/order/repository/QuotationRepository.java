@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface QuotationRepository extends JpaRepository<Quotation, String>, QuotationRepositoryCustom {
 
     Page<Quotation> findByCustomerUserIdOrderByCreatedAtDesc(String customerUserId, Pageable pageable);
+
+    Page<Quotation> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

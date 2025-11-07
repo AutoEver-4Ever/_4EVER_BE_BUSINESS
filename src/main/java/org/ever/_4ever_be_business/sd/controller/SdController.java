@@ -348,6 +348,20 @@ public class SdController {
     }
 
     /**
+     * 대시보드용(내부 사용자) 견적서 목록 조회
+     * GET /sd/dashboard/quotation/mm?size={size}
+     */
+    @GetMapping("/dashboard/quotation/mm")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getInternalQuotationList(
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        List<DashboardWorkflowItemDto> items =
+                dashboardCustomerQuotationService.getAllQuotations(size);
+
+        return ApiResponse.success(items, "내부 견적서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
      * 견적 상세 조회
      */
     @GetMapping("/quotations/{quotationId}")
