@@ -50,9 +50,11 @@ public class AttendanceServiceImpl implements AttendanceService {
         int limit = size > 0 ? size : DEFAULT_DASHBOARD_SIZE;
         Pageable pageable = PageRequest.of(0, limit);
 
-        Page<Attendance> attendancePage = (userId != null && !userId.isBlank())
-                ? attendanceRepository.findAllByEmployee_InternelUser_UserIdOrderByWorkDateDesc(userId, pageable)
-                : attendanceRepository.findAllByOrderByWorkDateDesc(pageable);
+        if (userId != null && !userId.isBlank()) {
+            log.info("[HRM][Dashboard][ATT] userId={} supplied but 전체 데이터를 반환합니다.", userId);
+        }
+
+        Page<Attendance> attendancePage = attendanceRepository.findAllByOrderByWorkDateDesc(pageable);
 
         return attendancePage.getContent().stream()
                 .map(this::toDashboardWorkflowItem)
