@@ -70,6 +70,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeTrainingRepository employeeTrainingRepository;
     private final DepartmentRepository departmentRepository;
     private final InternelUserRepository internalUserRepository;
+    private final CustomerUserRepository customerUserRepository;
     private final AttendanceRepository attendanceRepository;
     private final AsyncResultManager asyncResultManager;
     private final SagaTransactionManager sagaManager;
@@ -378,9 +379,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                     requestDto.getPhoneNumber(),
                     UserStatus.ACTIVE
                 );
-                internalUserRepository.save(internalUser);
+                InternelUser savedInternalUser = internalUserRepository.save(internalUser);
 
-                Employee employee = new Employee(internalUser, 15L, null);
+                Employee employee = new Employee(savedInternalUser.getId(), savedInternalUser, 15L, null);
                 employeeRepository.save(employee);
 
                 CreateAuthUserEvent event = CreateAuthUserEvent.builder()
@@ -730,5 +731,34 @@ public class EmployeeServiceImpl implements EmployeeService {
         long minutes = workMinutes % 60;
 
         return hours + "시간 " + minutes + "분";
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto getCustomerInfoByUserId(String customerUserId) {
+        log.info("고객 정보 조회 요청 - customerUserId: {}", customerUserId);
+
+        // CustomerUser 조회
+        CustomerUser customerUser = customerUserRepository.findByUserId(customerUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // CustomerCompany 조회
+        org.ever._4ever_be_business.company.entity.CustomerCompany customerCompany = customerUser.getCustomerCompany();
+        if (customerCompany == null) {
+            throw new BusinessException(ErrorCode.CUSTOMER_COMPANY_NOT_FOUND);
+        }
+
+        log.info("고객 정보 조회 성공 - customerUserId: {}, companyName: {}", customerUserId, customerCompany.getCompanyName());
+
+        return new org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto(
+                customerCompany.getCompanyName(),
+                customerCompany.getBaseAddress(),
+                customerCompany.getDetailAddress(),
+                customerCompany.getOfficePhone(),
+                customerCompany.getBusinessNumber(),
+                customerUser.getCustomerName(),
+                customerUser.getPhoneNumber(),
+                customerUser.getEmail()
+        );
     }
 }

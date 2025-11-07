@@ -439,11 +439,14 @@ public class HrmController {
      * 휴가 신청
      */
     @PostMapping("/leave/request")
-    public ApiResponse<Void> createLeaveRequest(@RequestBody CreateLeaveRequestDto requestDto) {
+    public ApiResponse<Void> createLeaveRequest(
+            @RequestBody CreateLeaveRequestDto requestDto,
+            @RequestParam String InternelUserId
+    ) {
         log.info("휴가 신청 API 호출 - internelUserId: {}, leaveType: {}, startDate: {}, endDate: {}",
-                requestDto.getInternelUserId(), requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
-        leaveRequestService.createLeaveRequest(requestDto);
-        log.info("휴가 신청 성공 - internelUserId: {}", requestDto.getInternelUserId());
+                InternelUserId, requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
+        leaveRequestService.createLeaveRequest(requestDto, InternelUserId);
+        log.info("휴가 신청 성공 - internelUserId: {}", InternelUserId);
         return ApiResponse.success(null, "휴가 신청이 완료되었습니다.", HttpStatus.OK);
     }
 
@@ -1140,6 +1143,19 @@ public class HrmController {
         employeeService.updateProfileByInternelUserId(internelUserId, requestDto);
         log.info("프로필 수정 성공 - internelUserId: {}", internelUserId);
         return ApiResponse.success(null, "프로필 수정에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * CustomerUserId로 고객 정보 조회 (고객사 + 고객 담당자)
+     */
+    @GetMapping("/customers/profile/{customerUserId}")
+    public ApiResponse<org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto> getCustomerInfo(
+            @PathVariable String customerUserId) {
+        log.info("고객 정보 조회 API 호출 - customerUserId: {}", customerUserId);
+        org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto result =
+                employeeService.getCustomerInfoByUserId(customerUserId);
+        log.info("고객 정보 조회 성공 - customerUserId: {}", customerUserId);
+        return ApiResponse.success(result, "고객 정보 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**

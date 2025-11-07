@@ -98,4 +98,58 @@ public class VoucherStatusServiceImpl implements VoucherStatusService {
         log.info("전체 바우처 상태 자동 업데이트 완료 - 총 업데이트: {}건",
                 purchaseUpdatedCount + salesUpdatedCount);
     }
+
+    @Override
+    @Transactional
+    public void updateSalesVouchersToResponsePending(List<String> invoiceIds) {
+        log.info("매출 전표 상태 일괄 업데이트 시작 - invoiceIds: {}, count: {}", invoiceIds, invoiceIds.size());
+
+        if (invoiceIds == null || invoiceIds.isEmpty()) {
+            log.warn("매출 전표 ID 목록이 비어있습니다.");
+            throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "업데이트할 매출 전표 ID가 없습니다.");
+        }
+
+        List<SalesVoucher> salesVouchers = salesVoucherRepository.findAllById(invoiceIds);
+
+        if (salesVouchers.isEmpty()) {
+            log.warn("해당하는 매출 전표가 없습니다 - invoiceIds: {}", invoiceIds);
+            throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "해당하는 매출 전표를 찾을 수 없습니다.");
+        }
+
+        int updatedCount = 0;
+        for (SalesVoucher voucher : salesVouchers) {
+            voucher.updateStatus(SalesVoucherStatus.RESPONSE_PENDING);
+            updatedCount++;
+        }
+
+        salesVoucherRepository.saveAll(salesVouchers);
+        log.info("매출 전표 상태 일괄 업데이트 완료 - 요청: {}건, 업데이트: {}건", invoiceIds.size(), updatedCount);
+    }
+
+    @Override
+    @Transactional
+    public void updatePurchaseVouchersToResponsePending(List<String> invoiceIds) {
+        log.info("매입 전표 상태 일괄 업데이트 시작 - invoiceIds: {}, count: {}", invoiceIds, invoiceIds.size());
+
+        if (invoiceIds == null || invoiceIds.isEmpty()) {
+            log.warn("매입 전표 ID 목록이 비어있습니다.");
+            throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "업데이트할 매입 전표 ID가 없습니다.");
+        }
+
+        List<PurchaseVoucher> purchaseVouchers = purchaseVoucherRepository.findAllById(invoiceIds);
+
+        if (purchaseVouchers.isEmpty()) {
+            log.warn("해당하는 매입 전표가 없습니다 - invoiceIds: {}", invoiceIds);
+            throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "해당하는 매입 전표를 찾을 수 없습니다.");
+        }
+
+        int updatedCount = 0;
+        for (PurchaseVoucher voucher : purchaseVouchers) {
+            voucher.updateStatus(PurchaseVoucherStatus.RESPONSE_PENDING);
+            updatedCount++;
+        }
+
+        purchaseVoucherRepository.saveAll(purchaseVouchers);
+        log.info("매입 전표 상태 일괄 업데이트 완료 - 요청: {}건, 업데이트: {}건", invoiceIds.size(), updatedCount);
+    }
 }

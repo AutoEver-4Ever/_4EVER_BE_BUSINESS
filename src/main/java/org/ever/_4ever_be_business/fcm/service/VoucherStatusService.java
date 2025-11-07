@@ -1,5 +1,7 @@
 package org.ever._4ever_be_business.fcm.service;
 
+import java.util.List;
+
 public interface VoucherStatusService {
     /**
      * 바우처 상태를 수동으로 업데이트합니다.
@@ -14,4 +16,18 @@ public interface VoucherStatusService {
      * 스케줄러에서 호출됩니다.
      */
     void updateAllVoucherStatusesByDueDate();
+
+    /**
+     * 매출 전표(SalesVoucher)의 상태를 RESPONSE_PENDING으로 일괄 업데이트합니다.
+     *
+     * @param invoiceIds 업데이트할 매출 전표 ID 목록
+     */
+    void updateSalesVouchersToResponsePending(List<String> invoiceIds);
+
+    /**
+     * 매입 전표(PurchaseVoucher)의 상태를 RESPONSE_PENDING으로 일괄 업데이트합니다.
+     *
+     * @param invoiceIds 업데이트할 매입 전표 ID 목록
+     */
+    void updatePurchaseVouchersToResponsePending(List<String> invoiceIds);
 }

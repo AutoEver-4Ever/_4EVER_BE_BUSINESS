@@ -7,6 +7,7 @@ public enum SalesVoucherStatus {
     CANCELLED,         // 거래나 바우처가 취소된 상태 (승인 후라도 취소 가능)
 
     PENDING,           // 대기 중 상태 (지급 기한 전, 미지급 상태)
+    RESPONSE_PENDING,
     PAID,              // 전액 지급 완료된 상태 (완납)
     UNPAID,            // 아직 아무 금액도 지급되지 않은 상태 (미지급)
     OVERDUE,           // 지급 기한 초과, 미지급 상태 (미납)
