@@ -12,6 +12,7 @@ import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
 import org.ever._4ever_be_business.sd.dto.request.*;
 import org.ever._4ever_be_business.sd.dto.response.*;
 import org.ever._4ever_be_business.sd.service.*;
+import org.ever._4ever_be_business.sd.dto.response.DashboardWorkflowItemDto;
 import org.ever._4ever_be_business.sd.dto.request.SupplierQuotationRequestDto;
 import org.ever._4ever_be_business.sd.dto.response.SupplierQuotationWorkflowItemDto;
 import org.ever._4ever_be_business.sd.vo.*;
@@ -41,6 +42,7 @@ public class SdController {
     private final QuotationService quotationService;
     private final SdSupplierOrderService sdSupplierOrderService;
     private final DashboardSupplierQuotationService dashboardSupplierQuotationService;
+    private final DashboardCustomerQuotationService dashboardCustomerQuotationService;
 
     // ==================== Statistics ====================
 
@@ -331,6 +333,25 @@ public class SdController {
         );
 
         return ApiResponse.success(responseDto, "공급사 발주서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 대시보드용(고객사) 견적서 목록 조회
+     * GET /sd/dashboard/quotation/customer?userId={userId}&size={size}
+     */
+    @GetMapping("/dashboard/quotation/customer")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getCustomerQuotationList(
+            @RequestParam("userId") String userId,
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        if (userId == null || userId.isBlank()) {
+            return ApiResponse.fail("userId는 필수입니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        List<DashboardWorkflowItemDto> items =
+                dashboardCustomerQuotationService.getCustomerQuotations(userId, size);
+
+        return ApiResponse.success(items, "고객사 견적서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**
