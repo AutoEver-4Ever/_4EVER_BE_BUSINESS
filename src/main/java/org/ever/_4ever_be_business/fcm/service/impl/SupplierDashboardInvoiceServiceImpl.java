@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseInvoiceListDto;
 import org.ever._4ever_be_business.fcm.dto.response.SupplierPurchaseInvoiceListItemDto;
 import org.ever._4ever_be_business.fcm.service.PurchaseStatementService;
+import org.ever._4ever_be_business.fcm.service.SupplierCompanyResolver;
 import org.ever._4ever_be_business.fcm.service.SupplierDashboardInvoiceService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,10 +19,14 @@ import java.util.List;
 public class SupplierDashboardInvoiceServiceImpl implements SupplierDashboardInvoiceService {
 
     private final PurchaseStatementService purchaseStatementService;
+    private final SupplierCompanyResolver supplierCompanyResolver;
 
     @Override
     public List<SupplierPurchaseInvoiceListItemDto> getSupplierInvoices(String supplierUserId, int size) {
         int limit = size > 0 ? size : 5;
+
+        SupplierCompanyResolver.SupplierCompanyInfo companyInfo = supplierCompanyResolver.resolve(supplierUserId);
+        log.info("[DASHBOARD][FCM] 공급사 매핑 - userId={}, companyId={}", supplierUserId, companyInfo.supplierCompanyId());
 
         Page<PurchaseInvoiceListDto> page = purchaseStatementService.getPurchaseStatementListBySupplierUserId(
                 supplierUserId,
