@@ -56,7 +56,7 @@ public class MockDataProvider {
     public ProductOrderInfoResponseDto createMockProductOrderItems(String productOrderId) {
         log.info("[MOCK] 생산 주문 아이템 생성 - productOrderId: {}", productOrderId);
         // 실제 DTO 구조에 맞게 기본 데이터 반환
-        return new ProductOrderInfoResponseDto(new ArrayList<>(), BigDecimal.ZERO);
+        return new ProductOrderInfoResponseDto(new ArrayList<>(), BigDecimal.ZERO, "po" + productOrderId);
     }
 
     /**
@@ -68,6 +68,7 @@ public class MockDataProvider {
         return productOrderIds.stream()
                 .map(id -> new ProductOrderInfosResponseDto.ProductOrderInfoItem(
                         id,
+                        "po" + id,
                         BigDecimal.valueOf(100000)
                 ))
                 .collect(Collectors.toList());
