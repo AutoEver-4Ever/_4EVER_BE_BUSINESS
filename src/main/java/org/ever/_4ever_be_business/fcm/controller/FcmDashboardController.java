@@ -56,4 +56,36 @@ public class FcmDashboardController {
                 HttpStatus.OK
         );
     }
+
+    @GetMapping("/invoice/ar")
+    public ApiResponse<List<SupplierPurchaseInvoiceListItemDto>> getCompanyArInvoices(
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        log.info("[DASHBOARD][FCM] 기업 전체 매출 전표 목록 조회 요청 - size: {}", size);
+
+        List<SupplierPurchaseInvoiceListItemDto> invoices =
+                supplierDashboardInvoiceService.getCompanyArInvoices(size);
+
+        return ApiResponse.success(
+                invoices,
+                "기업 전체 매출 전표 목록 조회 성공",
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/invoice/ap")
+    public ApiResponse<List<SupplierPurchaseInvoiceListItemDto>> getCompanyApInvoices(
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        log.info("[DASHBOARD][FCM] 기업 전체 매입 전표 목록 조회 요청 - size: {}", size);
+
+        List<SupplierPurchaseInvoiceListItemDto> invoices =
+                supplierDashboardInvoiceService.getCompanyApInvoices(size);
+
+        return ApiResponse.success(
+                invoices,
+                "기업 전체 매입 전표 목록 조회 성공",
+                HttpStatus.OK
+        );
+    }
 }

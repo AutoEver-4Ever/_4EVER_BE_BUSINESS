@@ -34,6 +34,7 @@ public class SdController {
     private final SdOrderService sdOrderService;
     private final QuotationService quotationService;
     private final SdSupplierOrderService sdSupplierOrderService;
+    private final DashboardOrderService dashboardOrderService;
     private final DashboardSupplierQuotationService dashboardSupplierQuotationService;
     private final DashboardCustomerQuotationService dashboardCustomerQuotationService;
 
@@ -326,6 +327,20 @@ public class SdController {
         );
 
         return ApiResponse.success(responseDto, "공급사 발주서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 대시보드용(내부 사용자) 주문서 목록 조회
+     * GET /sd/dashboard/orders/mm?size={size}
+     */
+    @GetMapping("/dashboard/orders/mm")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getInternalOrderList(
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        List<DashboardWorkflowItemDto> items =
+                dashboardSupplierOrderService.getAllOrders(size);
+
+        return ApiResponse.success(items, "내부 주문서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**

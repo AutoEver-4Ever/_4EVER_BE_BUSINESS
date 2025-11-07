@@ -38,6 +38,36 @@ public class SupplierDashboardInvoiceServiceImpl implements SupplierDashboardInv
         return page.map(this::toDashboardItem).getContent();
     }
 
+    @Override
+    public List<SupplierPurchaseInvoiceListItemDto> getCompanyArInvoices(int size) {
+        int limit = size > 0 ? size : 5;
+
+        Page<PurchaseInvoiceListDto> page = purchaseStatementService.getPurchaseStatementList(
+                null,
+                null,
+                null,
+                null,
+                PageRequest.of(0, limit)
+        );
+
+        return page.map(this::toDashboardItem).getContent();
+    }
+
+    @Override
+    public List<SupplierPurchaseInvoiceListItemDto> getCompanyApInvoices(int size) {
+        int limit = size > 0 ? size : 5;
+
+        Page<PurchaseInvoiceListDto> page = purchaseStatementService.getPurchaseStatementList(
+                null,
+                null,
+                null,
+                null,
+                PageRequest.of(0, limit)
+        );
+
+        return page.map(this::toDashboardItem).getContent();
+    }
+
     private SupplierPurchaseInvoiceListItemDto toDashboardItem(PurchaseInvoiceListDto src) {
         String title = src.getConnection() != null ? src.getConnection().getConnectionName() : "";
         return SupplierPurchaseInvoiceListItemDto.builder()
