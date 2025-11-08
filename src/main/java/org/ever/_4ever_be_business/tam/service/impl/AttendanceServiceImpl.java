@@ -30,7 +30,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -56,9 +58,16 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         Page<Attendance> attendancePage = attendanceRepository.findAllByOrderByWorkDateDesc(pageable);
 
-        return attendancePage.getContent().stream()
+        List<DashboardWorkflowItemDto> items = attendancePage.getContent().stream()
                 .map(this::toDashboardWorkflowItem)
                 .collect(Collectors.toList());
+
+        if (items.isEmpty()) {
+            log.info("[DASHBOARD][MOCK][HRM][ATT] 실데이터 없음 - 근태 목업 데이터 반환");
+            return buildMockAttendanceItems(limit);
+        }
+
+        return items;
     }
 
     @Override
@@ -256,6 +265,21 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .statusCode(attendance.getStatus() != null ? attendance.getStatus().name() : "UNKNOWN")
                 .date(formatDashboardDate(attendance.getCheckIn(), attendance.getWorkDate()))
                 .build();
+    }
+
+    private List<DashboardWorkflowItemDto> buildMockAttendanceItems(int size) {
+        int itemCount = Math.min(size > 0 ? size : DEFAULT_DASHBOARD_SIZE, DEFAULT_DASHBOARD_SIZE);
+
+        return IntStream.range(0, itemCount)
+                .mapToObj(i -> DashboardWorkflowItemDto.builder()
+                        .itemId(UUID.randomUUID().toString())
+                        .itemTitle("근태 기록 " + (i + 1))
+                        .itemNumber(String.format("ATT-MOCK-%04d", i + 1))
+                        .name("사원" + (i + 1))
+                        .statusCode(i % 2 == 0 ? AttendanceStatus.NORMAL.name() : AttendanceStatus.LATE.name())
+                        .date(LocalDate.now().minusDays(i).toString())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private String mapStatusLabel(AttendanceStatus status) {

@@ -31,7 +31,9 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -61,9 +63,16 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         Page<LeaveRequest> leaveRequests = leaveRequestRepository.findAllByOrderByCreatedAtDesc(pageable);
 
-        return leaveRequests.getContent().stream()
+        List<DashboardWorkflowItemDto> items = leaveRequests.getContent().stream()
                 .map(this::toDashboardItem)
                 .collect(Collectors.toList());
+
+        if (items.isEmpty()) {
+            log.info("[DASHBOARD][MOCK][HRM][LV] 실데이터 없음 - 휴가 신청 목업 데이터 반환");
+            return buildMockLeaveRequests(limit);
+        }
+
+        return items;
     }
 
     private DashboardWorkflowItemDto toDashboardItem(LeaveRequest leaveRequest) {
@@ -87,6 +96,21 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 )
                 .date(formatDashboardDate(leaveRequest.getStartDate()))
                 .build();
+    }
+
+    private List<DashboardWorkflowItemDto> buildMockLeaveRequests(int size) {
+        int itemCount = Math.min(size > 0 ? size : DEFAULT_DASHBOARD_SIZE, DEFAULT_DASHBOARD_SIZE);
+
+        return IntStream.range(0, itemCount)
+                .mapToObj(i -> DashboardWorkflowItemDto.builder()
+                        .itemId(UUID.randomUUID().toString())
+                        .itemTitle("휴가 신청 " + (i + 1))
+                        .itemNumber(String.format("LV-MOCK-%04d", i + 1))
+                        .name("사원" + (i + 1))
+                        .statusCode(i % 2 == 0 ? LeaveRequestStatus.PENDING.name() : LeaveRequestStatus.APPROVED.name())
+                        .date(LocalDate.now().minusDays(i).toString())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private String mapLeaveTypeLabel(String leaveType) {
