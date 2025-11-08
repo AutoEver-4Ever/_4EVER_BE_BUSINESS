@@ -1,7 +1,7 @@
 package org.ever._4ever_be_business.fcm.service;
 
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementDetailDto;
-import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementListItemDto;
+import org.ever._4ever_be_business.fcm.dto.response.PurchaseInvoiceListDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -26,7 +26,7 @@ public interface PurchaseStatementService {
      * @param pageable 페이징 정보
      * @return 매입전표 목록
      */
-    Page<PurchaseStatementListItemDto> getPurchaseStatementList(
+    Page<PurchaseInvoiceListDto> getPurchaseStatementList(
             String company,
             String status,
             LocalDate startDate,
@@ -44,7 +44,7 @@ public interface PurchaseStatementService {
      * @param pageable 페이징 정보
      * @return 매입전표 목록
      */
-    Page<PurchaseStatementListItemDto> getPurchaseStatementListBySupplierUserId(
+    Page<PurchaseInvoiceListDto> getPurchaseStatementListBySupplierUserId(
             String supplierUserId,
             LocalDate startDate,
             LocalDate endDate,

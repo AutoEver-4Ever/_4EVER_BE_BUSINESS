@@ -16,8 +16,10 @@ import org.ever._4ever_be_business.hr.repository.InternelUserRepository;
 import org.ever._4ever_be_business.hr.repository.LeaveRequestRepository;
 import org.ever._4ever_be_business.hr.service.LeaveRequestService;
 import org.ever._4ever_be_business.hr.vo.LeaveRequestSearchConditionVo;
+import org.ever._4ever_be_business.sd.dto.response.DashboardWorkflowItemDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,18 +27,103 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LeaveRequestServiceImpl implements LeaveRequestService {
 
+    private static final int DEFAULT_DASHBOARD_SIZE = 5;
+    private static final DateTimeFormatter DASHBOARD_DATE_FORMATTER =
+            new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+                    .appendFraction(ChronoField.MILLI_OF_SECOND, 0, 3, true)
+                    .toFormatter();
+
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
     private final InternelUserRepository internelUserRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DashboardWorkflowItemDto> getDashboardLeaveRequestList(String userId, int size) {
+        int limit = size > 0 ? size : DEFAULT_DASHBOARD_SIZE;
+        Pageable pageable = PageRequest.of(0, limit);
+
+        if (userId != null && !userId.isBlank()) {
+            log.info("[HRM][Dashboard][LV] userId={} supplied but 전체 데이터를 반환합니다.", userId);
+        }
+
+        Page<LeaveRequest> leaveRequests = leaveRequestRepository.findAllByOrderByCreatedAtDesc(pageable);
+
+        List<DashboardWorkflowItemDto> items = leaveRequests.getContent().stream()
+                .map(this::toDashboardItem)
+                .collect(Collectors.toList());
+
+        if (items.isEmpty()) {
+            log.info("[DASHBOARD][MOCK][HRM][LV] 실데이터 없음 - 휴가 신청 목업 데이터 반환");
+            return buildMockLeaveRequests(limit);
+        }
+
+        return items;
+    }
+
+    private DashboardWorkflowItemDto toDashboardItem(LeaveRequest leaveRequest) {
+        Employee employee = leaveRequest.getEmployee();
+        InternelUser internelUser = employee != null ? employee.getInternelUser() : null;
+
+        String employeeName = internelUser != null ? internelUser.getName() : "미상";
+        String employeeCode = internelUser != null ? internelUser.getEmployeeCode() : null;
+        String leaveType = leaveRequest.getLeaveType() != null ? leaveRequest.getLeaveType().name() : "UNKNOWN";
+        String title = employeeName + " · " + mapLeaveTypeLabel(leaveType);
+
+        return DashboardWorkflowItemDto.builder()
+                .itemId(leaveRequest.getId())
+                .itemTitle(title)
+                .itemNumber(employeeCode)
+                .name(employeeName)
+                .statusCode(
+                        leaveRequest.getStatus() != null
+                                ? leaveRequest.getStatus().name()
+                                : LeaveRequestStatus.PENDING.name()
+                )
+                .date(formatDashboardDate(leaveRequest.getStartDate()))
+                .build();
+    }
+
+    private List<DashboardWorkflowItemDto> buildMockLeaveRequests(int size) {
+        int itemCount = Math.min(size > 0 ? size : DEFAULT_DASHBOARD_SIZE, DEFAULT_DASHBOARD_SIZE);
+
+        return IntStream.range(0, itemCount)
+                .mapToObj(i -> DashboardWorkflowItemDto.builder()
+                        .itemId(UUID.randomUUID().toString())
+                        .itemTitle("휴가 신청 " + (i + 1))
+                        .itemNumber(String.format("LV-MOCK-%04d", i + 1))
+                        .name("사원" + (i + 1))
+                        .statusCode(i % 2 == 0 ? LeaveRequestStatus.PENDING.name() : LeaveRequestStatus.APPROVED.name())
+                        .date(LocalDate.now().minusDays(i).toString())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private String mapLeaveTypeLabel(String leaveType) {
+        return switch (leaveType) {
+            case "ANNUAL" -> "연차";
+            case "SICK" -> "병가";
+            default -> leaveType;
+        };
+    }
+
+    private String formatDashboardDate(LocalDateTime startDate) {
+        return startDate != null ? startDate.format(DASHBOARD_DATE_FORMATTER) : null;
+    }
 
     @Override
     @Transactional(readOnly = true)

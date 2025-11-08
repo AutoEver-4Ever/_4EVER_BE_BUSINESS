@@ -10,7 +10,7 @@ import org.ever._4ever_be_business.fcm.dto.internal.PurchaseStatementListItemInf
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementConnectionDto;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementDetailDto;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementItemDto;
-import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementListItemDto;
+import org.ever._4ever_be_business.fcm.dto.response.PurchaseInvoiceListDto;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementReferenceDto;
 import org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfoResponseDto;
 import org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfosResponseDto;
@@ -93,7 +93,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PurchaseStatementListItemDto> getPurchaseStatementList(
+    public Page<PurchaseInvoiceListDto> getPurchaseStatementList(
             String company,
             String status,
             LocalDate startDate,
@@ -143,7 +143,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                 ));
 
         // 4. DTO 조립
-        List<PurchaseStatementListItemDto> content = statementInfos.stream()
+        List<PurchaseInvoiceListDto> content = statementInfos.stream()
                 .map(info -> {
                     String supplierCompanyId = info.getSupplierCompanyId();
                     String productOrderId = info.getProductOrderId();
@@ -164,7 +164,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                             referenceCode
                     );
 
-                    return new PurchaseStatementListItemDto(
+                    return new PurchaseInvoiceListDto(
                             info.getInvoiceId(),
                             info.getInvoiceCode(),
                             connection,
@@ -194,7 +194,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PurchaseStatementListItemDto> getPurchaseStatementListBySupplierUserId(
+    public Page<PurchaseInvoiceListDto> getPurchaseStatementListBySupplierUserId(
             String supplierUserId,
             LocalDate startDate,
             LocalDate endDate,
@@ -236,7 +236,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                 ));
 
         // 5. DTO 조립
-        List<PurchaseStatementListItemDto> content = statementInfos.stream()
+        List<PurchaseInvoiceListDto> content = statementInfos.stream()
                 .map(info -> {
                     String productOrderId = info.getProductOrderId();
                     BigDecimal totalAmount = productOrderTotalAmountMap.get(productOrderId);
@@ -254,7 +254,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                             referenceCode
                     );
 
-                    return new PurchaseStatementListItemDto(
+                    return new PurchaseInvoiceListDto(
                             info.getInvoiceId(),
                             info.getInvoiceCode(),
                             connection,

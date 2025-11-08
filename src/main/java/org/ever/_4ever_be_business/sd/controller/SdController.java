@@ -1,18 +1,14 @@
 package org.ever._4ever_be_business.sd.controller;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.dto.response.ApiResponse;
-import org.ever._4ever_be_business.fcm.dto.response.SalesStatementListItemDto;
 import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
 import org.ever._4ever_be_business.sd.dto.request.*;
 import org.ever._4ever_be_business.sd.dto.response.*;
 import org.ever._4ever_be_business.sd.service.*;
 import org.ever._4ever_be_business.sd.vo.*;
+import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,9 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.ever.event.CreateAuthUserResultEvent;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -37,6 +33,10 @@ public class SdController {
     private final SdCustomerService customerService;
     private final SdOrderService sdOrderService;
     private final QuotationService quotationService;
+    private final SdSupplierOrderService sdSupplierOrderService;
+    private final DashboardOrderService dashboardOrderService;
+    private final DashboardSupplierQuotationService dashboardSupplierQuotationService;
+    private final DashboardCustomerQuotationService dashboardCustomerQuotationService;
 
     // ==================== Statistics ====================
 
@@ -189,6 +189,39 @@ public class SdController {
         return ApiResponse.success(result, "주문서 상세 정보를 조회했습니다.", HttpStatus.OK);
     }
 
+    /**
+     * 공급사 사용자 기준 주문서 목록 조회 (대시보드용)
+     */
+    @GetMapping("/orders/supplier")
+    public ApiResponse<PageResponseDto<org.ever._4ever_be_business.sd.dto.response.SupplierOrderWorkflowItemDto>> getSupplierOrderList(
+            @RequestParam("userId") String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        log.info("[INFO] 공급사 주문서 목록 조회 API 호출 - userId: {}, page: {}, size: {}", userId, page, size);
+
+        Pageable pageable = PageRequest.of(page, size);
+        org.springframework.data.domain.Page<org.ever._4ever_be_business.sd.dto.response.SupplierOrderWorkflowItemDto> result =
+                sdSupplierOrderService.getSupplierOrderList(userId, pageable);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<org.ever._4ever_be_business.sd.dto.response.SupplierOrderWorkflowItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
+        log.info("[INFO]공급사 주문서 목록 조회 성공 - total: {}, size: {}", result.getTotalElements(), result.getContent().size());
+        return ApiResponse.success(responseDto, "공급사 주문서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
     // ==================== Quotations ====================
 
     /**
@@ -264,6 +297,83 @@ public class SdController {
 
         log.info("SCM 견적 목록 조회 성공 - totalElements: {}, totalPages: {}", result.getTotalElements(), result.getTotalPages());
         return ApiResponse.success(responseDto, "SCM 견적 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 대시보드용(공급사) 발주서 목록 조회
+     * GET /sd/quotation/supplier?userId={userId}&size={size}
+     */
+    @GetMapping("/quotation/supplier")
+    public ApiResponse<PageResponseDto<SupplierQuotationWorkflowItemDto>> getSupplierQuotationList(
+            @ModelAttribute SupplierQuotationRequestDto request
+    ) {
+        int size = (request.getSize() != null && request.getSize() > 0) ? request.getSize() : 5;
+        Pageable pageable = PageRequest.of(0, size);
+
+        Page<SupplierQuotationWorkflowItemDto> result = dashboardSupplierQuotationService.getSupplierQuotationList(request, pageable);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<SupplierQuotationWorkflowItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
+        return ApiResponse.success(responseDto, "공급사 발주서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 대시보드용(내부 사용자) 주문서 목록 조회
+     * GET /sd/dashboard/orders/mm?size={size}
+     */
+    @GetMapping("/dashboard/orders/mm")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getInternalOrderList(
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        List<DashboardWorkflowItemDto> items =
+                dashboardOrderService.getAllOrders(size);
+
+        return ApiResponse.success(items, "내부 주문서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 대시보드용(고객사) 견적서 목록 조회
+     * GET /sd/dashboard/quotation/customer?userId={userId}&size={size}
+     */
+    @GetMapping("/dashboard/quotation/customer")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getCustomerQuotationList(
+            @RequestParam("userId") String userId,
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        if (userId == null || userId.isBlank()) {
+            return ApiResponse.fail("userId는 필수입니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        List<DashboardWorkflowItemDto> items =
+                dashboardCustomerQuotationService.getCustomerQuotations(userId, size);
+
+        return ApiResponse.success(items, "고객사 견적서 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 대시보드용(내부 사용자) 견적서 목록 조회
+     * GET /sd/dashboard/quotation/mm?size={size}
+     */
+    @GetMapping("/dashboard/quotation/mm")
+    public ApiResponse<List<DashboardWorkflowItemDto>> getInternalQuotationList(
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        List<DashboardWorkflowItemDto> items =
+                dashboardCustomerQuotationService.getAllQuotations(size);
+
+        return ApiResponse.success(items, "내부 견적서 목록 조회에 성공했습니다.", HttpStatus.OK);
     }
 
     /**

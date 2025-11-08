@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.entity.Employee;
+import org.ever._4ever_be_business.hr.entity.InternelUser;
 import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
+import org.ever._4ever_be_business.sd.dto.response.DashboardWorkflowItemDto;
 import org.ever._4ever_be_business.tam.dao.AttendanceDAO;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceListItemDto;
 import org.ever._4ever_be_business.tam.dto.response.AttendanceRecordDto;
@@ -16,6 +18,7 @@ import org.ever._4ever_be_business.tam.service.AttendanceService;
 import org.ever._4ever_be_business.tam.vo.AttendanceListSearchConditionVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,16 +30,45 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AttendanceServiceImpl implements AttendanceService {
 
+    private static final int DEFAULT_DASHBOARD_SIZE = 5;
+    private static final DateTimeFormatter DASHBOARD_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     private final AttendanceDAO attendanceDAO;
     private final AttendanceRepository attendanceRepository;
     private final EmployeeRepository employeeRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DashboardWorkflowItemDto> getDashboardAttendanceList(String userId, int size) {
+        int limit = size > 0 ? size : DEFAULT_DASHBOARD_SIZE;
+        Pageable pageable = PageRequest.of(0, limit);
+
+        if (userId != null && !userId.isBlank()) {
+            log.info("[HRM][Dashboard][ATT] userId={} supplied but 전체 데이터를 반환합니다.", userId);
+        }
+
+        Page<Attendance> attendancePage = attendanceRepository.findAllByOrderByWorkDateDesc(pageable);
+
+        List<DashboardWorkflowItemDto> items = attendancePage.getContent().stream()
+                .map(this::toDashboardWorkflowItem)
+                .collect(Collectors.toList());
+
+        if (items.isEmpty()) {
+            log.info("[DASHBOARD][MOCK][HRM][ATT] 실데이터 없음 - 근태 목업 데이터 반환");
+            return buildMockAttendanceItems(limit);
+        }
+
+        return items;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -214,6 +246,52 @@ public class AttendanceServiceImpl implements AttendanceService {
         log.info("InternelUser ID로 출퇴근 기록 목록 조회 성공 - internelUserId: {}, recordCount: {}", internelUserId, result.size());
 
         return result;
+    }
+
+    private DashboardWorkflowItemDto toDashboardWorkflowItem(Attendance attendance) {
+        Employee employee = attendance.getEmployee();
+        InternelUser internalUser = employee != null ? employee.getInternelUser() : null;
+
+        String employeeName = internalUser != null ? internalUser.getName() : "미상";
+        String employeeCode = internalUser != null ? internalUser.getEmployeeCode() : null;
+        String statusLabel = mapStatusLabel(attendance.getStatus());
+        String itemTitle = employeeName + " · " + statusLabel;
+
+        return DashboardWorkflowItemDto.builder()
+                .itemId(attendance.getId())
+                .itemTitle(itemTitle)
+                .itemNumber(employeeCode)
+                .name(employeeName)
+                .statusCode(attendance.getStatus() != null ? attendance.getStatus().name() : "UNKNOWN")
+                .date(formatDashboardDate(attendance.getCheckIn(), attendance.getWorkDate()))
+                .build();
+    }
+
+    private List<DashboardWorkflowItemDto> buildMockAttendanceItems(int size) {
+        int itemCount = Math.min(size > 0 ? size : DEFAULT_DASHBOARD_SIZE, DEFAULT_DASHBOARD_SIZE);
+
+        return IntStream.range(0, itemCount)
+                .mapToObj(i -> DashboardWorkflowItemDto.builder()
+                        .itemId(UUID.randomUUID().toString())
+                        .itemTitle("근태 기록 " + (i + 1))
+                        .itemNumber(String.format("ATT-MOCK-%04d", i + 1))
+                        .name("사원" + (i + 1))
+                        .statusCode(i % 2 == 0 ? AttendanceStatus.NORMAL.name() : AttendanceStatus.LATE.name())
+                        .date(LocalDate.now().minusDays(i).toString())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private String mapStatusLabel(AttendanceStatus status) {
+        if (status == AttendanceStatus.LATE) {
+            return "지각";
+        }
+        return "정상 출근";
+    }
+
+    private String formatDashboardDate(LocalDateTime checkIn, LocalDateTime workDate) {
+        LocalDateTime target = checkIn != null ? checkIn : workDate;
+        return target != null ? target.format(DASHBOARD_DATE_FORMATTER) : null;
     }
 
     private AttendanceRecordDto convertToAttendanceRecordDto(Attendance attendance) {
