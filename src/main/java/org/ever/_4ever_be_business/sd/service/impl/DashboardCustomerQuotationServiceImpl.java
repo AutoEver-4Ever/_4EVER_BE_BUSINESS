@@ -13,8 +13,11 @@ import org.ever._4ever_be_business.sd.service.DashboardCustomerQuotationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -28,7 +31,7 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
 
     @Override
     public List<DashboardWorkflowItemDto> getCustomerQuotations(String userId, int size) {
-        int limit = size > 0 ? size : 5;
+        int limit = size > 0 ? Math.min(size, 20) : 5;
 
         CustomerUser customerUser = customerUserRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CUSTOMER_NOT_FOUND));
@@ -38,7 +41,20 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
                 PageRequest.of(0, limit)
         );
 
-        return page.stream()
+        List<Quotation> quotations = page.getContent();
+        String requesterName = customerUser.getCustomerName() != null
+                ? customerUser.getCustomerName()
+                : "고객 담당자";
+        String companyName = customerUser.getCustomerCompany() != null
+                ? customerUser.getCustomerCompany().getCompanyName()
+                : "고객사 미지정";
+
+        if (quotations == null || quotations.isEmpty()) {
+            log.info("[DASHBOARD][MOCK] 고객사 견적서 목업 데이터 반환 - userId: {}", userId);
+            return buildMockCustomerQuotations(limit, requesterName, companyName);
+        }
+
+        return quotations.stream()
                 .map(quotation -> toDashboardItem(quotation, customerUser.getCustomerName(),
                         customerUser.getCustomerCompany() != null
                                 ? customerUser.getCustomerCompany().getCompanyName()
@@ -73,5 +89,21 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
                         ? quotation.getCreatedAt().toLocalDate().format(ISO_FORMATTER)
                         : null)
                 .build();
+    }
+
+    private List<DashboardWorkflowItemDto> buildMockCustomerQuotations(int size, String requesterName, String companyName) {
+        int limit = size > 0 ? Math.min(size, 20) : 5;
+        int itemCount = Math.min(limit, 5);
+
+        return IntStream.range(0, itemCount)
+                .mapToObj(i -> DashboardWorkflowItemDto.builder()
+                        .itemId(UUID.randomUUID().toString())
+                        .itemTitle(companyName)
+                        .itemNumber(String.format("QT-MOCK-%04d", i + 1))
+                        .name(requesterName)
+                        .statusCode(i % 2 == 0 ? "PENDING" : "APPROVED")
+                        .date(OffsetDateTime.now().minusDays(i).toLocalDate().format(ISO_FORMATTER))
+                        .build())
+                .toList();
     }
 }
