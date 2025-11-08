@@ -18,7 +18,7 @@ public class ProductOrderInfoResponseDto {
     @JsonProperty("totalPrice")
     private BigDecimal totalPrice;
 
-    @JsonProperty("productOrderNumber")
+    @JsonProperty("ProductOrderNumber")
     private String productOrderNumber;
 
     @Getter
