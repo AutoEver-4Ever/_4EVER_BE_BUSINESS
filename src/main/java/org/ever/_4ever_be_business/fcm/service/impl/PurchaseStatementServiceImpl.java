@@ -10,7 +10,7 @@ import org.ever._4ever_be_business.fcm.dto.internal.PurchaseStatementListItemInf
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementConnectionDto;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementDetailDto;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementItemDto;
-import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementListItemDto;
+import org.ever._4ever_be_business.fcm.dto.response.PurchaseInvoiceListDto;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseStatementReferenceDto;
 import org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfoResponseDto;
 import org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfosResponseDto;
@@ -79,7 +79,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                 statementInfo.getIssueDate(),
                 statementInfo.getDueDate(),
                 supplierCompany.getCompanyName(),
-                "PO" + statementInfo.getProductOrderId(), // referenceCode
+                productOrderInfo.getProductOrderNumber(), // referenceCode
                 statementInfo.getTotalAmount(),
                 statementInfo.getNote(),
                 items
@@ -93,7 +93,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PurchaseStatementListItemDto> getPurchaseStatementList(
+    public Page<PurchaseInvoiceListDto> getPurchaseStatementList(
             String company,
             String status,
             LocalDate startDate,
@@ -128,7 +128,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                         company1 -> company1
                 ));
 
-        // 3. SCM에서 product order 정보 조회 (totalAmount)
+        // 3. SCM에서 product order 정보 조회 (totalAmount, productOrderNumber)
         List<String> productOrderIds = statementInfos.stream()
                 .map(PurchaseStatementListItemInfoDto::getProductOrderId)
                 .distinct()
@@ -142,14 +142,21 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                         ProductOrderInfosResponseDto.ProductOrderInfoItem::getTotalAmount
                 ));
 
+        Map<String, String> productOrderNumberMap = productOrderInfos.stream()
+                .collect(Collectors.toMap(
+                        ProductOrderInfosResponseDto.ProductOrderInfoItem::getProductOrderId,
+                        ProductOrderInfosResponseDto.ProductOrderInfoItem::getProductOrderNumber
+                ));
+
         // 4. DTO 조립
-        List<PurchaseStatementListItemDto> content = statementInfos.stream()
+        List<PurchaseInvoiceListDto> content = statementInfos.stream()
                 .map(info -> {
                     String supplierCompanyId = info.getSupplierCompanyId();
                     String productOrderId = info.getProductOrderId();
 
                     SupplierCompanyResponseDto supplierCompany = supplierCompanyMap.get(supplierCompanyId);
                     BigDecimal totalAmount = productOrderTotalAmountMap.get(productOrderId);
+                    String productOrderNumber = productOrderNumberMap.get(productOrderId);
 
                     PurchaseStatementConnectionDto connection = new PurchaseStatementConnectionDto(
                             supplierCompany != null ? supplierCompany.getCompanyId() : null,
@@ -157,14 +164,12 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                             supplierCompany != null ? supplierCompany.getCompanyName() : null
                     );
 
-                    String referenceCode = "PO-" + info.getProductOrderId();
-
                     PurchaseStatementReferenceDto reference = new PurchaseStatementReferenceDto(
                             info.getProductOrderId(),
-                            referenceCode
+                            productOrderNumber
                     );
 
-                    return new PurchaseStatementListItemDto(
+                    return new PurchaseInvoiceListDto(
                             info.getInvoiceId(),
                             info.getInvoiceCode(),
                             connection,
@@ -172,7 +177,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                             info.getIssueDate(),
                             info.getDueDate(),
                             info.getStatus(),
-                            referenceCode,
+                            productOrderNumber,
                             reference
                     );
                 })
@@ -194,7 +199,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PurchaseStatementListItemDto> getPurchaseStatementListBySupplierUserId(
+    public Page<PurchaseInvoiceListDto> getPurchaseStatementListBySupplierUserId(
             String supplierUserId,
             LocalDate startDate,
             LocalDate endDate,
@@ -221,7 +226,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
         // 3. SCM에서 supplier company 정보 조회 (단일 조회)
         SupplierCompanyResponseDto supplierCompany = supplierCompanyServicePort.getSupplierCompanyById(supplierCompanyId);
 
-        // 4. SCM에서 product order 정보 조회 (totalAmount)
+        // 4. SCM에서 product order 정보 조회 (totalAmount, productOrderNumber)
         List<String> productOrderIds = statementInfos.stream()
                 .map(PurchaseStatementListItemInfoDto::getProductOrderId)
                 .distinct()
@@ -235,11 +240,18 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                         ProductOrderInfosResponseDto.ProductOrderInfoItem::getTotalAmount
                 ));
 
+        Map<String, String> productOrderNumberMap = productOrderInfos.stream()
+                .collect(Collectors.toMap(
+                        ProductOrderInfosResponseDto.ProductOrderInfoItem::getProductOrderId,
+                        ProductOrderInfosResponseDto.ProductOrderInfoItem::getProductOrderNumber
+                ));
+
         // 5. DTO 조립
-        List<PurchaseStatementListItemDto> content = statementInfos.stream()
+        List<PurchaseInvoiceListDto> content = statementInfos.stream()
                 .map(info -> {
                     String productOrderId = info.getProductOrderId();
                     BigDecimal totalAmount = productOrderTotalAmountMap.get(productOrderId);
+                    String productOrderNumber = productOrderNumberMap.get(productOrderId);
 
                     PurchaseStatementConnectionDto connection = new PurchaseStatementConnectionDto(
                             supplierCompany.getCompanyId(),
@@ -247,14 +259,13 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                             supplierCompany.getCompanyName()
                     );
 
-                    String referenceCode = "PO-" + info.getProductOrderId();
 
                     PurchaseStatementReferenceDto reference = new PurchaseStatementReferenceDto(
                             info.getProductOrderId(),
-                            referenceCode
+                            productOrderNumber
                     );
 
-                    return new PurchaseStatementListItemDto(
+                    return new PurchaseInvoiceListDto(
                             info.getInvoiceId(),
                             info.getInvoiceCode(),
                             connection,
@@ -262,7 +273,7 @@ public class PurchaseStatementServiceImpl implements PurchaseStatementService {
                             info.getIssueDate(),
                             info.getDueDate(),
                             info.getStatus(),
-                            referenceCode,
+                            productOrderNumber,
                             reference
                     );
                 })
