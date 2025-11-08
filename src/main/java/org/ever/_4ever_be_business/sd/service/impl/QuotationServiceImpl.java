@@ -16,17 +16,13 @@ import org.ever._4ever_be_business.order.repository.OrderItemRepository;
 import org.ever._4ever_be_business.order.repository.OrderRepository;
 import org.ever._4ever_be_business.order.repository.QuotationApprovalRepository;
 import org.ever._4ever_be_business.order.repository.QuotationItemRepository;
+import org.ever._4ever_be_business.sd.dto.response.*;
 import org.ever._4ever_be_business.voucher.entity.SalesVoucher;
 import org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus;
 import org.ever._4ever_be_business.voucher.repository.SalesVoucherRepository;
 import org.ever._4ever_be_business.sd.dto.request.CreateQuotationRequestDto;
 import org.ever._4ever_be_business.sd.dto.request.InventoryCheckRequestDto;
 import org.ever._4ever_be_business.sd.dto.request.QuotationItemRequestDto;
-import org.ever._4ever_be_business.sd.dto.response.InventoryCheckResponseDto;
-import org.ever._4ever_be_business.sd.dto.response.QuotationDetailDto;
-import org.ever._4ever_be_business.sd.dto.response.QuotationItemDto;
-import org.ever._4ever_be_business.sd.dto.response.QuotationListItemDto;
-import org.ever._4ever_be_business.sd.dto.response.ScmQuotationListItemDto;
 import org.ever._4ever_be_business.sd.integration.dto.ProductInfoResponseDto;
 import org.ever._4ever_be_business.sd.integration.port.InventoryServicePort;
 import org.ever._4ever_be_business.sd.integration.port.ProductServicePort;
@@ -68,6 +64,7 @@ public class QuotationServiceImpl implements QuotationService {
     private final InventoryServicePort inventoryServicePort;
     private final org.ever._4ever_be_business.hr.repository.CustomerUserRepository customerUserRepository;
     private final org.ever._4ever_be_business.company.repository.CustomerCompanyRepository customerCompanyRepository;
+    private final org.ever._4ever_be_business.order.repository.QuotationRepository quotationRepository;
     private final KafkaProducerService kafkaProducerService;
     private final DepartmentService departmentService;
 
@@ -225,14 +222,18 @@ public class QuotationServiceImpl implements QuotationService {
 
         // 5. Quotation 생성 (CustomerUser의 id를 customerUserId에 저장)
         String quotationCode = CodeGenerator.generateCode("QO");
-        LocalDate dueDate = LocalDate.parse(dto.getDueDate(), DATE_FORMATTER);
+
+        LocalDate dueDate = null;
+        if (dto.getDueDate() != null && !dto.getDueDate().isBlank()) {
+            dueDate = LocalDate.parse(dto.getDueDate(), DATE_FORMATTER);
+        }
 
         Quotation quotation = new Quotation(
                 quotationCode,
                 customerUser.getId(),  // CustomerUser의 PK(id)를 저장
                 totalAmount,
                 savedApproval,
-                dueDate.atStartOfDay(),
+                dueDate != null ? dueDate.atStartOfDay() : null,
                 dto.getNote()
         );
 
@@ -507,5 +508,28 @@ public class QuotationServiceImpl implements QuotationService {
         log.info("재고 확인 성공 - items count: {}", response.getItems().size());
 
         return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuotationCodeMapDto> getAvailableQuotationCodeMap() {
+        log.info("availableStatus가 null이 아닌 견적서 ID/코드 맵 조회 요청");
+
+        // availableStatus가 null이 아닌 Quotation 조회
+        List<Quotation> quotations = quotationRepository.findAll().stream()
+                .filter(q -> q.getAvailableStatus() != null)
+                .collect(Collectors.toList());
+
+        // List<QuotationCodeMapDto> 생성
+        List<QuotationCodeMapDto> result = quotations.stream()
+                .map(q -> new QuotationCodeMapDto(
+                        q.getId(),
+                        q.getQuotationCode()
+                ))
+                .collect(Collectors.toList());
+
+        log.info("availableStatus가 null이 아닌 견적서 ID/코드 맵 조회 성공 - count: {}", result.size());
+
+        return result;
     }
 }

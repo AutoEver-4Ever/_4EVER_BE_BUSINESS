@@ -2,6 +2,8 @@ package org.ever._4ever_be_business.voucher.entity;
 
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ever._4ever_be_business.common.entity.TimeStamp;
@@ -14,6 +16,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name="purchase_voucher")
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Getter
 public class PurchaseVoucher extends TimeStamp {
 

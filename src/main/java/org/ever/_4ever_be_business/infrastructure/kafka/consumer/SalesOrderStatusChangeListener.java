@@ -30,8 +30,8 @@ public class SalesOrderStatusChangeListener {
 
     @KafkaListener(topics = SALES_ORDER_STATUS_CHANGE_TOPIC, groupId = "${spring.kafka.consumer.group-id}")
     public void handleSalesOrderStatusChange(SalesOrderStatusChangeEvent event, Acknowledgment acknowledgment) {
-        log.info("판매주문 상태 변경 이벤트 수신: transactionId={}, salesOrderId={}, itemIds={}",
-                event.getTransactionId(), event.getSalesOrderId(), event.getItemIds());
+        log.info("판매주문 상태 변경 이벤트 수신: transactionId={}, salesOrderId={}",
+                event.getTransactionId(), event.getSalesOrderId());
 
         try {
             // Saga 트랜잭션으로 실행
@@ -53,7 +53,6 @@ public class SalesOrderStatusChangeListener {
             SalesOrderStatusChangeCompletionEvent completionEvent = SalesOrderStatusChangeCompletionEvent.builder()
                     .transactionId(event.getTransactionId())
                     .salesOrderId(event.getSalesOrderId())
-                    .itemIds(event.getItemIds())
                     .success(true)
                     .timestamp(System.currentTimeMillis())
                     .build();
@@ -73,7 +72,6 @@ public class SalesOrderStatusChangeListener {
             SalesOrderStatusChangeCompletionEvent completionEvent = SalesOrderStatusChangeCompletionEvent.builder()
                     .transactionId(event.getTransactionId())
                     .salesOrderId(event.getSalesOrderId())
-                    .itemIds(event.getItemIds())
                     .success(false)
                     .errorMessage(e.getMessage())
                     .timestamp(System.currentTimeMillis())

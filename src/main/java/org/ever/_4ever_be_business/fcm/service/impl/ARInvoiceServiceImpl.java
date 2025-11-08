@@ -8,9 +8,11 @@ import org.ever._4ever_be_business.fcm.dto.request.ARInvoiceSearchConditionDto;
 import org.ever._4ever_be_business.fcm.dto.response.ARInvoiceDetailDto;
 import org.ever._4ever_be_business.fcm.dto.response.ARInvoiceItemDto;
 import org.ever._4ever_be_business.fcm.dto.response.ARInvoiceListItemDto;
-import org.ever._4ever_be_business.fcm.integration.dto.OrderItemsResponseDto;
-import org.ever._4ever_be_business.fcm.integration.port.OrderServicePort;
+import org.ever._4ever_be_business.fcm.integration.dto.ProductMultipleResponseDto;
+import org.ever._4ever_be_business.fcm.integration.port.ProductsServicePort;
 import org.ever._4ever_be_business.fcm.service.ARInvoiceService;
+import org.ever._4ever_be_business.order.entity.OrderItem;
+import org.ever._4ever_be_business.order.repository.OrderItemRepository;
 import org.ever._4ever_be_business.voucher.entity.SalesVoucher;
 import org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus;
 import org.ever._4ever_be_business.voucher.repository.SalesVoucherRepository;
@@ -20,10 +22,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,7 +36,8 @@ import java.util.stream.Collectors;
 public class ARInvoiceServiceImpl implements ARInvoiceService {
 
     private final SalesVoucherRepository salesVoucherRepository;
-    private final OrderServicePort orderServicePort;
+    private final OrderItemRepository orderItemRepository;
+    private final ProductsServicePort productServicePort;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -66,22 +71,45 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
         SalesVoucher voucher = salesVoucherRepository.findById(invoiceId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "존재하지 않는 전표입니다."));
 
-        // 2. SCM에서 Order Items 정보 조회
-        OrderItemsResponseDto orderItemsInfo = orderServicePort.getOrderItemsById(voucher.getOrder().getId());
+        // 2. Business 서버의 OrderItem 조회
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(voucher.getOrder().getId());
+        log.info("OrderItem 조회 완료 - orderId: {}, itemCount: {}",
+                voucher.getOrder().getId(), orderItems.size());
 
-        // 3. Items 변환
-        List<ARInvoiceItemDto> items = orderItemsInfo.getItems().stream()
-                .map(item -> new ARInvoiceItemDto(
-                        item.getItemId(),
-                        item.getItemName(),
-                        item.getQuantity(),
-                        item.getUomName(),
-                        item.getUnitPrice(),
-                        item.getTotalPrice()
-                ))
+        // 3. OrderItem에서 productId 추출
+        List<String> productIds = orderItems.stream()
+                .map(OrderItem::getProductId)
                 .collect(Collectors.toList());
 
-        // 4. ARInvoiceDetailDto 생성
+        // 4. SCM에서 Product 정보만 조회 (itemName, uomName)
+        ProductMultipleResponseDto productInfo = productServicePort.getProductsMultiple(productIds);
+
+        // 5. Product 정보를 Map으로 변환 (productId -> ProductDto)
+        Map<String, ProductMultipleResponseDto.ProductDto> productMap = productInfo.getProducts().stream()
+                .collect(Collectors.toMap(
+                        ProductMultipleResponseDto.ProductDto::getItemId,
+                        product -> product
+                ));
+
+        // 6. OrderItem과 Product 정보를 조합하여 ARInvoiceItemDto 생성
+        List<ARInvoiceItemDto> items = orderItems.stream()
+                .map(orderItem -> {
+                    ProductMultipleResponseDto.ProductDto product = productMap.get(orderItem.getProductId());
+                    String itemName = product != null ? product.getItemName() : "Unknown Product";
+                    String uomName = product != null ? product.getUomName() : "EA";
+
+                    return new ARInvoiceItemDto(
+                            orderItem.getProductId(),
+                            itemName,
+                            orderItem.getCount().intValue(),
+                            uomName,
+                            BigDecimal.valueOf(orderItem.getPrice()),
+                            BigDecimal.valueOf(orderItem.getPrice() * orderItem.getCount())
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 7. ARInvoiceDetailDto 생성
         ARInvoiceDetailDto result = new ARInvoiceDetailDto(
                 voucher.getId(),
                 voucher.getVoucherCode(),
@@ -96,8 +124,8 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
                 items
         );
 
-        log.info("AR 전표 상세 정보 조회 성공 - invoiceId: {}, invoiceNumber: {}",
-                invoiceId, voucher.getVoucherCode());
+        log.info("AR 전표 상세 정보 조회 성공 - invoiceId: {}, invoiceNumber: {}, itemCount: {}",
+                invoiceId, voucher.getVoucherCode(), items.size());
 
         return result;
     }

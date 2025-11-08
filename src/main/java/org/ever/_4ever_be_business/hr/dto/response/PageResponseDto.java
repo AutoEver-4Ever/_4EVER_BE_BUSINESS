@@ -18,7 +18,7 @@ public class PageResponseDto<T> {
     @JsonProperty("content")
     private List<T> content;
 
-    @JsonProperty("pageInfo")
+    @JsonProperty("page")
     private PageInfo pageInfo;
 }
 

@@ -16,7 +16,7 @@ public class ARInvoiceListItemDto {
     @JsonProperty("invoiceNumber")
     private String invoiceNumber;
 
-    @JsonProperty("supply")
+    @JsonProperty("connection")
     private SupplyDto supply;
 
     @JsonProperty("totalAmount")

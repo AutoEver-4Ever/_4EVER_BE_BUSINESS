@@ -10,6 +10,7 @@ import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
 import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
 import org.ever._4ever_be_business.order.entity.Order;
+import org.ever._4ever_be_business.order.entity.OrderItem;
 import org.ever._4ever_be_business.order.entity.OrderStatus;
 import org.ever._4ever_be_business.order.entity.Quotation;
 import org.ever._4ever_be_business.order.entity.QuotationApproval;
@@ -22,6 +23,7 @@ import org.ever._4ever_be_business.order.repository.QuotationRepository;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.voucher.entity.SalesVoucher;
 import org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus;
+import org.ever._4ever_be_business.voucher.repository.SalesVoucherRepository;
 import org.ever.event.QuotationUpdateEvent;
 import org.ever.event.QuotationUpdateCompletionEvent;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -48,8 +50,10 @@ public class QuotationUpdateListener {
     private final QuotationApprovalRepository quotationApprovalRepository;
     private final QuotationItemRepository quotationItemRepository;
     private final OrderRepository orderRepository;
+    private final org.ever._4ever_be_business.order.repository.OrderItemRepository orderItemRepository;
     private final KafkaProducerService kafkaProducerService;
     private final CustomerUserRepository customerUserRepository;
+    private final SalesVoucherRepository salesVoucherRepository;
 
     @KafkaListener(topics = QUOTATION_UPDATE_TOPIC, groupId = "${spring.kafka.consumer.group-id}")
     public void handleQuotationUpdate(QuotationUpdateEvent event, Acknowledgment acknowledgment) {
@@ -162,12 +166,26 @@ public class QuotationUpdateListener {
         order.setStatus(OrderStatus.PENDING); // PENDING 상태로 생성
 
         Order savedOrder = orderRepository.save(order);
+        log.info("Order 생성 완료: orderId={}, orderCode={}", savedOrder.getId(), orderCode);
+
+        // OrderItem 생성
+        for (QuotationItem quotationItem : quotationItems) {
+            OrderItem orderItem = new OrderItem(
+                    savedOrder,
+                    quotationItem.getProductId(),
+                    quotationItem.getCount(),
+                    quotationItem.getUnit(),
+                    quotationItem.getPrice().longValue()
+            );
+            orderItemRepository.save(orderItem);
+        }
+        log.info("OrderItem 생성 완료: count={}", quotationItems.size());
 
         // SalesVoucher 생성
         String voucherCode = CodeGenerator.generateCode("SV");
         SalesVoucher salesVoucher = new SalesVoucher(
                 customerCompany,
-                order,
+                savedOrder,  // savedOrder 사용
                 voucherCode,
                 LocalDateTime.now(),  // issueDate
                 quotation.getDueDate(),  // dueDate
@@ -175,6 +193,12 @@ public class QuotationUpdateListener {
                 SalesVoucherStatus.PENDING,
                 "견적서 승인을 통한 자동 생성"
         );
+
+        // SalesVoucher 저장
+        SalesVoucher savedVoucher = salesVoucherRepository.save(salesVoucher);
+        log.info("매출전표 생성 완료: voucherId={}, voucherCode={}, status=PENDING",
+                savedVoucher.getId(), voucherCode);
+
         return savedOrder.getId();
     }
 }
