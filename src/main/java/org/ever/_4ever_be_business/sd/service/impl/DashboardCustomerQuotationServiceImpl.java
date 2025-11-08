@@ -13,6 +13,7 @@ import org.ever._4ever_be_business.sd.service.DashboardCustomerQuotationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -64,9 +65,9 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
 
     @Override
     public List<DashboardWorkflowItemDto> getAllQuotations(int size) {
-        int limit = size > 0 ? size : 5;
+        int limit = size > 0 ? Math.min(size, 20) : 5;
 
-        return quotationRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit))
+        List<DashboardWorkflowItemDto> items = quotationRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit))
                 .stream()
                 .map(quotation -> toDashboardItem(
                         quotation,
@@ -74,6 +75,13 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
                         quotation.getCustomerUserId()
                 ))
                 .toList();
+
+        if (items.isEmpty()) {
+            log.info("[DASHBOARD][MOCK][SD][QT] 실데이터 없음 - 내부 견적서 목업 데이터 반환");
+            return buildMockInternalQuotations(limit);
+        }
+
+        return items;
     }
 
     private DashboardWorkflowItemDto toDashboardItem(Quotation quotation, String requesterName, String companyName) {
@@ -103,6 +111,22 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
                         .name(requesterName)
                         .statusCode(i % 2 == 0 ? "PENDING" : "APPROVED")
                         .date(OffsetDateTime.now().minusDays(i).toLocalDate().format(ISO_FORMATTER))
+                        .build())
+                .toList();
+    }
+
+    private List<DashboardWorkflowItemDto> buildMockInternalQuotations(int size) {
+        int limit = size > 0 ? Math.min(size, 20) : 5;
+        int itemCount = Math.min(limit, 5);
+
+        return IntStream.range(0, itemCount)
+                .mapToObj(i -> DashboardWorkflowItemDto.builder()
+                        .itemId(UUID.randomUUID().toString())
+                        .itemTitle("내부 견적 요청 " + (i + 1))
+                        .itemNumber(String.format("QT-MOCK-%04d", i + 1))
+                        .name("영업 담당자 " + (i + 1))
+                        .statusCode(i % 2 == 0 ? "IN_REVIEW" : "APPROVED")
+                        .date(LocalDate.now().minusDays(i).toString())
                         .build())
                 .toList();
     }

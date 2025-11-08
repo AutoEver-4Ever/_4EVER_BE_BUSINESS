@@ -9,6 +9,7 @@ import org.ever._4ever_be_business.fcm.service.CustomerDashboardInvoiceService;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -19,6 +20,7 @@ import java.util.stream.IntStream;
 public class CustomerDashboardInvoiceServiceImpl implements CustomerDashboardInvoiceService {
 
     private final ARInvoiceService arInvoiceService;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     @Override
     public List<SupplierPurchaseInvoiceListItemDto> getCustomerInvoices(String userId, int size) {
@@ -65,7 +67,7 @@ public class CustomerDashboardInvoiceServiceImpl implements CustomerDashboardInv
                         .itemTitle("고객사 목업 매입 전표 " + (i + 1))
                         .name("고객사 담당자 " + (i + 1))
                         .statusCode(i % 2 == 0 ? "PENDING" : "APPROVED")
-                        .date(OffsetDateTime.now().minusDays(i).toString())
+                        .date(OffsetDateTime.now().minusDays(i).toLocalDate().format(DATE_FORMATTER))
                         .build())
                 .toList();
     }
