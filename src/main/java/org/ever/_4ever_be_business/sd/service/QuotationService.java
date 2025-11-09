@@ -81,4 +81,12 @@ public interface QuotationService {
      * @return List<QuotationCodeMapDto>
      */
     java.util.List<QuotationCodeMapDto> getAvailableQuotationCodeMap();
+
+    /**
+     * 고객사별 견적 건수 조회 (기간별)
+     *
+     * @param customerUserId 고객사 사용자 ID
+     * @return 기간별 견적 건수 (주/월/분기/년)
+     */
+    QuotationCountDto getQuotationCountByCustomerUserId(String customerUserId);
 }

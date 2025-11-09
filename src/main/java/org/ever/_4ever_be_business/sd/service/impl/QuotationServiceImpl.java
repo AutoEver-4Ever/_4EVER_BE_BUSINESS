@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.common.util.CodeGenerator;
+import org.ever._4ever_be_business.common.util.DateRangeCalculator;
 import org.ever._4ever_be_business.common.util.UuidV7Generator;
+import org.ever._4ever_be_business.fcm.dto.response.FcmStatisticsValueDto;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.hr.service.DepartmentService;
 import org.ever._4ever_be_business.infrastructure.kafka.producer.KafkaProducerService;
@@ -138,7 +140,7 @@ public class QuotationServiceImpl implements QuotationService {
                 quotation.getId(),
                 quotation.getQuotationCode(),
                 quotation.getCreatedAt().format(DATE_FORMATTER),
-                quotation.getDueDate().format(DATE_FORMATTER),
+                quotation.getDueDate() == null ? "-" : quotation.getDueDate().format(DATE_FORMATTER) ,
                 quotation.getQuotationApproval() != null ?
                         quotation.getQuotationApproval().getApprovalStatus().name() : "PENDING",
                 customerName,
@@ -189,8 +191,8 @@ public class QuotationServiceImpl implements QuotationService {
     @Override
     @Transactional
     public String createQuotation(CreateQuotationRequestDto dto) {
-        log.info("견적서 생성 요청 - userId: {}, dueDate: {}, items count: {}",
-                dto.getUserId(), dto.getDueDate(), dto.getItems().size());
+        log.info("견적서 생성 요청 - userId: {} items count: {}",
+                dto.getUserId(), dto.getItems().size());
 
         // 1. CustomerUser 조회 (userId로)
         org.ever._4ever_be_business.hr.entity.CustomerUser customerUser = customerUserRepository.findByUserId(dto.getUserId())
@@ -223,17 +225,13 @@ public class QuotationServiceImpl implements QuotationService {
         // 5. Quotation 생성 (CustomerUser의 id를 customerUserId에 저장)
         String quotationCode = CodeGenerator.generateCode("QO");
 
-        LocalDate dueDate = null;
-        if (dto.getDueDate() != null && !dto.getDueDate().isBlank()) {
-            dueDate = LocalDate.parse(dto.getDueDate(), DATE_FORMATTER);
-        }
 
         Quotation quotation = new Quotation(
                 quotationCode,
                 customerUser.getId(),  // CustomerUser의 PK(id)를 저장
                 totalAmount,
                 savedApproval,
-                dueDate != null ? dueDate.atStartOfDay() : null,
+                null,
                 dto.getNote()
         );
 
@@ -337,6 +335,8 @@ public class QuotationServiceImpl implements QuotationService {
         if (customerCompany == null) {
             throw new BusinessException(ErrorCode.CUSTOMER_COMPANY_NOT_FOUND);
         }
+
+        quotation.setDueDate(LocalDateTime.now().plus(customerCompany.getDeliveryLeadTime()));
 
         // 5. Order 생성
         String orderCode = CodeGenerator.generateCode("OR");
@@ -531,5 +531,86 @@ public class QuotationServiceImpl implements QuotationService {
         log.info("availableStatus가 null이 아닌 견적서 ID/코드 맵 조회 성공 - count: {}", result.size());
 
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuotationCountDto getQuotationCountByCustomerUserId(String customerUserId) {
+        log.info("고객사별 견적 건수 조회 요청 (기간별) - customerUserId: {}", customerUserId);
+
+        // 모든 Quotation 조회
+        List<Quotation> allQuotations = quotationRepository.findAll().stream()
+                .filter(q -> customerUserId.equals(q.getCustomerUserId()))
+                .toList();
+
+        // 기간별 통계 계산
+        PeriodQuotationCountDto weekStats = calculatePeriodQuotationCount(allQuotations, DateRangeCalculator.PeriodType.WEEK);
+        PeriodQuotationCountDto monthStats = calculatePeriodQuotationCount(allQuotations, DateRangeCalculator.PeriodType.MONTH);
+        PeriodQuotationCountDto quarterStats = calculatePeriodQuotationCount(allQuotations, DateRangeCalculator.PeriodType.QUARTER);
+        PeriodQuotationCountDto yearStats = calculatePeriodQuotationCount(allQuotations, DateRangeCalculator.PeriodType.YEAR);
+
+        log.info("고객사별 견적 건수 조회 성공 (기간별) - customerUserId: {}, total quotations: {}",
+                customerUserId, allQuotations.size());
+
+        return new QuotationCountDto(weekStats, monthStats, quarterStats, yearStats);
+    }
+
+    /**
+     * Quotation 기간별 건수 계산
+     */
+    private PeriodQuotationCountDto calculatePeriodQuotationCount(List<Quotation> quotations, DateRangeCalculator.PeriodType periodType) {
+        Map<String, LocalDate[]> dateRanges = DateRangeCalculator.getDateRanges(periodType);
+
+        LocalDate[] currentPeriod = getCurrentPeriod(dateRanges, periodType);
+        LocalDate[] previousPeriod = getPreviousPeriod(dateRanges, periodType);
+
+        // 현재 기간 건수 계산
+        long currentCount = quotations.stream()
+                .filter(q -> q.getCreatedAt() != null)
+                .filter(q -> {
+                    LocalDate createdDate = q.getCreatedAt().toLocalDate();
+                    return !createdDate.isBefore(currentPeriod[0]) && !createdDate.isAfter(currentPeriod[1]);
+                })
+                .count();
+
+        // 이전 기간 건수 계산
+        long previousCount = quotations.stream()
+                .filter(q -> q.getCreatedAt() != null)
+                .filter(q -> {
+                    LocalDate createdDate = q.getCreatedAt().toLocalDate();
+                    return !createdDate.isBefore(previousPeriod[0]) && !createdDate.isAfter(previousPeriod[1]);
+                })
+                .count();
+
+        // 증감률 계산
+        BigDecimal currentCountDecimal = BigDecimal.valueOf(currentCount);
+        BigDecimal previousCountDecimal = BigDecimal.valueOf(previousCount);
+        Double deltaRate = currentCountDecimal.subtract(previousCountDecimal).doubleValue();
+
+        return new PeriodQuotationCountDto(new FcmStatisticsValueDto(currentCountDecimal, deltaRate));
+    }
+
+    /**
+     * 현재 기간 추출
+     */
+    private LocalDate[] getCurrentPeriod(Map<String, LocalDate[]> dateRanges, DateRangeCalculator.PeriodType periodType) {
+        return switch (periodType) {
+            case WEEK -> dateRanges.get("thisWeek");
+            case MONTH -> dateRanges.get("thisMonth");
+            case QUARTER -> dateRanges.get("thisQuarter");
+            case YEAR -> dateRanges.get("thisYear");
+        };
+    }
+
+    /**
+     * 이전 기간 추출
+     */
+    private LocalDate[] getPreviousPeriod(Map<String, LocalDate[]> dateRanges, DateRangeCalculator.PeriodType periodType) {
+        return switch (periodType) {
+            case WEEK -> dateRanges.get("lastWeek");
+            case MONTH -> dateRanges.get("lastMonth");
+            case QUARTER -> dateRanges.get("lastQuarter");
+            case YEAR -> dateRanges.get("lastYear");
+        };
     }
 }
