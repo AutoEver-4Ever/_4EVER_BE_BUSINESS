@@ -11,7 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateQuotationRequestDto {
     private String userId;          // CustomerUser의 userId (String)
-    private String dueDate;         // YYYY-MM-DD
     private List<QuotationItemRequestDto> items;
     private String note;
 }

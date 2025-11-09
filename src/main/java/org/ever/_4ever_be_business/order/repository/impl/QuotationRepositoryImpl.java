@@ -126,9 +126,9 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
                         customerCompany.companyName,               // customerName
                         quotationItem.productId,                   // productId (첫 번째 아이템)
                         Expressions.stringTemplate(
-                                "TO_CHAR({0}, 'YYYY-MM-DD')",
+                                "CASE WHEN {0} IS NULL THEN '-' ELSE TO_CHAR({0}, 'YYYY-MM-DD') END",
                                 quotation.dueDate
-                        ),                                         // dueDate
+                        ),//                                       // dueDate
                         quotationItem.count,                       // quantity (첫 번째 아이템)
                         quotationItem.unit.stringValue(),          // uomName (첫 번째 아이템)
                         quotationApproval.approvalStatus.stringValue()  // statusCode

@@ -12,4 +12,6 @@ public interface QuotationRepository extends JpaRepository<Quotation, String>, Q
     Page<Quotation> findByCustomerUserIdOrderByCreatedAtDesc(String customerUserId, Pageable pageable);
 
     Page<Quotation> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    Long countByCustomerUserId(String customerUserId);
 }

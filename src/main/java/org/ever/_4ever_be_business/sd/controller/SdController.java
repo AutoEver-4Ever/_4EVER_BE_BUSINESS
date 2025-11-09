@@ -394,8 +394,8 @@ public class SdController {
      */
     @PostMapping("/quotations")
     public ApiResponse<Map<String, String>> createQuotation(@RequestBody CreateQuotationRequestDto dto) {
-        log.info("견적서 생성 API 호출 - userId: {}, dueDate: {}, items count: {}",
-                dto.getUserId(), dto.getDueDate(), dto.getItems() != null ? dto.getItems().size() : 0);
+        log.info("견적서 생성 API 호출 - userId: {}, items count: {}",
+                dto.getUserId(),  dto.getItems() != null ? dto.getItems().size() : 0);
         String quotationId = quotationService.createQuotation(dto);
         log.info("견적서 생성 성공 - quotationId: {}", quotationId);
         return ApiResponse.success(Map.of("quotationId", quotationId), "견적서가 생성되었습니다.", HttpStatus.CREATED);
@@ -460,5 +460,16 @@ public class SdController {
         List<QuotationCodeMapDto> result = quotationService.getAvailableQuotationCodeMap();
         log.info("availableStatus가 null이 아닌 견적서 ID/코드 맵 조회 성공 - count: {}", result.size());
         return ApiResponse.success(result, "견적서 ID/코드 맵을 조회했습니다", HttpStatus.OK);
+    }
+
+    /**
+     * 고객사별 견적 건수 조회 (기간별)
+     */
+    @GetMapping("/quotations/customer/{customerUserId}/count")
+    public ApiResponse<QuotationCountDto> getQuotationCountByCustomerUserId(@PathVariable String customerUserId) {
+        log.info("고객사별 견적 건수 조회 API 호출 (기간별) - customerUserId: {}", customerUserId);
+        QuotationCountDto result = quotationService.getQuotationCountByCustomerUserId(customerUserId);
+        log.info("고객사별 견적 건수 조회 성공 (기간별) - customerUserId: {}", customerUserId);
+        return ApiResponse.success(result, "고객사별 견적 건수를 조회했습니다.", HttpStatus.OK);
     }
 }

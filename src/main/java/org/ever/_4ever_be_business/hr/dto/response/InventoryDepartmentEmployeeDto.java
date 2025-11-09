@@ -12,7 +12,7 @@ public class InventoryDepartmentEmployeeDto {
     @JsonProperty("managerId")
     private String userId;
 
-    @JsonProperty("manageName")
+    @JsonProperty("managerName")
     private String name;
 
     @JsonProperty("managerEmail")
