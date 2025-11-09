@@ -9,10 +9,10 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ARInvoiceSearchConditionDto {
+public class APInvoiceSearchConditionDto {
 
     private String company;
-    private String customerUserId;
+    private String supplierCompanyId;
     private LocalDate startDate;
     private LocalDate endDate;
 }

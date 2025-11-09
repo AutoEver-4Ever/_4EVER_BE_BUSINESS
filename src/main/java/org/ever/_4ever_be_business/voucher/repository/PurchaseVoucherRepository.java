@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PurchaseVoucherRepository extends JpaRepository<PurchaseVoucher, String> {
+public interface PurchaseVoucherRepository extends JpaRepository<PurchaseVoucher, String>, PurchaseVoucherRepositoryCustom {
 
     /**
      * 전표 코드로 시작하는 PurchaseVoucher 개수 조회 (코드 생성용)

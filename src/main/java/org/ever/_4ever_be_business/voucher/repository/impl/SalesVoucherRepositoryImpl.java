@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import static org.ever._4ever_be_business.voucher.entity.QSalesVoucher.salesVoucher;
 import static org.ever._4ever_be_business.company.entity.QCustomerCompany.customerCompany;
 import static org.ever._4ever_be_business.order.entity.QOrder.order;
+import static org.ever._4ever_be_business.hr.entity.QCustomerUser.customerUser;
 
 @Slf4j
 @Repository
@@ -41,9 +42,11 @@ public class SalesVoucherRepositoryImpl implements SalesVoucherRepositoryCustom 
                 .select(salesVoucher.count())
                 .from(salesVoucher)
                 .join(salesVoucher.customerCompany, customerCompany)
+                .leftJoin(customerUser).on(customerUser.customerCompany.id.eq(customerCompany.id))
                 .join(salesVoucher.order, order)
                 .where(
                         companyNameContains(condition.getCompany()),
+                        customerUserIdEquals(condition.getCustomerUserId()),
                         issueDateBetween(condition.getStartDate(), condition.getEndDate())
                 )
                 .fetchOne();
@@ -53,9 +56,11 @@ public class SalesVoucherRepositoryImpl implements SalesVoucherRepositoryCustom 
                 .select(salesVoucher)
                 .from(salesVoucher)
                 .join(salesVoucher.customerCompany, customerCompany).fetchJoin()
+                .leftJoin(customerUser).on(customerUser.customerCompany.id.eq(customerCompany.id))
                 .join(salesVoucher.order, order).fetchJoin()
                 .where(
                         companyNameContains(condition.getCompany()),
+                        customerUserIdEquals(condition.getCustomerUserId()),
                         issueDateBetween(condition.getStartDate(), condition.getEndDate())
                 )
                 .offset(pageable.getOffset())
@@ -101,6 +106,15 @@ public class SalesVoucherRepositoryImpl implements SalesVoucherRepositoryCustom 
     private BooleanExpression companyNameContains(String companyName) {
         return companyName != null && !companyName.isBlank()
                 ? customerCompany.companyName.containsIgnoreCase(companyName)
+                : null;
+    }
+
+    /**
+     * customerUserId로 필터링
+     */
+    private BooleanExpression customerUserIdEquals(String customerUserId) {
+        return customerUserId != null && !customerUserId.isBlank()
+                ? customerUser.userId.eq(customerUserId)
                 : null;
     }
 
