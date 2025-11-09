@@ -124,11 +124,17 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
                         quotation.id,                              // quotationId
                         quotation.quotationCode,                   // quotationNumber
                         customerCompany.companyName,               // customerName
+                        customerUser.customerName,                 // managerName
+                        Expressions.stringTemplate(
+                                "TO_CHAR({0}, 'YYYY-MM-DD')",
+                                quotation.createdAt
+                        ),                                         // quotationDate
                         quotationItem.productId,                   // productId (첫 번째 아이템)
+                        quotation.totalPrice.stringValue(),        // totalAmount
                         Expressions.stringTemplate(
                                 "CASE WHEN {0} IS NULL THEN '-' ELSE TO_CHAR({0}, 'YYYY-MM-DD') END",
                                 quotation.dueDate
-                        ),//                                       // dueDate
+                        ),                                         // dueDate
                         quotationItem.count,                       // quantity (첫 번째 아이템)
                         quotationItem.unit.stringValue(),          // uomName (첫 번째 아이템)
                         quotationApproval.approvalStatus.stringValue()  // statusCode
