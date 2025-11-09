@@ -274,6 +274,72 @@ public class FcmController {
     }
 
     /**
+     * CustomerUserId 기반 AR 전표 목록 조회 (CUSTOMER 사용자용)
+     */
+    @GetMapping("/invoice/ar/customer/{customerUserId}")
+    public ApiResponse<PageResponseDto<ARInvoiceListItemDto>> getARInvoiceListByCustomerUserId(
+            @PathVariable String customerUserId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("CustomerUserId 기반 AR 전표 목록 조회 API 호출 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                customerUserId, startDate, endDate, page, size);
+
+        Page<ARInvoiceListItemDto> result = arInvoiceService.getARInvoiceListByCustomerUserId(customerUserId, startDate, endDate, page, size);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<ARInvoiceListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
+        log.info("CustomerUserId 기반 AR 전표 목록 조회 성공 - totalElements: {}", result.getTotalElements());
+        return ApiResponse.success(responseDto, "매출 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * SupplierCompanyId 기반 AP 전표 목록 조회 (SUPPLIER 사용자용)
+     */
+    @GetMapping("/invoice/ap/supplier/{supplierUserId}")
+    public ApiResponse<PageResponseDto<APInvoiceListItemDto>> getAPInvoiceListBySupplierCompanyId(
+            @PathVariable String supplierUserId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 API 호출 - supplierCompanyId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                supplierUserId, startDate, endDate, page, size);
+
+        Page<APInvoiceListItemDto> result = apInvoiceService.getAPInvoiceListBySupplierCompanyId(supplierUserId, startDate, endDate, page, size);
+
+        PageInfo pageInfo = new PageInfo(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        PageResponseDto<APInvoiceListItemDto> responseDto = new PageResponseDto<>(
+                (int) result.getTotalElements(),
+                result.getContent(),
+                pageInfo
+        );
+
+        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 성공 - totalElements: {}", result.getTotalElements());
+        return ApiResponse.success(responseDto, "매입 전표 목록 조회에 성공했습니다.", HttpStatus.OK);
+    }
+
+    /**
      * AR 전표 상세 정보 조회
      */
     @GetMapping("/invoice/ar/{invoiceId}")
