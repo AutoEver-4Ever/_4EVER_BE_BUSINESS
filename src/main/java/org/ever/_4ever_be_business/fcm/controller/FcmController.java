@@ -50,6 +50,38 @@ public class FcmController {
         return ApiResponse.success(result, "재무 통계 데이터를 성공적으로 조회했습니다.", HttpStatus.OK);
     }
 
+    /**
+     * 공급사별 총 매출 금액 조회 (PurchaseVoucher 기준)
+     *
+     * @param supplierUserId 공급사 사용자 ID
+     * @return ApiResponse<TotalAmountDto>
+     */
+    @GetMapping("/statistics/supplier/{supplierUserId}/total-sales")
+    public ApiResponse<TotalAmountDto> getTotalPurchaseAmountBySupplierUserId(
+            @PathVariable String supplierUserId) {
+        log.info("공급사별 총 매출 금액 조회 API 호출 - supplierUserId: {}", supplierUserId);
+        TotalAmountDto result =
+                fcmStatisticsService.getTotalPurchaseAmountBySupplierUserId(supplierUserId);
+        log.info("공급사별 총 매출 금액 조회 성공 - supplierUserId: {}", supplierUserId);
+        return ApiResponse.success(result, "공급사별 총 매출 금액을 성공적으로 조회했습니다.", HttpStatus.OK);
+    }
+
+    /**
+     * 고객사별 총 매입 금액 조회 (SalesVoucher 기준)
+     *
+     * @param customerUserId 고객사 사용자 ID
+     * @return ApiResponse<TotalAmountDto>
+     */
+    @GetMapping("/statistics/customer/{customerUserId}/total-purchases")
+    public ApiResponse<TotalAmountDto> getTotalSalesAmountByCustomerUserId(
+            @PathVariable String customerUserId) {
+        log.info("고객사별 총 매입 금액 조회 API 호출 - customerUserId: {}", customerUserId);
+        TotalAmountDto result =
+                fcmStatisticsService.getTotalSalesAmountByCustomerUserId(customerUserId);
+        log.info("고객사별 총 매입 금액 조회 성공 - customerUserId: {}", customerUserId);
+        return ApiResponse.success(result, "고객사별 총 매입 금액을 성공적으로 조회했습니다.", HttpStatus.OK);
+    }
+
     // ==================== Sales Statements (매출전표) ====================
 
     /**
