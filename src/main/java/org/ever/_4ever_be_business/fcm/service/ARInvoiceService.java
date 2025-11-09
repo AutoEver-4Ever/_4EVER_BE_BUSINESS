@@ -21,6 +21,18 @@ public interface ARInvoiceService {
     Page<ARInvoiceListItemDto> getARInvoiceList(String company, LocalDate startDate, LocalDate endDate, int page, int size);
 
     /**
+     * CustomerUserId 기반 AR 전표 목록 조회
+     *
+     * @param customerUserId Customer의 userId
+     * @param startDate 시작일 (검색 필터, optional)
+     * @param endDate 종료일 (검색 필터, optional)
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return Page<ARInvoiceListItemDto>
+     */
+    Page<ARInvoiceListItemDto> getARInvoiceListByCustomerUserId(String customerUserId, LocalDate startDate, LocalDate endDate, int page, int size);
+
+    /**
      * AR 전표 상세 정보 조회
      *
      * @param invoiceId 전표 ID

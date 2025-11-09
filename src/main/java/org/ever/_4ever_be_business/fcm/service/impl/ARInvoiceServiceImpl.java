@@ -48,7 +48,7 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
                 company, startDate, endDate, page, size);
 
         // 검색 조건 생성
-        ARInvoiceSearchConditionDto condition = new ARInvoiceSearchConditionDto(company, startDate, endDate);
+        ARInvoiceSearchConditionDto condition = new ARInvoiceSearchConditionDto(company, null, startDate, endDate);
 
         // 페이징 정보 생성
         Pageable pageable = PageRequest.of(page, size);
@@ -57,6 +57,27 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
         Page<ARInvoiceListItemDto> result = salesVoucherRepository.findARInvoiceList(condition, pageable);
 
         log.info("AR 전표 목록 조회 완료 - totalElements: {}, totalPages: {}",
+                result.getTotalElements(), result.getTotalPages());
+
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ARInvoiceListItemDto> getARInvoiceListByCustomerUserId(String customerUserId, LocalDate startDate, LocalDate endDate, int page, int size) {
+        log.info("CustomerUserId 기반 AR 전표 목록 조회 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                customerUserId, startDate, endDate, page, size);
+
+        // 검색 조건 생성 (customerUserId 포함)
+        ARInvoiceSearchConditionDto condition = new ARInvoiceSearchConditionDto(null, customerUserId, startDate, endDate);
+
+        // 페이징 정보 생성
+        Pageable pageable = PageRequest.of(page, size);
+
+        // 목록 조회
+        Page<ARInvoiceListItemDto> result = salesVoucherRepository.findARInvoiceList(condition, pageable);
+
+        log.info("CustomerUserId 기반 AR 전표 목록 조회 완료 - totalElements: {}, totalPages: {}",
                 result.getTotalElements(), result.getTotalPages());
 
         return result;
