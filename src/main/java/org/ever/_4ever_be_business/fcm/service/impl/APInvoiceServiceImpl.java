@@ -16,6 +16,7 @@ import org.ever._4ever_be_business.fcm.service.APInvoiceService;
 import org.ever._4ever_be_business.voucher.entity.PurchaseVoucher;
 import org.ever._4ever_be_business.voucher.repository.PurchaseVoucherRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -52,10 +54,14 @@ public class APInvoiceServiceImpl implements APInvoiceService {
         // 목록 조회
         Page<APInvoiceListItemDto> result = purchaseVoucherRepository.findAPInvoiceList(condition, pageable);
 
-        log.info("AP 전표 목록 조회 완료 - totalElements: {}, totalPages: {}",
-                result.getTotalElements(), result.getTotalPages());
+        // SCM에서 추가 정보 조회하여 채우기
+        List<APInvoiceListItemDto> enrichedContent = enrichAPInvoiceList(result.getContent());
+        Page<APInvoiceListItemDto> enrichedResult = new PageImpl<>(enrichedContent, pageable, result.getTotalElements());
 
-        return result;
+        log.info("AP 전표 목록 조회 완료 - totalElements: {}, totalPages: {}",
+                enrichedResult.getTotalElements(), enrichedResult.getTotalPages());
+
+        return enrichedResult;
     }
 
     @Override
@@ -75,10 +81,92 @@ public class APInvoiceServiceImpl implements APInvoiceService {
         // 목록 조회
         Page<APInvoiceListItemDto> result = purchaseVoucherRepository.findAPInvoiceList(condition, pageable);
 
-        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 완료 - totalElements: {}, totalPages: {}",
-                result.getTotalElements(), result.getTotalPages());
+        // SCM에서 추가 정보 조회하여 채우기
+        List<APInvoiceListItemDto> enrichedContent = enrichAPInvoiceList(result.getContent());
+        Page<APInvoiceListItemDto> enrichedResult = new PageImpl<>(enrichedContent, pageable, result.getTotalElements());
 
-        return result;
+        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 완료 - totalElements: {}, totalPages: {}",
+                enrichedResult.getTotalElements(), enrichedResult.getTotalPages());
+
+        return enrichedResult;
+    }
+
+    /**
+     * AP 전표 목록에 SCM 서버로부터 추가 정보를 조회하여 새로운 리스트 반환
+     */
+    private List<APInvoiceListItemDto> enrichAPInvoiceList(List<APInvoiceListItemDto> invoices) {
+        if (invoices == null || invoices.isEmpty()) {
+            return invoices;
+        }
+
+        // 1. Supplier Company IDs 추출
+        List<String> supplierCompanyIds = invoices.stream()
+                .map(invoice -> invoice.getSupplier().getCompanyId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 2. Product Order IDs 추출
+        List<String> productOrderIds = invoices.stream()
+                .map(invoice -> invoice.getReference().getReferenceId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 3. SCM에서 Supplier Company 정보 일괄 조회
+        var supplierCompaniesResponse = supplierCompanyServicePort.getSupplierCompaniesByIds(supplierCompanyIds);
+        Map<String, org.ever._4ever_be_business.fcm.integration.dto.SupplierCompanyResponseDto> supplierMap =
+                supplierCompaniesResponse.getSupplierCompanies().stream()
+                .collect(Collectors.toMap(
+                        org.ever._4ever_be_business.fcm.integration.dto.SupplierCompanyResponseDto::getCompanyId,
+                        supplier -> supplier
+                ));
+
+        // 4. SCM에서 Product Order 정보 일괄 조회
+        var productOrderInfos = productOrderServicePort.getProductOrderInfosByIds(productOrderIds);
+        Map<String, org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfosResponseDto.ProductOrderInfoItem> productOrderMap =
+                productOrderInfos.stream()
+                .collect(Collectors.toMap(
+                        org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfosResponseDto.ProductOrderInfoItem::getProductOrderId,
+                        order -> order
+                ));
+
+        // 5. 각 invoice에 정보를 채운 새로운 객체 생성
+        return invoices.stream()
+                .map(invoice -> {
+                    // Supplier 정보 가져오기
+                    var supplier = supplierMap.get(invoice.getSupplier().getCompanyId());
+                    var enrichedSupplier = supplier != null
+                            ? new org.ever._4ever_be_business.fcm.dto.response.SupplierDto(
+                                    supplier.getCompanyId(),
+                                    supplier.getCompanyNumber(),
+                                    supplier.getCompanyName())
+                            : invoice.getSupplier();
+
+                    // Product Order 정보 가져오기
+                    var productOrder = productOrderMap.get(invoice.getReference().getReferenceId());
+                    var enrichedReference = productOrder != null
+                            ? new org.ever._4ever_be_business.fcm.dto.response.ReferenceDto(
+                                    productOrder.getProductOrderId(),
+                                    productOrder.getProductOrderNumber())
+                            : invoice.getReference();
+
+                    String enrichedReferenceNumber = productOrder != null
+                            ? productOrder.getProductOrderNumber()
+                            : invoice.getReferenceNumber();
+
+                    // 새로운 APInvoiceListItemDto 생성
+                    return new APInvoiceListItemDto(
+                            invoice.getInvoiceId(),
+                            invoice.getInvoiceNumber(),
+                            enrichedSupplier,
+                            invoice.getTotalAmount(),
+                            invoice.getIssueDate(),
+                            invoice.getDueDate(),
+                            invoice.getStatusCode(),
+                            enrichedReferenceNumber,
+                            enrichedReference
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
