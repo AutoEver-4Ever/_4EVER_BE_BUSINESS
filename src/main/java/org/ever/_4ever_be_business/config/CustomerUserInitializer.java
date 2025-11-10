@@ -23,16 +23,21 @@ public class CustomerUserInitializer implements CommandLineRunner {
     private final CustomerCompanyRepository customerCompanyRepository;
 
     private static final String[] COMPANY_NAMES = new String[] {
-        "Hanil Motors Co.",
-        "현대모비스 영업본부",
-        "K-Auto Trading",
-        "대영 카 컴퍼니",
-        "Prime Vehicle Retail",
-        "서연 자동차 판매",
-        "AutoBridge Korea",
-        "동운 모빌리티",
-        "Neo Motor Group",
-        "한빛 카 딜러스"
+            "Hanil Motors Co.",
+            "현대모비스 영업본부",
+            "K-Auto Trading",
+            "대영 카 컴퍼니",
+            "Prime Vehicle Retail",
+            "서연 자동차 판매",
+            "AutoBridge Korea",
+            "동운 모빌리티",
+            "Neo Motor Group",
+            "한빛 카 딜러스",
+            "Global Auto Parts",
+            "넥스트드라이브 모터스",
+            "스카이라인 오토모티브",
+            "에버카 솔루션즈",
+            "인피니티 모터스"
     };
 
     private static final String[] BASE_ADDRESSES = new String[] {
@@ -177,8 +182,8 @@ public class CustomerUserInitializer implements CommandLineRunner {
         Duration leadTime;
         if (idx == 0) leadTime = Duration.ofSeconds(5);
         else if (idx == 1) leadTime = Duration.ofSeconds(10);
-        else if (idx == 2) leadTime = Duration.ofSeconds(30);
-        else leadTime = Duration.ofSeconds(300 + ((idx - 3) % 6) * 60L); // 300~600초
+        else if (idx == 2) leadTime = Duration.ofSeconds(7);
+        else leadTime = Duration.ofSeconds(5 + ((idx - 3) % 10));  // 5~15초
 
         CustomerCompany company = new CustomerCompany(
             userId,              // id
