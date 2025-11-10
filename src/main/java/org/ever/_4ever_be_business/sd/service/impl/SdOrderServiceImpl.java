@@ -103,7 +103,7 @@ public class SdOrderServiceImpl implements SdOrderService {
                     BigDecimal amount = unitPrice.multiply(quantity);
 
                     return new OrderItemDto(
-                            product != null ? product.getProductCode() : productId,  // itemId
+                            orderItem.getProductId(),  // itemId
                             product != null ? product.getProductName() : "Unknown",  // itemName
                             orderItem.getCount(),                                     // quantity
                             uonName,                                                  // uonName
