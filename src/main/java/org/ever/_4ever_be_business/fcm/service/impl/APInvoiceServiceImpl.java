@@ -14,6 +14,8 @@ import org.ever._4ever_be_business.fcm.integration.port.ProductOrderServicePort;
 import org.ever._4ever_be_business.fcm.integration.port.SupplierCompanyServicePort;
 import org.ever._4ever_be_business.fcm.service.APInvoiceService;
 import org.ever._4ever_be_business.voucher.entity.PurchaseVoucher;
+import org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus;
+import org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus;
 import org.ever._4ever_be_business.voucher.repository.PurchaseVoucherRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -228,8 +230,13 @@ public class APInvoiceServiceImpl implements APInvoiceService {
         PurchaseVoucher voucher = purchaseVoucherRepository.findById(invoiceId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "존재하지 않는 전표입니다."));
 
-        // 2. 상태를 PAID로 변경
-        voucher.updateStatus(org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus.PAID);
+        if(voucher.getStatus() == PurchaseVoucherStatus.PENDING){
+            // 2. 상태를 PAID로 변경
+            voucher.updateStatus(org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus.PAID);
+        }
+        else{
+            throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "대기 상태만 수정 가능합니다");
+        }
 
         // 3. 저장
         purchaseVoucherRepository.save(voucher);
