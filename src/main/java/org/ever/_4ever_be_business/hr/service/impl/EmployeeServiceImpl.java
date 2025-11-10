@@ -519,12 +519,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime todayEnd = todayStart.plusDays(1);
 
-        // 오늘 Attendance 조회
+        // 오늘 Attendance 조회 (checkIn 기준으로 필터링)
         Attendance todayAttendance = attendanceRepository.findAll().stream()
                 .filter(a -> a.getEmployee().getId().equals(employee.getId()))
-                .filter(a -> a.getWorkDate() != null
-                        && !a.getWorkDate().isBefore(todayStart)
-                        && a.getWorkDate().isBefore(todayEnd))
+                .filter(a -> a.getCheckIn() != null
+                        && !a.getCheckIn().isBefore(todayStart)
+                        && a.getCheckIn().isBefore(todayEnd))
                 .findFirst()
                 .orElse(null);
 
