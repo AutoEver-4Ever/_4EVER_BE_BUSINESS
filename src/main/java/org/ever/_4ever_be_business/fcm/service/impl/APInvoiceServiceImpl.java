@@ -46,7 +46,7 @@ public class APInvoiceServiceImpl implements APInvoiceService {
                 company, startDate, endDate, page, size);
 
         // 검색 조건 생성
-        APInvoiceSearchConditionDto condition = new APInvoiceSearchConditionDto(company, null, startDate, endDate);
+        APInvoiceSearchConditionDto condition = new APInvoiceSearchConditionDto(company,null, null, startDate, endDate);
 
         // 페이징 정보 생성
         Pageable pageable = PageRequest.of(page, size);
