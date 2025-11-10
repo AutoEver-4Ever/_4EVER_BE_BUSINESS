@@ -198,8 +198,14 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
         SalesVoucher voucher = salesVoucherRepository.findById(invoiceId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "존재하지 않는 전표입니다."));
 
-        // 2. 상태를 PAID로 변경
-        voucher.updateStatus(SalesVoucherStatus.PAID);
+        if(voucher.getStatus() == SalesVoucherStatus.PENDING){
+            // 2. 상태를 PAID로 변경
+            voucher.updateStatus(SalesVoucherStatus.PAID);
+        }
+        else{
+            throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "대기상태만 수정 가능합니다");
+        }
+
 
         // 3. 저장
         salesVoucherRepository.save(voucher);
