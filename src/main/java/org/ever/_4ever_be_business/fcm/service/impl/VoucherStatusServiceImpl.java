@@ -35,7 +35,7 @@ public class VoucherStatusServiceImpl implements VoucherStatusService {
             PurchaseVoucher voucher = purchaseVoucherOpt.get();
 
             // 현재 상태가 PENDING인지 확인
-            if (voucher.getStatus() != PurchaseVoucherStatus.PENDING) {
+            if (voucher.getStatus() != PurchaseVoucherStatus.UNPAID) {
                 throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR,
                         "바우처 상태가 PENDING이 아니어서 상태 변경이 불가능합니다: " + voucher.getStatus());
             }
@@ -57,7 +57,7 @@ public class VoucherStatusServiceImpl implements VoucherStatusService {
             SalesVoucher voucher = salesVoucherOpt.get();
 
             // 현재 상태가 PENDING인지 확인
-            if (voucher.getStatus() != SalesVoucherStatus.PENDING) {
+            if (voucher.getStatus() != SalesVoucherStatus.UNPAID) {
                 throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR,
                         "바우처 상태가 PENDING이 아니어서 상태 변경이 불가능합니다: " + voucher.getStatus());
             }
