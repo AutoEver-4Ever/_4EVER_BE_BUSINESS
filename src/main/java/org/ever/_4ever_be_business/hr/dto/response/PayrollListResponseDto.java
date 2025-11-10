@@ -18,6 +18,6 @@ public class PayrollListResponseDto {
     @JsonProperty("content")
     private List<PayrollListItemDto> content;
 
-    @JsonProperty("pageInfo")
+    @JsonProperty("page")
     private PageInfo pageInfo;
 }

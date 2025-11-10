@@ -264,7 +264,25 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 oneYearAgo
         );
 
-        // 5. 잔여 연차 계산 (기본 연차 18일 - 사용 일수)
+        // 5. 1년 이내 휴가 신청 목록 조회 (모든 상태 포함)
+        List<org.ever._4ever_be_business.hr.entity.LeaveRequest> leaveRequests =
+                leaveRequestRepository.findByEmployeeIdAndStartDateAfter(employee.getId(), oneYearAgo);
+
+        // 6. LeaveItemDto 변환
+        java.time.format.DateTimeFormatter dateFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        List<org.ever._4ever_be_business.hr.dto.response.LeaveItemDto> leaveItems = leaveRequests.stream()
+                .map(lr -> new org.ever._4ever_be_business.hr.dto.response.LeaveItemDto(
+                        lr.getId(),
+                        lr.getLeaveType().name(),
+                        lr.getStartDate() != null ? lr.getStartDate().format(dateFormatter) : null,
+                        lr.getEndDate() != null ? lr.getEndDate().format(dateFormatter) : null,
+                        lr.getNumberOfLeaveDays(),
+                        lr.getStatus().name(),
+                        lr.getReason()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+        // 7. 잔여 연차 계산 (기본 연차 18일 - 사용 일수)
         int used = (usedLeaveDays != null) ? usedLeaveDays : 0;
         int remaining = 18 - used;
 
@@ -272,11 +290,12 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 userId,
                 18,
                 used,
-                remaining
+                remaining,
+                leaveItems
         );
 
-        log.info("잔여 연차 조회 성공 - userId: {}, usedLeaveDays: {}, remainingLeaveDays: {}",
-                userId, used, remaining);
+        log.info("잔여 연차 조회 성공 - userId: {}, usedLeaveDays: {}, remainingLeaveDays: {}, leaveRequestCount: {}",
+                userId, used, remaining, leaveItems.size());
 
         return result;
     }
