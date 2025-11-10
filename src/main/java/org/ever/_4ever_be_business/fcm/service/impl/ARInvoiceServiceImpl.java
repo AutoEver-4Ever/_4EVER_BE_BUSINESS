@@ -43,12 +43,12 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ARInvoiceListItemDto> getARInvoiceList(String company, LocalDate startDate, LocalDate endDate, int page, int size) {
-        log.info("AR 전표 목록 조회 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                company, startDate, endDate, page, size);
+    public Page<ARInvoiceListItemDto> getARInvoiceList(String company, String status, LocalDate startDate, LocalDate endDate, int page, int size) {
+        log.info("AR 전표 목록 조회 - company: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                company, status, startDate, endDate, page, size);
 
         // 검색 조건 생성
-        ARInvoiceSearchConditionDto condition = new ARInvoiceSearchConditionDto(company, null, startDate, endDate);
+        ARInvoiceSearchConditionDto condition = new ARInvoiceSearchConditionDto(company, status, null, startDate, endDate);
 
         // 페이징 정보 생성
         Pageable pageable = PageRequest.of(page, size);
@@ -64,12 +64,12 @@ public class ARInvoiceServiceImpl implements ARInvoiceService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ARInvoiceListItemDto> getARInvoiceListByCustomerUserId(String customerUserId, LocalDate startDate, LocalDate endDate, int page, int size) {
-        log.info("CustomerUserId 기반 AR 전표 목록 조회 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                customerUserId, startDate, endDate, page, size);
+    public Page<ARInvoiceListItemDto> getARInvoiceListByCustomerUserId(String customerUserId, String status, LocalDate startDate, LocalDate endDate, int page, int size) {
+        log.info("CustomerUserId 기반 AR 전표 목록 조회 - customerUserId: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                customerUserId, status, startDate, endDate, page, size);
 
         // 검색 조건 생성 (customerUserId 포함)
-        ARInvoiceSearchConditionDto condition = new ARInvoiceSearchConditionDto(null, customerUserId, startDate, endDate);
+        ARInvoiceSearchConditionDto condition = new ARInvoiceSearchConditionDto(null, status, customerUserId, startDate, endDate);
 
         // 페이징 정보 생성
         Pageable pageable = PageRequest.of(page, size);

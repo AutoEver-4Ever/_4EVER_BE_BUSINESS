@@ -66,14 +66,14 @@ public class APInvoiceServiceImpl implements APInvoiceService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<APInvoiceListItemDto> getAPInvoiceListBySupplierCompanyId(String supplierUserId, LocalDate startDate, LocalDate endDate, int page, int size) {
-        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 - supplierCompanyId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                supplierUserId, startDate, endDate, page, size);
+    public Page<APInvoiceListItemDto> getAPInvoiceListBySupplierCompanyId(String supplierUserId, String status, LocalDate startDate, LocalDate endDate, int page, int size) {
+        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 - supplierCompanyId: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                supplierUserId, status, startDate, endDate, page, size);
 
         String supplierCompanyId = supplierCompanyServicePort.getSupplierCompanyIdByUserId(supplierUserId);
 
         // 검색 조건 생성 (supplierCompanyId 포함)
-        APInvoiceSearchConditionDto condition = new APInvoiceSearchConditionDto(null, supplierCompanyId, startDate, endDate);
+        APInvoiceSearchConditionDto condition = new APInvoiceSearchConditionDto(null, status, supplierCompanyId, startDate, endDate);
 
         // 페이징 정보 생성
         Pageable pageable = PageRequest.of(page, size);

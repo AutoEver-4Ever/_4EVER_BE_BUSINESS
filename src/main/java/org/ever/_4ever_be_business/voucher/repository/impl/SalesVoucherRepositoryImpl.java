@@ -46,6 +46,7 @@ public class SalesVoucherRepositoryImpl implements SalesVoucherRepositoryCustom 
                 .join(salesVoucher.order, order)
                 .where(
                         companyNameContains(condition.getCompany()),
+                        statusEquals(condition.getStatus()),
                         customerUserIdEquals(condition.getCustomerUserId()),
                         issueDateBetween(condition.getStartDate(), condition.getEndDate())
                 )
@@ -60,6 +61,7 @@ public class SalesVoucherRepositoryImpl implements SalesVoucherRepositoryCustom 
                 .join(salesVoucher.order, order).fetchJoin()
                 .where(
                         companyNameContains(condition.getCompany()),
+                        statusEquals(condition.getStatus()),
                         customerUserIdEquals(condition.getCustomerUserId()),
                         issueDateBetween(condition.getStartDate(), condition.getEndDate())
                 )
@@ -116,6 +118,23 @@ public class SalesVoucherRepositoryImpl implements SalesVoucherRepositoryCustom 
         return customerUserId != null && !customerUserId.isBlank()
                 ? customerUser.userId.eq(customerUserId)
                 : null;
+    }
+
+    /**
+     * 전표 상태 필터
+     */
+    private BooleanExpression statusEquals(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus statusEnum =
+                    org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus.valueOf(status);
+            return salesVoucher.status.eq(statusEnum);
+        } catch (IllegalArgumentException e) {
+            log.warn("유효하지 않은 상태값 - status: {}", status);
+            return null;
+        }
     }
 
     /**

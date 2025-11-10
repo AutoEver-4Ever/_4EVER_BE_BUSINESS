@@ -12,6 +12,7 @@ import java.time.LocalDate;
 public class ARInvoiceSearchConditionDto {
 
     private String company;
+    private String status;
     private String customerUserId;
     private LocalDate startDate;
     private LocalDate endDate;

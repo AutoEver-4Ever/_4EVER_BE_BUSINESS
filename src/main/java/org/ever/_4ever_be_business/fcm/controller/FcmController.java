@@ -145,6 +145,9 @@ public class FcmController {
         log.info("매입전표 목록 조회 API 호출 - company: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 company, status, startDate, endDate, page, size);
 
+        if(status.equals("ALL"))
+            status = null;
+
         Pageable pageable = PageRequest.of(page, size);
         Page<PurchaseInvoiceListDto> result = purchaseStatementService.getPurchaseStatementList(
                 company, status, startDate, endDate, pageable
@@ -246,14 +249,18 @@ public class FcmController {
     @GetMapping("/invoice/ar")
     public ApiResponse<PageResponseDto<ARInvoiceListItemDto>> getARInvoiceList(
             @RequestParam(required = false) String company,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        log.info("AR 전표 목록 조회 API 호출 - company: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                company, startDate, endDate, page, size);
+        log.info("AR 전표 목록 조회 API 호출 - company: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                company, status, startDate, endDate, page, size);
 
-        Page<ARInvoiceListItemDto> result = arInvoiceService.getARInvoiceList(company, startDate, endDate, page, size);
+        if(status.equals("ALL"))
+            status = null;
+
+        Page<ARInvoiceListItemDto> result = arInvoiceService.getARInvoiceList(company, status, startDate, endDate, page, size);
 
         PageInfo pageInfo = new PageInfo(
                 result.getNumber(),
@@ -279,14 +286,18 @@ public class FcmController {
     @GetMapping("/invoice/ar/customer/{customerUserId}")
     public ApiResponse<PageResponseDto<ARInvoiceListItemDto>> getARInvoiceListByCustomerUserId(
             @PathVariable String customerUserId,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        log.info("CustomerUserId 기반 AR 전표 목록 조회 API 호출 - customerUserId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                customerUserId, startDate, endDate, page, size);
+        log.info("CustomerUserId 기반 AR 전표 목록 조회 API 호출 - customerUserId: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                customerUserId, status, startDate, endDate, page, size);
 
-        Page<ARInvoiceListItemDto> result = arInvoiceService.getARInvoiceListByCustomerUserId(customerUserId, startDate, endDate, page, size);
+        if(status != null && status.equals("ALL"))
+            status = null;
+
+        Page<ARInvoiceListItemDto> result = arInvoiceService.getARInvoiceListByCustomerUserId(customerUserId, status, startDate, endDate, page, size);
 
         PageInfo pageInfo = new PageInfo(
                 result.getNumber(),
@@ -312,14 +323,18 @@ public class FcmController {
     @GetMapping("/invoice/ap/supplier/{supplierUserId}")
     public ApiResponse<PageResponseDto<APInvoiceListItemDto>> getAPInvoiceListBySupplierCompanyId(
             @PathVariable String supplierUserId,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 API 호출 - supplierCompanyId: {}, startDate: {}, endDate: {}, page: {}, size: {}",
-                supplierUserId, startDate, endDate, page, size);
+        log.info("SupplierCompanyId 기반 AP 전표 목록 조회 API 호출 - supplierCompanyId: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
+                supplierUserId, status, startDate, endDate, page, size);
 
-        Page<APInvoiceListItemDto> result = apInvoiceService.getAPInvoiceListBySupplierCompanyId(supplierUserId, startDate, endDate, page, size);
+        if(status != null && status.equals("ALL"))
+            status = null;
+
+        Page<APInvoiceListItemDto> result = apInvoiceService.getAPInvoiceListBySupplierCompanyId(supplierUserId, status, startDate, endDate, page, size);
 
         PageInfo pageInfo = new PageInfo(
                 result.getNumber(),

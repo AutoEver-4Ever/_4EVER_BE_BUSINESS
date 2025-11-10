@@ -30,6 +30,7 @@ public class CustomerDashboardInvoiceServiceImpl implements CustomerDashboardInv
                 userId, // company
                 null,
                 null,
+                null,
                 0,
                 limit
         ).getContent();
