@@ -392,6 +392,17 @@ public class FcmController {
     }
 
     /**
+     * AP 전표 미지급 처리 완료
+     */
+    @PostMapping("/invoice/ap/{invoiceId}/payable/complete")
+    public ApiResponse<Void> completePayable(@PathVariable String invoiceId) {
+        log.info("AP 전표 미지급 처리 완료 API 호출 - invoiceId: {}", invoiceId);
+        apInvoiceService.completePayable(invoiceId);
+        log.info("AP 전표 미지급 처리 완료 성공 - invoiceId: {}", invoiceId);
+        return ApiResponse.success(null, "미지급 처리가 완료되었습니다.", HttpStatus.OK);
+    }
+
+    /**
      * AR 전표 상태 일괄 변경 (RESPONSE_PENDING)
      */
     @PostMapping("/invoice/ar/customer/response-pending")

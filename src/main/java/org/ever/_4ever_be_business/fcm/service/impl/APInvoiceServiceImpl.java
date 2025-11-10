@@ -218,4 +218,22 @@ public class APInvoiceServiceImpl implements APInvoiceService {
 
         return result;
     }
+
+    @Override
+    @Transactional
+    public void completePayable(String invoiceId) {
+        log.info("AP 전표 미지급 처리 완료 - invoiceId: {}", invoiceId);
+
+        // 1. PurchaseVoucher 조회
+        PurchaseVoucher voucher = purchaseVoucherRepository.findById(invoiceId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "존재하지 않는 전표입니다."));
+
+        // 2. 상태를 PAID로 변경
+        voucher.updateStatus(org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus.PAID);
+
+        // 3. 저장
+        purchaseVoucherRepository.save(voucher);
+
+        log.info("AP 전표 미지급 처리 완료 성공 - invoiceId: {}, status: PAID", invoiceId);
+    }
 }

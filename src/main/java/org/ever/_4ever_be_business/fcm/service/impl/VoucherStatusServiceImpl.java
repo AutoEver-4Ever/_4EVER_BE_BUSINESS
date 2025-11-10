@@ -33,6 +33,13 @@ public class VoucherStatusServiceImpl implements VoucherStatusService {
         var purchaseVoucherOpt = purchaseVoucherRepository.findById(voucherId);
         if (purchaseVoucherOpt.isPresent()) {
             PurchaseVoucher voucher = purchaseVoucherOpt.get();
+
+            // 현재 상태가 PENDING인지 확인
+            if (voucher.getStatus() != PurchaseVoucherStatus.PENDING) {
+                throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR,
+                        "바우처 상태가 PENDING이 아니어서 상태 변경이 불가능합니다: " + voucher.getStatus());
+            }
+
             try {
                 PurchaseVoucherStatus newStatus = PurchaseVoucherStatus.valueOf(statusCode);
                 voucher.updateStatus(newStatus);
@@ -48,6 +55,13 @@ public class VoucherStatusServiceImpl implements VoucherStatusService {
         var salesVoucherOpt = salesVoucherRepository.findById(voucherId);
         if (salesVoucherOpt.isPresent()) {
             SalesVoucher voucher = salesVoucherOpt.get();
+
+            // 현재 상태가 PENDING인지 확인
+            if (voucher.getStatus() != SalesVoucherStatus.PENDING) {
+                throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR,
+                        "바우처 상태가 PENDING이 아니어서 상태 변경이 불가능합니다: " + voucher.getStatus());
+            }
+
             try {
                 SalesVoucherStatus newStatus = SalesVoucherStatus.valueOf(statusCode);
                 voucher.updateStatus(newStatus);
@@ -61,6 +75,7 @@ public class VoucherStatusServiceImpl implements VoucherStatusService {
 
         throw new BusinessException(ErrorCode.BUSINESS_LOGIC_ERROR, "존재하지 않는 바우처입니다: " + voucherId);
     }
+
 
     @Override
     @Transactional
