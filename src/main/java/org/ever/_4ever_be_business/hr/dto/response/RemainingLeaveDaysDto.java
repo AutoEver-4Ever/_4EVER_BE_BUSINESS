@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,4 +22,7 @@ public class RemainingLeaveDaysDto {
 
     @JsonProperty("remainingLeaveDays")
     private Integer remainingLeaveDays;  // 잔여 연차
+
+    @JsonProperty("leaveRequests")
+    private List<LeaveItemDto> leaveRequests;  // 1년 내 휴가 목록 (상태 포함)
 }

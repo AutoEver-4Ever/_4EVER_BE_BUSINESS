@@ -59,4 +59,18 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
      */
     @EntityGraph(attributePaths = {"employee", "employee.internelUser"})
     Page<LeaveRequest> findAllByEmployee_InternelUser_UserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+
+    /**
+     * 특정 직원의 1년 이내 휴가 신청 목록 조회 (모든 상태 포함)
+     *
+     * @param employeeId 직원 ID
+     * @param startDate 시작 날짜 (1년 전)
+     * @return 휴가 신청 목록
+     */
+    @Query("SELECT lr FROM LeaveRequest lr " +
+           "WHERE lr.employee.id = :employeeId " +
+           "AND lr.startDate >= :startDate " +
+           "ORDER BY lr.startDate DESC")
+    java.util.List<LeaveRequest> findByEmployeeIdAndStartDateAfter(@Param("employeeId") String employeeId,
+                                                                     @Param("startDate") LocalDateTime startDate);
 }
