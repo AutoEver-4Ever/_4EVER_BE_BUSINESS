@@ -40,4 +40,11 @@ public interface APInvoiceService {
      * @return APInvoiceDetailDto
      */
     APInvoiceDetailDto getAPInvoiceDetail(String invoiceId);
+
+    /**
+     * AP 전표 미지급 처리 완료 (PAID 상태로 변경)
+     *
+     * @param invoiceId 전표 ID
+     */
+    void completePayable(String invoiceId);
 }

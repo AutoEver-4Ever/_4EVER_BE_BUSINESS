@@ -190,7 +190,7 @@ public class QuotationUpdateListener {
                 LocalDateTime.now(),  // issueDate
                 quotation.getDueDate(),  // dueDate
                 quotation.getTotalPrice(),
-                SalesVoucherStatus.PENDING,
+                SalesVoucherStatus.UNPAID,
                 "견적서 승인을 통한 자동 생성"
         );
 

@@ -52,7 +52,7 @@ public class PurchaseOrderApprovalListener {
                         .issueDate(LocalDateTime.now())
                         .dueDate(event.getDueDate() != null ? event.getDueDate() : LocalDateTime.now().plusDays(30))
                         .totalAmount(event.getTotalAmount())
-                        .status(PurchaseVoucherStatus.PENDING)
+                        .status(PurchaseVoucherStatus.UNPAID)
                         .memo(event.getMemo() != null ? event.getMemo() : "")
                         .build();
 
