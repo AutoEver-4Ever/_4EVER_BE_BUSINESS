@@ -153,7 +153,7 @@ public class QuotationUpdateListener {
 
         // Order 생성
         String orderId = UuidV7Generator.generate();
-        String orderCode = "ORD-" + System.currentTimeMillis();
+        String orderCode = CodeGenerator.generateOrderCode();
 
         Order order = new Order();
         order.setId(orderId);

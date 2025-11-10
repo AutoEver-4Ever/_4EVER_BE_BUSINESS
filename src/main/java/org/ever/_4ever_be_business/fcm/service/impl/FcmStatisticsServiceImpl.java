@@ -128,14 +128,10 @@ public class FcmStatisticsServiceImpl implements FcmStatisticsService {
      * 증감률 계산: (현재 - 이전) / 이전
      */
     private Double calculateDeltaRate(BigDecimal current, BigDecimal previous) {
-        if (previous == null || previous.compareTo(BigDecimal.ZERO) == 0) {
-            return 0.0;
-        }
 
         BigDecimal delta = current.subtract(previous);
-        BigDecimal rate = delta.divide(previous, 4, RoundingMode.HALF_UP);
 
-        return rate.doubleValue();
+        return delta.doubleValue();
     }
 
     @Override
