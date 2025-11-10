@@ -38,6 +38,7 @@ public class PurchaseVoucherRepositoryImpl implements PurchaseVoucherRepositoryC
                 .select(purchaseVoucher.count())
                 .from(purchaseVoucher)
                 .where(
+                        statusEquals(condition.getStatus()),
                         supplierCompanyIdEquals(condition.getSupplierCompanyId()),
                         issueDateBetween(condition.getStartDate(), condition.getEndDate())
                 )
@@ -48,6 +49,7 @@ public class PurchaseVoucherRepositoryImpl implements PurchaseVoucherRepositoryC
                 .select(purchaseVoucher)
                 .from(purchaseVoucher)
                 .where(
+                        statusEquals(condition.getStatus()),
                         supplierCompanyIdEquals(condition.getSupplierCompanyId()),
                         issueDateBetween(condition.getStartDate(), condition.getEndDate())
                 )
@@ -86,6 +88,23 @@ public class PurchaseVoucherRepositoryImpl implements PurchaseVoucherRepositoryC
                 .collect(Collectors.toList());
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    /**
+     * 전표 상태 필터
+     */
+    private BooleanExpression statusEquals(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus statusEnum =
+                    org.ever._4ever_be_business.voucher.enums.PurchaseVoucherStatus.valueOf(status);
+            return purchaseVoucher.status.eq(statusEnum);
+        } catch (IllegalArgumentException e) {
+            log.warn("유효하지 않은 상태값 - status: {}", status);
+            return null;
+        }
     }
 
     /**

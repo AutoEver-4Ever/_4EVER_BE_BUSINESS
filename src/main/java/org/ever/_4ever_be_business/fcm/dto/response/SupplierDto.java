@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SupplierDto {
 
-    @JsonProperty("companyId")
+    @JsonProperty("connectionId")
     private String companyId;
 
-    @JsonProperty("companyCode")
+    @JsonProperty("connectionNumber")
     private String companyCode;
 
-    @JsonProperty("companyName")
+    @JsonProperty("connectionName")
     private String companyName;
 }

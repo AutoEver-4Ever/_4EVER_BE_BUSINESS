@@ -24,13 +24,14 @@ public interface APInvoiceService {
      * SupplierCompanyId 기반 AP 전표 목록 조회
      *
      * @param supplierCompanyId Supplier의 companyId (from SCM)
+     * @param status 전표 상태 (검색 필터, optional)
      * @param startDate 시작일 (검색 필터, optional)
      * @param endDate 종료일 (검색 필터, optional)
      * @param page 페이지 번호
      * @param size 페이지 크기
      * @return Page<APInvoiceListItemDto>
      */
-    Page<APInvoiceListItemDto> getAPInvoiceListBySupplierCompanyId(String supplierCompanyId, LocalDate startDate, LocalDate endDate, int page, int size);
+    Page<APInvoiceListItemDto> getAPInvoiceListBySupplierCompanyId(String supplierCompanyId, String status, LocalDate startDate, LocalDate endDate, int page, int size);
 
     /**
      * AP 전표 상세 정보 조회
