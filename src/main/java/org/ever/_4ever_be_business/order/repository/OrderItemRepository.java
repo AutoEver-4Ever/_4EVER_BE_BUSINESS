@@ -15,4 +15,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
      * @return 주문 항목 목록
      */
     List<OrderItem> findByOrderId(String orderId);
+
+    /**
+     * 여러 주문 ID에 대한 주문 항목을 한 번에 조회
+     */
+    List<OrderItem> findByOrder_IdIn(List<String> orderIds);
 }
