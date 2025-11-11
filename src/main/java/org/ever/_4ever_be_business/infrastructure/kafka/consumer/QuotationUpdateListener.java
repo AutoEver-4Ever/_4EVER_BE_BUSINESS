@@ -24,8 +24,13 @@ import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.voucher.entity.SalesVoucher;
 import org.ever._4ever_be_business.voucher.enums.SalesVoucherStatus;
 import org.ever._4ever_be_business.voucher.repository.SalesVoucherRepository;
+import org.ever.event.AlarmEvent;
 import org.ever.event.QuotationUpdateEvent;
 import org.ever.event.QuotationUpdateCompletionEvent;
+import org.ever.event.alarm.AlarmType;
+import org.ever.event.alarm.LinkType;
+import org.ever.event.alarm.SourceType;
+import org.ever.event.alarm.TargetType;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -98,6 +103,44 @@ public class QuotationUpdateListener {
                 // 5. Order 생성 (PENDING 상태로)
                 String orderId = createOrderFromQuotation(quotation, customerCompany);
                 log.info("주문 생성 완료: orderId={}, status=PENDING", orderId);
+
+                // TODO 알람 필요 : 견적 확정 -> 고객사
+                log.info("[ALARM] 견적서 상태 변경 알림 생성 - : {}", quotation.getId());
+                String targetId = quotation.getCustomerUserId();
+                AlarmEvent alarmEventForCreate = AlarmEvent.builder()
+                    .eventId(UuidV7Generator.generate())
+                    .eventType(AlarmEvent.class.getName())
+                    .timestamp(LocalDateTime.now())
+                    .source(SourceType.BUSINESS.name())
+                    .alarmId(UuidV7Generator.generate())
+                    .alarmType(AlarmType.SD)
+                    .targetId(targetId)
+                    .targetType(TargetType.CUSTOMER)
+                    .title("견적서 상태 변경")
+                    .message("해당 견적서가 확정되었습니다. 견저서 번호 = " + quotation.getQuotationCode())
+                    .linkId(quotation.getId())
+                    .linkType(LinkType.QUOTATION)
+                    .scheduledAt(null)
+                    .build();
+
+                log.info("[ALARM] 알림 요청 전송 준비 - alarmId: {}, targetId: {}, targetType: {}, linkType: {}",
+                    alarmEventForCreate.getAlarmId(), targetId, alarmEventForCreate.getTargetType(),
+                    alarmEventForCreate.getLinkType());
+                kafkaProducerService.sendAlarmEvent(alarmEventForCreate)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("[ALARM] 알림 요청 전송 실패 - alarmId: {}, targetId: {}, error: {}",
+                                alarmEventForCreate.getAlarmId(), targetId, ex.getMessage(), ex);
+                        } else if (result != null) {
+                            log.info("[ALARM] 알림 요청 전송 성공 - topic: {}, partition: {}, offset: {}",
+                                result.getRecordMetadata().topic(),
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                        } else {
+                            log.warn("[ALARM] 알림 요청 전송 결과가 null 입니다 - alarmId: {}, targetId: {}",
+                                alarmEventForCreate.getAlarmId(), targetId);
+                        }
+                    });
 
                 return null;
             });
