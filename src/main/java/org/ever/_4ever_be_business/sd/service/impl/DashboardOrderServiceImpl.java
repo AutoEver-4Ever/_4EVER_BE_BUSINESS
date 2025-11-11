@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.hr.entity.CustomerUser;
 import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
-import org.ever._4ever_be_business.hr.entity.CustomerUser;
-import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
 import org.ever._4ever_be_business.order.entity.Order;
 import org.ever._4ever_be_business.order.entity.OrderItem;
 import org.ever._4ever_be_business.order.repository.OrderItemRepository;
@@ -31,7 +29,6 @@ public class DashboardOrderServiceImpl implements DashboardOrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductServicePort productServicePort;
-    private final CustomerUserRepository customerUserRepository;
     private final CustomerUserRepository customerUserRepository;
 
     @Override
