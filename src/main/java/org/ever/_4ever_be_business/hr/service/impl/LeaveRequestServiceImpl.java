@@ -155,7 +155,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                             item.getStartDate(),
                             item.getEndDate(),
                             item.getNumberOfLeaveDays(),
-                            remainingLeaveDays  // 계산된 값으로 대체
+                            remainingLeaveDays,  // 계산된 값으로 대체
+                            item.getStatus()     // status 추가
                     );
                 })
                 .collect(Collectors.toList());

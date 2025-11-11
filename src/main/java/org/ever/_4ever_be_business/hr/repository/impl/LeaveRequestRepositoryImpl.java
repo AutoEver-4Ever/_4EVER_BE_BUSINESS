@@ -72,7 +72,8 @@ public class LeaveRequestRepositoryImpl implements LeaveRequestRepositoryCustom 
                                 leaveRequest.endDate
                         ),                                          // endDate
                         leaveRequest.numberOfLeaveDays,            // numberOfLeaveDays
-                        employee.remainingVacation.intValue()      // remainingLeaveDays
+                        employee.remainingVacation.intValue(),     // remainingLeaveDays
+                        leaveRequest.status.stringValue()          // status
                 ))
                 .from(leaveRequest)
                 .join(leaveRequest.employee, employee)

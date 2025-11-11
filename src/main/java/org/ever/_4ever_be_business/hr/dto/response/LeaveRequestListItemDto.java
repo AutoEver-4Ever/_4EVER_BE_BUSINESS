@@ -29,4 +29,7 @@ public class LeaveRequestListItemDto {
 
     @JsonProperty("remainingLeaveDays")
     private Integer remainingLeaveDays;
+
+    @JsonProperty("status")
+    private String status;  // PENDING, APPROVED, REJECTED
 }
