@@ -295,7 +295,7 @@ public class AttendanceRepositoryImpl implements AttendanceRepositoryCustom {
                 .join(attendance.employee, employee).fetchJoin()
                 .where(
                         employee.id.eq(employeeId),
-                        attendance.workDate.between(startOfDay, endOfDay)
+                        attendance.checkIn.between(startOfDay, endOfDay)  // checkIn 기준으로 변경
                 )
                 .fetchOne();
 

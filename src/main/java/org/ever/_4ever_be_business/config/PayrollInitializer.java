@@ -48,18 +48,23 @@ public class PayrollInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        log.info("[Initializer] 급여 데이터 생성 시작");
+        try {
+            log.info("========================================");
+            log.info("[PayrollInitializer] 급여 데이터 생성 시작");
+            log.info("========================================");
 
-        // 1. 공제 항목 생성 (이미 존재하면 건너뛰기)
-        initializeDeductions();
+            // 1. 공제 항목 생성 (이미 존재하면 건너뛰기)
+            initializeDeductions();
 
-        List<Employee> employees = employeeRepository.findAll();
-        if (employees.isEmpty()) {
-            log.warn("[Initializer] 직원 데이터가 없어 급여 데이터를 생성하지 않습니다.");
-            return;
-        }
+            List<Employee> employees = employeeRepository.findAll();
+            log.info("[PayrollInitializer] Employee 조회 결과: {} 명", employees.size());
 
-        log.info("[Initializer] 총 {} 명의 직원에 대한 급여 데이터 생성", employees.size());
+            if (employees.isEmpty()) {
+                log.warn("[PayrollInitializer] 직원 데이터가 없어 급여 데이터를 생성하지 않습니다.");
+                return;
+            }
+
+            log.info("[PayrollInitializer] 총 {} 명의 직원에 대한 급여 데이터 생성", employees.size());
 
         // 현재 연도 기준
         int currentYear = LocalDateTime.now().getYear();
@@ -107,12 +112,21 @@ public class PayrollInitializer implements CommandLineRunner {
                         status,
                         payDate
                 );
-                log.debug("[Initializer] 10월 급여 생성 - employeeId: {}, status: {}, netSalary: {}",
+                log.debug("[PayrollInitializer] 10월 급여 생성 - employeeId: {}, status: {}, netSalary: {}",
                         employee.getId(), status, octoberPayroll.getNetSalary());
             }
         }
 
-        log.info("[Initializer] 급여 데이터 생성 완료");
+            log.info("========================================");
+            log.info("[PayrollInitializer] 급여 데이터 생성 완료");
+            log.info("========================================");
+
+        } catch (Exception e) {
+            log.error("========================================");
+            log.error("[PayrollInitializer] 급여 데이터 생성 중 오류 발생", e);
+            log.error("========================================");
+            throw e;
+        }
     }
 
     /**

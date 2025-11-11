@@ -438,7 +438,7 @@ public class DataPreloader {
                         30,
                         "Spring Boot 프레임워크를 활용한 백엔드 개발 심화",
                         true,
-                        org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.IN_PROGRESS
                 ),
                 new Training(
                         "Java 프로그래밍 기초",
@@ -460,7 +460,7 @@ public class DataPreloader {
                         40,
                         "SQL 기초 및 데이터베이스 설계 원칙",
                         true,
-                        org.ever._4ever_be_business.hr.enums.TrainingStatus.RECRUITING
+                        org.ever._4ever_be_business.hr.enums.TrainingStatus.IN_PROGRESS
                 ),
                 new Training(
                         "React 프론트엔드 개발",

@@ -19,11 +19,13 @@ import org.ever._4ever_be_business.hr.repository.EmployeeRepository;
 import org.ever._4ever_be_business.hr.repository.InternelUserRepository;
 import org.ever._4ever_be_business.hr.repository.PositionRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
+@Order(1) // PayrollInitializer보다 먼저 실행
 @RequiredArgsConstructor
 public class InternalUserInitializer implements CommandLineRunner {
 
@@ -167,24 +169,32 @@ public class InternalUserInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        log.info("[Initializer] 내부 사용자 기본 데이터 점검 시작");
+        log.info("========================================");
+        log.info("[InternalUserInitializer] 내부 사용자 기본 데이터 점검 시작");
+        log.info("========================================");
 
         Position employeePosition = positionRepository.findByPositionCode(POSITION_CODE_EMPLOYEE)
             .orElseThrow(() -> new IllegalStateException("필수 직급을 찾을 수 없습니다: " + POSITION_CODE_EMPLOYEE));
         Position managerPosition = positionRepository.findByPositionCode(POSITION_CODE_MANAGER)
             .orElseThrow(() -> new IllegalStateException("필수 직급을 찾을 수 없습니다: " + POSITION_CODE_MANAGER));
 
+        int createdCount = 0;
         for (SeedUser seed : INTERNAL_USERS) {
-            internelUserRepository.findByUserId(seed.userId()).ifPresentOrElse(
-                existing -> log.debug("[Initializer] 내부 사용자 이미 존재: {}", existing.getUserId()),
-                () -> createInternalUser(seed, employeePosition, managerPosition)
-            );
+            boolean created = internelUserRepository.findByUserId(seed.userId()).isEmpty();
+            if (created) {
+                createInternalUser(seed, employeePosition, managerPosition);
+                createdCount++;
+            }
         }
+        log.info("[InternalUserInitializer] 기본 사용자 생성: {} 명 (기존: {} 명)", createdCount, INTERNAL_USERS.size() - createdCount);
 
         // 모듈별 계정 시드
         seedModuleMockUsers();
 
-        log.info("[Initializer] 내부 사용자 기본 데이터 점검 완료");
+        long totalEmployees = employeeRepository.count();
+        log.info("========================================");
+        log.info("[InternalUserInitializer] 내부 사용자 기본 데이터 점검 완료 - 총 Employee: {} 명", totalEmployees);
+        log.info("========================================");
     }
 
     // 샘플 한국인 이름 목록

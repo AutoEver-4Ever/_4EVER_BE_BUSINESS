@@ -130,7 +130,7 @@ public class QuotationRepositoryImpl implements QuotationRepositoryCustom {
                                 quotation.createdAt
                         ),                                         // quotationDate
                         quotationItem.productId,                   // productId (첫 번째 아이템)
-                        quotation.totalPrice.stringValue(),        // totalAmount
+                        quotation.totalPrice,                      // totalAmount - BigDecimal
                         Expressions.stringTemplate(
                                 "CASE WHEN {0} IS NULL THEN '-' ELSE TO_CHAR({0}, 'YYYY-MM-DD') END",
                                 quotation.dueDate
