@@ -1,8 +1,10 @@
 package org.ever._4ever_be_business.infrastructure.kafka.consumer;
 
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.saga.SagaTransactionManager;
+import org.ever._4ever_be_business.common.util.UuidV7Generator;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.hr.entity.CustomerUser;
 import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
@@ -11,8 +13,13 @@ import org.ever._4ever_be_business.infrastructure.redis.service.OrderDeliverySch
 import org.ever._4ever_be_business.order.entity.Order;
 import org.ever._4ever_be_business.order.entity.OrderStatus;
 import org.ever._4ever_be_business.order.repository.OrderRepository;
+import org.ever.event.AlarmEvent;
 import org.ever.event.SalesOrderStatusChangeEvent;
 import org.ever.event.SalesOrderStatusChangeCompletionEvent;
+import org.ever.event.alarm.AlarmType;
+import org.ever.event.alarm.LinkType;
+import org.ever.event.alarm.SourceType;
+import org.ever.event.alarm.TargetType;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -56,6 +63,44 @@ public class SalesOrderStatusChangeListener {
 
                 // 3. 자동 배송 완료 예약
                 scheduleAutoDeliveryCompletion(order);
+
+                // TODO 알람 필요 : 주문서 상태 변경 -> 고객사
+                log.info("[ALARM] 주문서 상태 변경 알림 생성 - : {}", order.getId());
+                String targetId = order.getCustomerUserId();
+                AlarmEvent alarmEventForCreate = AlarmEvent.builder()
+                    .eventId(UuidV7Generator.generate())
+                    .eventType(AlarmEvent.class.getName())
+                    .timestamp(LocalDateTime.now())
+                    .source(SourceType.BUSINESS.name())
+                    .alarmId(UuidV7Generator.generate())
+                    .alarmType(AlarmType.SD)
+                    .targetId(targetId)
+                    .targetType(TargetType.CUSTOMER)
+                    .title("주문서 상태 변경")
+                    .message("해당 주문서의 물품들이 출하되었습니다. 주문서 번호 = " + order.getOrderCode())
+                    .linkId(order.getId())
+                    .linkType(LinkType.SALES_ORDER)
+                    .scheduledAt(null)
+                    .build();
+
+                log.info("[ALARM] 알림 요청 전송 준비 - alarmId: {}, targetId: {}, targetType: {}, linkType: {}",
+                    alarmEventForCreate.getAlarmId(), targetId, alarmEventForCreate.getTargetType(),
+                    alarmEventForCreate.getLinkType());
+                kafkaProducerService.sendAlarmEvent(alarmEventForCreate)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("[ALARM] 알림 요청 전송 실패 - alarmId: {}, targetId: {}, error: {}",
+                                alarmEventForCreate.getAlarmId(), targetId, ex.getMessage(), ex);
+                        } else if (result != null) {
+                            log.info("[ALARM] 알림 요청 전송 성공 - topic: {}, partition: {}, offset: {}",
+                                result.getRecordMetadata().topic(),
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                        } else {
+                            log.warn("[ALARM] 알림 요청 전송 결과가 null 입니다 - alarmId: {}, targetId: {}",
+                                alarmEventForCreate.getAlarmId(), targetId);
+                        }
+                    });
 
                 return null;
             });
